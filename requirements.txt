@@ -1,3 +1,4 @@
 django>=1.9.6
+oic==0.9.1
 
 # Additional requirements go here
