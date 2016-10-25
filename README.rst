@@ -34,7 +34,7 @@ Does the code actually work?
 ::
 
     source <YOURVIRTUALENV>/bin/activate
-    (myenv) $ pip install -r requirements_test.txt
+    (myenv) $ pip install -r requirements/requirements_test.txt
     (myenv) $ python runtests.py
 
 License
