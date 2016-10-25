@@ -29,9 +29,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             'code': 'example_code',
             'state': 'example_state'
         }
-        url = reverse('oidc_authorization_callback')
+        url = reverse('oidc_authentication_callback')
         request = self.factory.post(url, post_data)
-        callback_view = views.OIDCAuthorizationCallbackView.as_view()
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
             with patch('mozilla_django_oidc.views.auth.login') as mock_login:
@@ -51,9 +51,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             'state': 'example_state'
         }
 
-        url = reverse('oidc_authorization_callback')
+        url = reverse('oidc_authentication_callback')
         request = self.factory.post(url, post_data)
-        callback_view = views.OIDCAuthorizationCallbackView.as_view()
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
             mock_auth.return_value = None
@@ -75,9 +75,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             'state': 'example_state'
         }
 
-        url = reverse('oidc_authorization_callback')
+        url = reverse('oidc_authentication_callback')
         request = self.factory.post(url, post_data)
-        callback_view = views.OIDCAuthorizationCallbackView.as_view()
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
             mock_auth.return_value = user
@@ -94,9 +94,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             'foo': 'bar',
         }
 
-        url = reverse('oidc_authorization_callback')
+        url = reverse('oidc_authentication_callback')
         request = self.factory.post(url, post_data)
-        callback_view = views.OIDCAuthorizationCallbackView.as_view()
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
         response = callback_view(request)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/failure')
@@ -109,9 +109,9 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
     @override_settings(OIDC_OP_CLIENT_ID='example_id')
     def test_get(self):
-        url = reverse('oidc_authorization_init')
+        url = reverse('oidc_authentication_init')
         request = self.factory.get(url)
-        login_view = views.OIDCAuthorizationRequestView.as_view()
+        login_view = views.OIDCAuthenticationRequestView.as_view()
         response = login_view(request)
         self.assertEqual(response.status_code, 302)
 
@@ -120,7 +120,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'response_type': ['code'],
             'scope': ['openid'],
             'client_id': ['example_id'],
-            'redirect_uri': ['/oidc/authorization_callback/']
+            'redirect_uri': ['/oidc/authentication_callback/']
         }
         self.assertDictEqual(parse_qs(o.query), expected_query)
         self.assertEqual(o.hostname, 'server.example.com')
