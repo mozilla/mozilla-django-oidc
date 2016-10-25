@@ -42,7 +42,7 @@ setup(
         'mozilla_django_oidc',
     ],
     include_package_data=True,
-    install_requires=[],
+    install_requires=['oic==0.9.1'],
     license='MPL 2.0',
     zip_safe=False,
     keywords='mozilla-django-oidc',
