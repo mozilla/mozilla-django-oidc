@@ -1,3 +1,8 @@
+try:
+    from urlparse import parse_qs, urlparse
+except ImportError:
+    from urllib.parse import parse_qs, urlparse
+
 from mock import patch
 
 from django.contrib.auth import get_user_model
@@ -95,3 +100,28 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         response = callback_view(request)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/failure')
+
+
+class OIDCAuthorizationRequestViewTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
+    @override_settings(OIDC_OP_CLIENT_ID='example_id')
+    def test_get(self):
+        url = reverse('oidc_authorization_init')
+        request = self.factory.get(url)
+        login_view = views.OIDCAuthorizationRequestView.as_view()
+        response = login_view(request)
+        self.assertEqual(response.status_code, 302)
+
+        o = urlparse(response.url)
+        expected_query = {
+            'response_type': ['code'],
+            'scope': ['openid'],
+            'client_id': ['example_id'],
+            'redirect_uri': ['/oidc/authorization_callback/']
+        }
+        self.assertDictEqual(parse_qs(o.query), expected_query)
+        self.assertEqual(o.hostname, 'server.example.com')
+        self.assertEqual(o.path, '/auth')
