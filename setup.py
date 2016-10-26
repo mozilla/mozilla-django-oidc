@@ -33,7 +33,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 setup(
     name='mozilla-django-oidc',
     version=version,
-    description="""A lightweight authentication and access management library for integration with OpenID Connect enabled authentication services.""",
+    description="""A lightweight authentication and access management library for integration with OpenID Connect enabled authentication services.""",  # noqa
     long_description=readme + '\n\n' + history,
     author='Tasos Katsoulas, John Giannelos',
     author_email='akatsoulas@mozilla.com, jgiannelos@mozilla.com',
