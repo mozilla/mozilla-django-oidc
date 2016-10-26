@@ -13,5 +13,5 @@ def import_from_settings(attr, default_val=None):
         if default_val:
             return getattr(settings, attr, default_val)
         return getattr(settings, attr)
-    except AttributeError as e:
+    except AttributeError:
         raise ImproperlyConfigured('Setting {0} not found'.format(attr))
