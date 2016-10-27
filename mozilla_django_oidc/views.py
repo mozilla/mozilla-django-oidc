@@ -11,7 +11,7 @@ from django.views.generic import View
 from mozilla_django_oidc.utils import import_from_settings
 
 
-class OIDCAuthorizationCallbackView(View):
+class OIDCAuthenticationCallbackView(View):
     """OIDC client authentication callback HTTP endpoint"""
 
     http_method_names = ['post']
@@ -46,13 +46,13 @@ class OIDCAuthorizationCallbackView(View):
         return self.login_failure()
 
 
-class OIDCAuthorizationRequestView(View):
+class OIDCAuthenticationRequestView(View):
     """OIDC client authentication HTTP endpoint"""
 
     http_method_names = ['get']
 
     def __init__(self, *args, **kwargs):
-        super(OIDCAuthorizationRequestView, self).__init__(*args, **kwargs)
+        super(OIDCAuthenticationRequestView, self).__init__(*args, **kwargs)
 
         self.OIDC_OP_AUTH_ENDPOINT = import_from_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
         self.OIDC_OP_CLIENT_ID = import_from_settings('OIDC_OP_CLIENT_ID')
@@ -63,7 +63,7 @@ class OIDCAuthorizationRequestView(View):
             'response_type': 'code',
             'scope': 'openid',
             'client_id': self.OIDC_OP_CLIENT_ID,
-            'redirect_uri': reverse('oidc_authorization_callback')
+            'redirect_uri': reverse('oidc_authentication_callback')
         }
 
         query = urlencode(params)
