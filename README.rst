@@ -16,7 +16,7 @@ A lightweight authentication and access management library for integration with 
 Documentation
 -------------
 
-The full documentation is at https://mozilla-django-oidc.readthedocs.org.
+The full documentation is at https://mozilla-django-oidc.readthedocs.io.
 
 Quickstart
 ----------
