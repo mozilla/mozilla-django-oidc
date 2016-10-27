@@ -21,6 +21,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
     @override_settings(LOGIN_REDIRECT_URL='/success')
     def test_post_auth_success(self):
+        """Test successful callback request to RP."""
+
         user = User.objects.create_user('example_username')
         user.is_active = True
         user.save()
@@ -46,6 +48,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
     @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
     def test_post_auth_failure_nonexisting_user(self):
+        """Test unsuccessful authentication and redirect url."""
+
         post_data = {
             'code': 'example_code',
             'state': 'example_state'
@@ -66,6 +70,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
     @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
     def test_post_auth_failure_inactive_user(self):
+        """Test authentication failure attempt for an inactive user."""
+
         user = User.objects.create_user('example_username')
         user.is_active = False
         user.save()
@@ -90,6 +96,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
     @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
     def test_post_auth_dirty_data(self):
+        """Test authentication attempt with wrong post data."""
         post_data = {
             'foo': 'bar',
         }
@@ -109,7 +116,9 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
     @override_settings(OIDC_OP_CLIENT_ID='example_id')
     def test_get(self):
-        url = reverse('oidc_authentication_init')
+        """Test initiation of a successful OIDC attempt."""
+
+        url = reverse('oidc_authorization_init')
         request = self.factory.get(url)
         login_view = views.OIDCAuthenticationRequestView.as_view()
         response = login_view(request)
