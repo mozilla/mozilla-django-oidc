@@ -42,7 +42,7 @@ setup(
         'mozilla_django_oidc',
     ],
     include_package_data=True,
-    install_requires=[],
+    install_requires=['Django>1.7', 'PyJWT', 'requests'],
     license='MPL 2.0',
     zip_safe=False,
     keywords='mozilla-django-oidc',
