@@ -1,4 +1,4 @@
-from mock import Mock, patch
+from mock import Mock, call, patch
 
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
@@ -138,6 +138,9 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     def test_jwt_decode_params(self, request_mock, jwt_mock):
         """Test jwt verification signature."""
 
+        jwt_mock.decode.return_value = {
+            'aud': 'audience'
+        }
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'username': 'username',
@@ -151,7 +154,11 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         }
         request_mock.post.return_value = post_json_mock
         self.backend.authenticate(code='foo', state='bar')
-        jwt_mock.decode.assert_called_once_with('token', 'example_secret', verify=True)
+        calls = [
+            call('token', verify=False),
+            call('token', 'example_secret', verify=True, audience='audience')
+        ]
+        jwt_mock.decode.assert_has_calls(calls)
 
     @override_settings(OIDC_VERIFY_JWT=False)
     @patch('mozilla_django_oidc.auth.jwt')
@@ -159,6 +166,9 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     def test_jwt_decode_params_verify_false(self, request_mock, jwt_mock):
         """Test jwt verification signature with verify False"""
 
+        jwt_mock.decode.return_value = {
+            'aud': 'audience'
+        }
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'username': 'username',
@@ -171,6 +181,10 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'access_token': 'access_token'
         }
         request_mock.post.return_value = post_json_mock
+        calls = [
+            call('token', verify=False),
+            call('token', 'example_secret', verify=False, audience='audience')
+        ]
 
         self.backend.authenticate(code='foo', state='bar')
-        jwt_mock.decode.assert_called_once_with('token', 'example_secret', verify=False)
+        jwt_mock.decode.assert_has_calls(calls)

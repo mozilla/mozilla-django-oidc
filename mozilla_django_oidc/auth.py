@@ -1,5 +1,7 @@
+import base64
 import jwt
 import requests
+
 try:
     from urllib import urlencode
 except ImportError:
@@ -26,9 +28,16 @@ class OIDCAuthenticationBackend(object):
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
 
-        return jwt.decode(token,
-                          self.OIDC_OP_CLIENT_SECRET,
-                          verify=import_from_settings('OIDC_VERIFY_JWT', True))
+        # Get JWT audience without signature verification
+        audience = jwt.decode(token, verify=False)['aud']
+
+        secret = self.OIDC_OP_CLIENT_SECRET
+        if import_from_settings('OIDC_RP_CLIENT_SECRET_ENCODED', False):
+            secret = base64.urlsafe_b64decode(self.OIDC_OP_CLIENT_SECRET)
+
+        return jwt.decode(token, secret,
+                          verify=import_from_settings('OIDC_VERIFY_JWT', True),
+                          audience=audience)
 
     def authenticate(self, code=None, state=None):
         """Authenticates a user based on the OIDC code flow."""
