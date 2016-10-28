@@ -20,19 +20,18 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         self.factory = RequestFactory()
 
     @override_settings(LOGIN_REDIRECT_URL='/success')
-    def test_post_auth_success(self):
+    def test_get_auth_success(self):
         """Test successful callback request to RP."""
-
         user = User.objects.create_user('example_username')
         user.is_active = True
         user.save()
 
-        post_data = {
+        get_data = {
             'code': 'example_code',
             'state': 'example_state'
         }
         url = reverse('oidc_authentication_callback')
-        request = self.factory.post(url, post_data)
+        request = self.factory.get(url, get_data)
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -47,16 +46,15 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         self.assertEqual(response.url, '/success')
 
     @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
-    def test_post_auth_failure_nonexisting_user(self):
+    def test_get_auth_failure_nonexisting_user(self):
         """Test unsuccessful authentication and redirect url."""
-
-        post_data = {
+        get_data = {
             'code': 'example_code',
             'state': 'example_state'
         }
 
         url = reverse('oidc_authentication_callback')
-        request = self.factory.post(url, post_data)
+        request = self.factory.get(url, get_data)
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -69,20 +67,19 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         self.assertEqual(response.url, '/failure')
 
     @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
-    def test_post_auth_failure_inactive_user(self):
+    def test_get_auth_failure_inactive_user(self):
         """Test authentication failure attempt for an inactive user."""
-
         user = User.objects.create_user('example_username')
         user.is_active = False
         user.save()
 
-        post_data = {
+        get_data = {
             'code': 'example_code',
             'state': 'example_state'
         }
 
         url = reverse('oidc_authentication_callback')
-        request = self.factory.post(url, post_data)
+        request = self.factory.get(url, get_data)
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -95,14 +92,14 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         self.assertEqual(response.url, '/failure')
 
     @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
-    def test_post_auth_dirty_data(self):
-        """Test authentication attempt with wrong post data."""
-        post_data = {
+    def test_get_auth_dirty_data(self):
+        """Test authentication attempt with wrong get data."""
+        get_data = {
             'foo': 'bar',
         }
 
         url = reverse('oidc_authentication_callback')
-        request = self.factory.post(url, post_data)
+        request = self.factory.get(url, get_data)
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
         response = callback_view(request)
         self.assertEqual(response.status_code, 302)
