@@ -1,4 +1,4 @@
-from mock import patch
+from mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
@@ -26,14 +26,18 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         """Test authentication with an invalid token."""
 
         token_mock.return_value = None
-        request_mock.get.return_value = {
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
             'username': 'username',
             'verified_email': 'email@example.com'
         }
-        request_mock.post.return_value = {
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
             'id_token': 'id_token',
             'accesss_token': 'access_token'
         }
+        request_mock.post.return_value = post_json_mock
         self.assertEqual(self.backend.authenticate(code='foo', state='bar'), None)
 
     def test_get_user(self):
@@ -55,14 +59,19 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         user = User.objects.create_user(username='a_username',
                                         email='email@example.com')
         token_mock.return_value = True
-        request_mock.get.return_value = {
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
             'username': 'a_username',
             'verified_email': 'email@example.com'
         }
-        request_mock.post.return_value = {
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
             'id_token': 'id_token',
             'access_token': 'access_granted'
         }
+        request_mock.post.return_value = post_json_mock
+
         post_data = {
             'client_id': 'example_id',
             'client_secret': 'example_secret',
@@ -73,7 +82,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(self.backend.authenticate(code='foo', state='bar'), user)
         token_mock.assert_called_once_with('id_token')
         request_mock.post.assert_called_once_with('https://server.example.com/token',
-                                                  data=post_data,
+                                                  json=post_data,
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user?access_token=access_granted'
@@ -85,14 +94,18 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         """Test successful authentication and user creation."""
 
         token_mock.return_value = True
-        request_mock.get.return_value = {
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
             'username': 'a_username',
             'verified_email': 'email@example.com'
         }
-        request_mock.post.return_value = {
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
             'id_token': 'id_token',
             'access_token': 'access_granted'
         }
+        request_mock.post.return_value = post_json_mock
         post_data = {
             'client_id': 'example_id',
             'client_secret': 'example_secret',
@@ -109,7 +122,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         token_mock.assert_called_once_with('id_token')
         request_mock.post.assert_called_once_with('https://server.example.com/token',
-                                                  data=post_data,
+                                                  json=post_data,
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user?access_token=access_granted'
@@ -125,14 +138,18 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     def test_jwt_decode_params(self, request_mock, jwt_mock):
         """Test jwt verification signature."""
 
-        request_mock.get.return_value = {
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
             'username': 'username',
             'verified_email': 'email@example.com'
         }
-        request_mock.post.return_value = {
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
             'id_token': 'token',
             'access_token': 'access_token'
         }
+        request_mock.post.return_value = post_json_mock
         self.backend.authenticate(code='foo', state='bar')
         jwt_mock.decode.assert_called_once_with('token', 'example_secret', verify=True)
 
@@ -142,13 +159,18 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     def test_jwt_decode_params_verify_false(self, request_mock, jwt_mock):
         """Test jwt verification signature with verify False"""
 
-        request_mock.get.return_value = {
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
             'username': 'username',
             'verified_email': 'email@example.com'
         }
-        request_mock.post.return_value = {
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
             'id_token': 'token',
             'access_token': 'access_token'
         }
+        request_mock.post.return_value = post_json_mock
+
         self.backend.authenticate(code='foo', state='bar')
         jwt_mock.decode.assert_called_once_with('token', 'example_secret', verify=False)

@@ -46,17 +46,19 @@ class OIDCAuthenticationBackend(object):
 
         # Get the token
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT,
-                                 data=token_payload,
+                                 json=token_payload,
                                  verify=import_from_settings('VERIFY_SSL', True))
         # Validate the token
-        payload = self.verify_token(response.get('id_token'))
+        token_response = response.json()
+        payload = self.verify_token(token_response.get('id_token'))
 
         if payload:
             query = urlencode({
-                'access_token': response.get('access_token')
+                'access_token': token_response.get('access_token')
             })
-            user_info = requests.get('{url}?{query}'.format(url=self.OIDC_OP_USER_ENDPOINT,
-                                                            query=query))
+            user_response = requests.get('{url}?{query}'.format(url=self.OIDC_OP_USER_ENDPOINT,
+                                                                query=query))
+            user_info = user_response.json()
 
             try:
                 return self.UserModel.objects.get(email=user_info['verified_email'])
