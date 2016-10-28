@@ -1,7 +1,6 @@
 from mock import Mock, call, patch
 
 from django.contrib.auth import get_user_model
-from django.core.urlresolvers import reverse
 from django.test import TestCase, override_settings
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
@@ -28,8 +27,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         token_mock.return_value = None
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
-            'username': 'username',
-            'verified_email': 'email@example.com'
+            'nickname': 'username',
+            'email': 'email@example.com'
         }
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock()
@@ -53,6 +52,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
+    @override_settings(SITE_URL='http://site-url.com')
     def test_successful_authentication_existing_user(self, token_mock, request_mock):
         """Test successful authentication for existing user."""
 
@@ -61,8 +61,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         token_mock.return_value = True
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
-            'username': 'a_username',
-            'verified_email': 'email@example.com'
+            'nickname': 'a_username',
+            'email': 'email@example.com'
         }
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock()
@@ -75,9 +75,9 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         post_data = {
             'client_id': 'example_id',
             'client_secret': 'example_secret',
-            'grand_type': 'authorization_code',
+            'grant_type': 'authorization_code',
             'code': 'foo',
-            'redirect_url': reverse('oidc_authentication_callback')
+            'redirect_uri': 'http://site-url.com/oidc/authentication_callback/'
         }
         self.assertEqual(self.backend.authenticate(code='foo', state='bar'), user)
         token_mock.assert_called_once_with('id_token')
@@ -90,14 +90,15 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
+    @override_settings(SITE_URL='http://site-url.com')
     def test_successful_authentication_new_user(self, token_mock, request_mock):
         """Test successful authentication and user creation."""
 
         token_mock.return_value = True
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
-            'username': 'a_username',
-            'verified_email': 'email@example.com'
+            'nickname': 'a_username',
+            'email': 'email@example.com'
         }
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock()
@@ -109,9 +110,9 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         post_data = {
             'client_id': 'example_id',
             'client_secret': 'example_secret',
-            'grand_type': 'authorization_code',
+            'grant_type': 'authorization_code',
             'code': 'foo',
-            'redirect_url': reverse('oidc_authentication_callback')
+            'redirect_uri': 'http://site-url.com/oidc/authentication_callback/',
         }
         self.assertEqual(User.objects.all().count(), 0)
         self.backend.authenticate(code='foo', state='bar')
@@ -143,8 +144,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         }
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
-            'username': 'username',
-            'verified_email': 'email@example.com'
+            'nickname': 'username',
+            'email': 'email@example.com'
         }
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock()
@@ -171,8 +172,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         }
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
-            'username': 'username',
-            'verified_email': 'email@example.com'
+            'nickname': 'username',
+            'email': 'email@example.com'
         }
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock()

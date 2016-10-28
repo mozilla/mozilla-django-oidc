@@ -10,7 +10,7 @@ except ImportError:
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 
-from mozilla_django_oidc.utils import import_from_settings
+from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 
 class OIDCAuthenticationBackend(object):
@@ -48,9 +48,9 @@ class OIDCAuthenticationBackend(object):
         token_payload = {
             'client_id': self.OIDC_OP_CLIENT_ID,
             'client_secret': self.OIDC_OP_CLIENT_SECRET,
-            'grand_type': 'authorization_code',
+            'grant_type': 'authorization_code',
             'code': code,
-            'redirect_url': reverse('oidc_authentication_callback')
+            'redirect_uri': absolutify(reverse('oidc_authentication_callback'))
         }
 
         # Get the token
@@ -70,10 +70,10 @@ class OIDCAuthenticationBackend(object):
             user_info = user_response.json()
 
             try:
-                return self.UserModel.objects.get(email=user_info['verified_email'])
+                return self.UserModel.objects.get(email=user_info['email'])
             except self.UserModel.DoesNotExist:
-                return self.UserModel.objects.create_user(username=user_info['username'],
-                                                          email=user_info['verified_email'])
+                return self.UserModel.objects.create_user(username=user_info['nickname'],
+                                                          email=user_info['email'])
         return None
 
     def get_user(self, user_id):

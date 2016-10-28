@@ -20,6 +20,7 @@ try:
             'mozilla_django_oidc',
         ],
         SITE_ID=1,
+        SITE_URL='http://example.com',
         MIDDLEWARE_CLASSES=(),
     )
 
