@@ -112,9 +112,11 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
     @override_settings(OIDC_OP_CLIENT_ID='example_id')
-    def test_get(self):
+    @override_settings(SITE_URL='http://site-url.com')
+    @patch('mozilla_django_oidc.views.get_random_string')
+    def test_get(self, mock_random_string):
         """Test initiation of a successful OIDC attempt."""
-
+        mock_random_string.return_value = 'examplestring'
         url = reverse('oidc_authentication_init')
         request = self.factory.get(url)
         login_view = views.OIDCAuthenticationRequestView.as_view()
@@ -126,7 +128,8 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'response_type': ['code'],
             'scope': ['openid'],
             'client_id': ['example_id'],
-            'redirect_uri': ['/oidc/authentication_callback/']
+            'redirect_uri': ['http://site-url.com/oidc/authentication_callback/'],
+            'state': ['examplestring']
         }
         self.assertDictEqual(parse_qs(o.query), expected_query)
         self.assertEqual(o.hostname, 'server.example.com')

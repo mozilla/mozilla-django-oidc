@@ -6,9 +6,10 @@ except ImportError:
 from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.http import HttpResponseRedirect
+from django.utils.crypto import get_random_string
 from django.views.generic import View
 
-from mozilla_django_oidc.utils import import_from_settings
+from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 
 class OIDCAuthenticationCallbackView(View):
@@ -63,7 +64,8 @@ class OIDCAuthenticationRequestView(View):
             'response_type': 'code',
             'scope': 'openid',
             'client_id': self.OIDC_OP_CLIENT_ID,
-            'redirect_uri': reverse('oidc_authentication_callback')
+            'redirect_uri': absolutify(reverse('oidc_authentication_callback')),
+            'state': get_random_string(import_from_settings('OIDC_STATE_SIZE', 32))
         }
 
         query = urlencode(params)
