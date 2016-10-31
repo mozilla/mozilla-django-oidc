@@ -128,7 +128,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'response_type': ['code'],
             'scope': ['openid'],
             'client_id': ['example_id'],
-            'redirect_uri': ['http://site-url.com/oidc/authentication_callback/'],
+            'redirect_uri': ['http://site-url.com/callback/'],
             'state': ['examplestring']
         }
         self.assertDictEqual(parse_qs(o.query), expected_query)

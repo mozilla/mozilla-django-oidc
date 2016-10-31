@@ -77,7 +77,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'client_secret': 'example_secret',
             'grant_type': 'authorization_code',
             'code': 'foo',
-            'redirect_uri': 'http://site-url.com/oidc/authentication_callback/'
+            'redirect_uri': 'http://site-url.com/callback/'
         }
         self.assertEqual(self.backend.authenticate(code='foo', state='bar'), user)
         token_mock.assert_called_once_with('id_token')
@@ -112,7 +112,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'client_secret': 'example_secret',
             'grant_type': 'authorization_code',
             'code': 'foo',
-            'redirect_uri': 'http://site-url.com/oidc/authentication_callback/',
+            'redirect_uri': 'http://site-url.com/callback/',
         }
         self.assertEqual(User.objects.all().count(), 0)
         self.backend.authenticate(code='foo', state='bar')
