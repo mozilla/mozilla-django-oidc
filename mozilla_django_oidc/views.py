@@ -6,15 +6,16 @@ except ImportError:
 from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.http import HttpResponseRedirect
+from django.utils.crypto import get_random_string
 from django.views.generic import View
 
-from mozilla_django_oidc.utils import import_from_settings
+from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 
 class OIDCAuthenticationCallbackView(View):
     """OIDC client authentication callback HTTP endpoint"""
 
-    http_method_names = ['post']
+    http_method_names = ['get']
 
     @property
     def failure_url(self):
@@ -31,13 +32,13 @@ class OIDCAuthenticationCallbackView(View):
         auth.login(self.request, self.user)
         return HttpResponseRedirect(self.success_url)
 
-    def post(self, request):
+    def get(self, request):
         """Callback handler for OIDC authorization code flow"""
 
-        if 'code' in request.POST and 'state' in request.POST:
+        if 'code' in request.GET and 'state' in request.GET:
             kwargs = {
-                'code': request.POST['code'],
-                'state': request.POST['state']
+                'code': request.GET['code'],
+                'state': request.GET['state']
             }
             self.user = auth.authenticate(**kwargs)
 
@@ -63,7 +64,8 @@ class OIDCAuthenticationRequestView(View):
             'response_type': 'code',
             'scope': 'openid',
             'client_id': self.OIDC_OP_CLIENT_ID,
-            'redirect_uri': reverse('oidc_authentication_callback')
+            'redirect_uri': absolutify(reverse('oidc_authentication_callback')),
+            'state': get_random_string(import_from_settings('OIDC_STATE_SIZE', 32))
         }
 
         query = urlencode(params)
