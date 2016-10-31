@@ -3,6 +3,7 @@ try:
 except ImportError:
     from urllib.parse import urlencode
 
+from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.http import HttpResponseRedirect
@@ -40,6 +41,14 @@ class OIDCAuthenticationCallbackView(View):
                 'code': request.GET['code'],
                 'state': request.GET['state']
             }
+
+            if 'oidc_state' not in request.session:
+                return self.login_failure()
+
+            if request.GET['state'] != request.session['oidc_state']:
+                msg = 'Session `oidc_state` does not match the OIDC callback state'
+                raise SuspiciousOperation(msg)
+
             self.user = auth.authenticate(**kwargs)
 
             if self.user and self.user.is_active:
@@ -60,13 +69,17 @@ class OIDCAuthenticationRequestView(View):
 
     def get(self, request):
         """OIDC client authentication initialization HTTP endpoint"""
+        state = get_random_string(import_from_settings('OIDC_STATE_SIZE', 32))
+
         params = {
             'response_type': 'code',
             'scope': 'openid',
             'client_id': self.OIDC_OP_CLIENT_ID,
             'redirect_uri': absolutify(reverse('oidc_authentication_callback')),
-            'state': get_random_string(import_from_settings('OIDC_STATE_SIZE', 32))
+            'state': state,
         }
+
+        request.session['oidc_state'] = state
 
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=self.OIDC_OP_AUTH_ENDPOINT, query=query)

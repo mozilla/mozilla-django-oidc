@@ -5,6 +5,7 @@ except ImportError:
 
 from mock import patch
 
+from django.core.exceptions import SuspiciousOperation
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 from django.test import RequestFactory, TestCase, override_settings
@@ -32,6 +33,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         }
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
+        request.session = {
+            'oidc_state': 'example_state'
+        }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -55,6 +59,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
+        request.session = {
+            'oidc_state': 'example_state'
+        }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -80,6 +87,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
+        request.session = {
+            'oidc_state': 'example_state'
+        }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -105,6 +115,54 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/failure')
 
+    @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
+    def test_get_auth_failure_missing_session_state(self):
+        """Test authentication failure attempt for an inactive user."""
+        user = User.objects.create_user('example_username')
+        user.is_active = False
+        user.save()
+
+        get_data = {
+            'code': 'example_code',
+            'state': 'example_state'
+        }
+
+        url = reverse('oidc_authentication_callback')
+        request = self.factory.get(url, get_data)
+        request.session = {
+        }
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
+
+        response = callback_view(request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/failure')
+
+    @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
+    def test_get_auth_failure_tampered_session_state(self):
+        """Test authentication failure attempt for an inactive user."""
+        user = User.objects.create_user('example_username')
+        user.is_active = False
+        user.save()
+
+        get_data = {
+            'code': 'example_code',
+            'state': 'example_state'
+        }
+
+        url = reverse('oidc_authentication_callback')
+        request = self.factory.get(url, get_data)
+        request.session = {
+            'oidc_state': 'tampered_state'
+        }
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
+
+        with self.assertRaises(SuspiciousOperation) as context:
+            callback_view(request)
+
+        expected_error_message = 'Session `oidc_state` does not match the OIDC callback state'
+        self.assertEqual(context.exception.args, (expected_error_message,))
+
 
 class OIDCAuthorizationRequestViewTestCase(TestCase):
     def setUp(self):
@@ -119,6 +177,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         mock_random_string.return_value = 'examplestring'
         url = reverse('oidc_authentication_init')
         request = self.factory.get(url)
+        request.session = dict()
         login_view = views.OIDCAuthenticationRequestView.as_view()
         response = login_view(request)
         self.assertEqual(response.status_code, 302)
