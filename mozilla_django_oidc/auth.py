@@ -1,5 +1,7 @@
 import base64
+import hashlib
 import jwt
+import logging
 import requests
 
 try:
@@ -7,10 +9,27 @@ try:
 except ImportError:
     from urllib.parse import urlencode
 
+try:
+    from django.utils.encoding import smart_bytes
+except ImportError:
+    from django.utils.encoding import smart_str as smart_bytes
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+def default_username_algo(email):
+    # bluntly stolen from django-browserid
+    # store the username as a base64 encoded sha224 of the email address
+    # this protects against data leakage because usernames are often
+    # treated as public identifiers (so we can't use the email address).
+    return base64.urlsafe_b64encode(
+        hashlib.sha224(smart_bytes(email)).digest()
+    ).rstrip(b'=')
 
 
 class OIDCAuthenticationBackend(object):
@@ -24,6 +43,20 @@ class OIDCAuthenticationBackend(object):
         self.OIDC_OP_CLIENT_SECRET = import_from_settings('OIDC_OP_CLIENT_SECRET')
 
         self.UserModel = get_user_model()
+
+    def create_user(self, email, **kwargs):
+        """Return object for a newly created user account."""
+        # bluntly stolen from django-browserid
+        # https://github.com/mozilla/django-browserid/blob/master/django_browserid/auth.py
+
+        username_algo = import_from_settings('OIDC_USERNAME_ALGO', None)
+
+        if username_algo:
+            username = username_algo(email)
+        else:
+            username = default_username_algo(email)
+
+        return self.UserModel.objects.create_user(username, email)
 
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
@@ -68,12 +101,28 @@ class OIDCAuthenticationBackend(object):
             user_response = requests.get('{url}?{query}'.format(url=self.OIDC_OP_USER_ENDPOINT,
                                                                 query=query))
             user_info = user_response.json()
+            email = user_info.get('email')
+            if not email:
+                return None
 
+            create_user = False
             try:
-                return self.UserModel.objects.get(email=user_info['email'])
+                return self.UserModel.objects.get(email=email)
+            except self.UserModel.MultipleObjectsReturned:
+                # In the rare case that two user accounts have the same email address,
+                # log and bail. Randomly selecting one seems really wrong.
+                LOGGER.warn('Multiple users with email address %s.', email)
+                return None
             except self.UserModel.DoesNotExist:
-                return self.UserModel.objects.create_user(username=user_info['nickname'],
-                                                          email=user_info['email'])
+                create_user = import_from_settings('OIDC_CREATE_USER', True)
+
+            if create_user:
+                user = self.create_user(email)
+                return user
+            else:
+                LOGGER.debug('Login failed: No user with email %s found, and '
+                             'OIDC_CREATE_USER is False', email)
+                return None
         return None
 
     def get_user(self, user_id):

@@ -22,6 +22,7 @@ try:
         SITE_ID=1,
         SITE_URL='http://example.com',
         MIDDLEWARE_CLASSES=(),
+        OIDC_USERNAME_ALGO=None
     )
 
     try:
