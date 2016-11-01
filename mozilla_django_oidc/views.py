@@ -65,7 +65,7 @@ class OIDCAuthenticationRequestView(View):
         super(OIDCAuthenticationRequestView, self).__init__(*args, **kwargs)
 
         self.OIDC_OP_AUTH_ENDPOINT = import_from_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
-        self.OIDC_OP_CLIENT_ID = import_from_settings('OIDC_OP_CLIENT_ID')
+        self.OIDC_RP_CLIENT_ID = import_from_settings('OIDC_RP_CLIENT_ID')
 
     def get(self, request):
         """OIDC client authentication initialization HTTP endpoint"""
@@ -74,7 +74,7 @@ class OIDCAuthenticationRequestView(View):
         params = {
             'response_type': 'code',
             'scope': 'openid',
-            'client_id': self.OIDC_OP_CLIENT_ID,
+            'client_id': self.OIDC_RP_CLIENT_ID,
             'redirect_uri': absolutify(reverse('oidc_authentication_callback')),
             'state': state,
         }

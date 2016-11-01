@@ -169,7 +169,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         self.factory = RequestFactory()
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
-    @override_settings(OIDC_OP_CLIENT_ID='example_id')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
     @override_settings(SITE_URL='http://site-url.com')
     @patch('mozilla_django_oidc.views.get_random_string')
     def test_get(self, mock_random_string):
