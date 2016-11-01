@@ -57,6 +57,8 @@ class OIDCAuthenticationBackend(object):
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT,
                                  json=token_payload,
                                  verify=import_from_settings('VERIFY_SSL', True))
+        response.raise_for_status()
+
         # Validate the token
         token_response = response.json()
         payload = self.verify_token(token_response.get('id_token'))
@@ -67,6 +69,7 @@ class OIDCAuthenticationBackend(object):
             })
             user_response = requests.get('{url}?{query}'.format(url=self.OIDC_OP_USER_ENDPOINT,
                                                                 query=query))
+            user_response.raise_for_status()
             user_info = user_response.json()
 
             try:
