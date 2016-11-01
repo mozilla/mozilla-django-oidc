@@ -1,5 +1,6 @@
 from mock import Mock, call, patch
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 
@@ -88,12 +89,14 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'https://server.example.com/user?access_token=access_granted'
         )
 
+    @patch.object(settings, 'OIDC_USERNAME_ALGO')
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     @override_settings(SITE_URL='http://site-url.com')
-    def test_successful_authentication_new_user(self, token_mock, request_mock):
+    def test_successful_authentication_new_user(self, token_mock, request_mock, algo_mock):
         """Test successful authentication and user creation."""
 
+        algo_mock.return_value = 'username_algo'
         token_mock.return_value = True
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
@@ -119,7 +122,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(User.objects.all().count(), 1)
         user = User.objects.all()[0]
         self.assertEquals(user.email, 'email@example.com')
-        self.assertEquals(user.username, 'a_username')
+        self.assertEquals(user.username, 'username_algo')
 
         token_mock.assert_called_once_with('id_token')
         request_mock.post.assert_called_once_with('https://server.example.com/token',
@@ -189,3 +192,92 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         self.backend.authenticate(code='foo', state='bar')
         jwt_mock.decode.assert_has_calls(calls)
+
+    @override_settings(OIDC_CREATE_USER=False)
+    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.requests')
+    def test_create_user_disabled(self, request_mock, jwt_mock):
+        """Test with user creation disabled and no user found."""
+
+        jwt_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'a_username',
+            'email': 'email@example.com'
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'id_token',
+            'access_token': 'access_granted'
+        }
+        request_mock.post.return_value = post_json_mock
+        self.assertEqual(self.backend.authenticate(code='foo', state='bar'), None)
+
+    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.requests')
+    def test_create_user_enabled(self, request_mock, jwt_mock):
+        """Test with user creation enabled and no user found."""
+
+        self.assertEqual(User.objects.filter(email='email@example.com').exists(), False)
+        jwt_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'a_username',
+            'email': 'email@example.com'
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'id_token',
+            'access_token': 'access_granted'
+        }
+        request_mock.post.return_value = post_json_mock
+        self.assertEqual(self.backend.authenticate(code='foo', state='bar'),
+                         User.objects.get(email='email@example.com'))
+
+    @patch.object(settings, 'OIDC_USERNAME_ALGO')
+    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.requests')
+    def test_custom_username_algo(self, request_mock, jwt_mock, algo_mock):
+        """Test user creation with custom username algorithm."""
+
+        self.assertEqual(User.objects.filter(email='email@example.com').exists(), False)
+        algo_mock.return_value = 'username_algo'
+        jwt_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'a_username',
+            'email': 'email@example.com'
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'id_token',
+            'access_token': 'access_granted'
+        }
+        request_mock.post.return_value = post_json_mock
+        self.assertEqual(self.backend.authenticate(code='foo', state='bar'),
+                         User.objects.get(username='username_algo'))
+
+    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.requests')
+    def test_duplicate_emails(self, request_mock, jwt_mock):
+        """Test auth with two users having the same email."""
+
+        User.objects.create(username='user1', email='email@example.com')
+        User.objects.create(username='user2', email='email@example.com')
+        jwt_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'a_username',
+            'email': 'email@example.com'
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'id_token',
+            'access_token': 'access_granted'
+        }
+        request_mock.post.return_value = post_json_mock
+        self.assertEqual(self.backend.authenticate(code='foo', state='bar'), None)
