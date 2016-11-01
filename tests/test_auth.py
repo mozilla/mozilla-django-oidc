@@ -14,8 +14,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
     @override_settings(OIDC_OP_TOKEN_ENDPOINT='https://server.example.com/token')
     @override_settings(OIDC_OP_USER_ENDPOINT='https://server.example.com/user')
-    @override_settings(OIDC_OP_CLIENT_ID='example_id')
-    @override_settings(OIDC_OP_CLIENT_SECRET='example_secret')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(OIDC_RP_CLIENT_SECRET='example_secret')
     def setUp(self):
         self.backend = OIDCAuthenticationBackend()
 

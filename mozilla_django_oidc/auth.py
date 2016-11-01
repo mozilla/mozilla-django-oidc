@@ -20,8 +20,8 @@ class OIDCAuthenticationBackend(object):
         """Initialize settings."""
         self.OIDC_OP_TOKEN_ENDPOINT = import_from_settings('OIDC_OP_TOKEN_ENDPOINT')
         self.OIDC_OP_USER_ENDPOINT = import_from_settings('OIDC_OP_USER_ENDPOINT')
-        self.OIDC_OP_CLIENT_ID = import_from_settings('OIDC_OP_CLIENT_ID')
-        self.OIDC_OP_CLIENT_SECRET = import_from_settings('OIDC_OP_CLIENT_SECRET')
+        self.OIDC_RP_CLIENT_ID = import_from_settings('OIDC_RP_CLIENT_ID')
+        self.OIDC_RP_CLIENT_SECRET = import_from_settings('OIDC_RP_CLIENT_SECRET')
 
         self.UserModel = get_user_model()
 
@@ -31,9 +31,9 @@ class OIDCAuthenticationBackend(object):
         # Get JWT audience without signature verification
         audience = jwt.decode(token, verify=False)['aud']
 
-        secret = self.OIDC_OP_CLIENT_SECRET
+        secret = self.OIDC_RP_CLIENT_SECRET
         if import_from_settings('OIDC_RP_CLIENT_SECRET_ENCODED', False):
-            secret = base64.urlsafe_b64decode(self.OIDC_OP_CLIENT_SECRET)
+            secret = base64.urlsafe_b64decode(self.OIDC_RP_CLIENT_SECRET)
 
         return jwt.decode(token, secret,
                           verify=import_from_settings('OIDC_VERIFY_JWT', True),
@@ -46,8 +46,8 @@ class OIDCAuthenticationBackend(object):
             return None
 
         token_payload = {
-            'client_id': self.OIDC_OP_CLIENT_ID,
-            'client_secret': self.OIDC_OP_CLIENT_SECRET,
+            'client_id': self.OIDC_RP_CLIENT_ID,
+            'client_secret': self.OIDC_RP_CLIENT_SECRET,
             'grant_type': 'authorization_code',
             'code': code,
             'redirect_uri': absolutify(reverse('oidc_authentication_callback'))
@@ -56,7 +56,7 @@ class OIDCAuthenticationBackend(object):
         # Get the token
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT,
                                  json=token_payload,
-                                 verify=import_from_settings('VERIFY_SSL', True))
+                                 verify=import_from_settings('OIDC_VERIFY_SSL', True))
         response.raise_for_status()
 
         # Validate the token
