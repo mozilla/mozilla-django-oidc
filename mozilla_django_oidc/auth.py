@@ -28,7 +28,7 @@ def default_username_algo(email):
     # this protects against data leakage because usernames are often
     # treated as public identifiers (so we can't use the email address).
     return base64.urlsafe_b64encode(
-        hashlib.sha224(smart_bytes(email)).digest()
+        hashlib.sha1(smart_bytes(email)).digest()
     ).rstrip(b'=')
 
 
