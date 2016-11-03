@@ -7,10 +7,9 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.http import HttpResponseRedirect
-from django.utils.crypto import get_random_string
 from django.views.generic import View
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings
+from mozilla_django_oidc.utils import absolutify, import_from_settings, generate_random_string
 
 
 class OIDCAuthenticationCallbackView(View):
@@ -69,7 +68,7 @@ class OIDCAuthenticationRequestView(View):
 
     def get(self, request):
         """OIDC client authentication initialization HTTP endpoint"""
-        state = get_random_string(import_from_settings('OIDC_STATE_SIZE', 32))
+        state = generate_random_string()
 
         params = {
             'response_type': 'code',
