@@ -41,7 +41,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
                 mock_auth.return_value = user
                 response = callback_view(request)
 
-                mock_auth.assert_called_once_with(code='example_code', state='example_state')
+                mock_auth.assert_called_once_with(code='example_code',
+                                                  state='example_state',
+                                                  nonce=None)
                 mock_login.assert_called_once_with(request, user)
 
         self.assertEqual(response.status_code, 302)
@@ -69,7 +71,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
                 mock_auth.return_value = user
                 response = callback_view(request)
 
-                mock_auth.assert_called_once_with(code='example_code', state='example_state')
+                mock_auth.assert_called_once_with(code='example_code',
+                                                  state='example_state',
+                                                  nonce=None)
                 mock_login.assert_called_once_with(request, user)
 
         self.assertEqual(response.status_code, 302)
@@ -94,7 +98,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             mock_auth.return_value = None
             response = callback_view(request)
 
-            mock_auth.assert_called_once_with(code='example_code', state='example_state')
+            mock_auth.assert_called_once_with(code='example_code',
+                                              state='example_state',
+                                              nonce=None)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/failure')
@@ -122,11 +128,14 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             mock_auth.return_value = user
             response = callback_view(request)
 
-            mock_auth.assert_called_once_with(code='example_code', state='example_state')
+            mock_auth.assert_called_once_with(code='example_code',
+                                              state='example_state',
+                                              nonce=None)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/failure')
 
+    @override_settings(OIDC_USE_NONCE=False)
     @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
     def test_get_auth_dirty_data(self):
         """Test authentication attempt with wrong get data."""
@@ -136,6 +145,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
+        request.session = {}
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
         response = callback_view(request)
         self.assertEqual(response.status_code, 302)
@@ -189,6 +199,37 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         expected_error_message = 'Session `oidc_state` does not match the OIDC callback state'
         self.assertEqual(context.exception.args, (expected_error_message,))
 
+    @override_settings(LOGIN_REDIRECT_URL='/success')
+    def test_nonce_is_deleted(self):
+        """Test Nonce is not in session."""
+        user = User.objects.create_user('example_username')
+
+        get_data = {
+            'code': 'example_code',
+            'state': 'example_state'
+        }
+        url = reverse('oidc_authentication_callback')
+        request = self.factory.get(url, get_data)
+        request.session = {
+            'oidc_state': 'example_state',
+            'oidc_nonce': 'example_nonce'
+        }
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
+
+        with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
+            with patch('mozilla_django_oidc.views.auth.login') as mock_login:
+                mock_auth.return_value = user
+                response = callback_view(request)
+
+                mock_auth.assert_called_once_with(code='example_code',
+                                                  state='example_state',
+                                                  nonce='example_nonce')
+                mock_login.assert_called_once_with(request, user)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/success')
+        self.assertTrue('oidc_nonce' not in request.session)
+
 
 class OIDCAuthorizationRequestViewTestCase(TestCase):
     def setUp(self):
@@ -214,7 +255,8 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'scope': ['openid'],
             'client_id': ['example_id'],
             'redirect_uri': ['http://site-url.com/callback/'],
-            'state': ['examplestring']
+            'state': ['examplestring'],
+            'nonce': ['examplestring']
         }
         self.assertDictEqual(parse_qs(o.query), expected_query)
         self.assertEqual(o.hostname, 'server.example.com')
