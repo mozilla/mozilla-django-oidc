@@ -5,6 +5,7 @@ except ImportError:
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.crypto import get_random_string
 
 
 def import_from_settings(attr, *args):
@@ -27,3 +28,10 @@ def absolutify(path):
 
     site_url = import_from_settings('SITE_URL')
     return urljoin(site_url, path)
+
+
+def generate_random_string(length=32):
+    """Return a random string."""
+    if length < 1:
+        return ''
+    return get_random_string(length)
