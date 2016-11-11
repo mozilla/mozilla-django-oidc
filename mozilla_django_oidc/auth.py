@@ -44,12 +44,22 @@ class OIDCAuthenticationBackend(object):
 
         self.UserModel = get_user_model()
 
-    def create_user(self, email, **kwargs):
+    def filter_users_by_claims(self, claims):
+        """Return all users matching the specified email."""
+        email = claims.get('email')
+        if not email:
+            return self.UserModel.objects.none()
+        return self.UserModel.objects.filter(email=email)
+
+    def create_user(self, claims):
         """Return object for a newly created user account."""
         # bluntly stolen from django-browserid
         # https://github.com/mozilla/django-browserid/blob/master/django_browserid/auth.py
 
         username_algo = import_from_settings('OIDC_USERNAME_ALGO', None)
+        email = claims.get('email')
+        if not email:
+            return None
 
         if username_algo:
             username = username_algo(email)
@@ -105,22 +115,19 @@ class OIDCAuthenticationBackend(object):
             user_response.raise_for_status()
             user_info = user_response.json()
             email = user_info.get('email')
-            if not email:
-                return None
 
-            create_user = False
-            try:
-                return self.UserModel.objects.get(email=email)
-            except self.UserModel.MultipleObjectsReturned:
+            # email based filtering
+            users = self.filter_users_by_claims(user_info)
+
+            if len(users) == 1:
+                return users[0]
+            elif len(users) > 1:
                 # In the rare case that two user accounts have the same email address,
                 # log and bail. Randomly selecting one seems really wrong.
                 LOGGER.warn('Multiple users with email address %s.', email)
                 return None
-            except self.UserModel.DoesNotExist:
-                create_user = import_from_settings('OIDC_CREATE_USER', True)
-
-            if create_user:
-                user = self.create_user(email)
+            elif import_from_settings('OIDC_CREATE_USER', True):
+                user = self.create_user(user_info)
                 return user
             else:
                 LOGGER.debug('Login failed: No user with email %s found, and '
