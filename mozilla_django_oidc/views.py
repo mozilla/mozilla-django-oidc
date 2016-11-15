@@ -24,7 +24,8 @@ class OIDCAuthenticationCallbackView(View):
 
     @property
     def success_url(self):
-        return import_from_settings('LOGIN_REDIRECT_URL', '/')
+        next_url = self.request.session.get('oidc_login_next', None)
+        return next_url or import_from_settings('LOGIN_REDIRECT_URL', '/')
 
     def login_failure(self):
         return HttpResponseRedirect(self.failure_url)
@@ -70,6 +71,7 @@ class OIDCAuthenticationRequestView(View):
     def get(self, request):
         """OIDC client authentication initialization HTTP endpoint"""
         state = get_random_string(import_from_settings('OIDC_STATE_SIZE', 32))
+        redirect_field_name = import_from_settings('OIDC_REDIRECT_FIELD_NAME', 'next')
 
         params = {
             'response_type': 'code',
@@ -80,6 +82,7 @@ class OIDCAuthenticationRequestView(View):
         }
 
         request.session['oidc_state'] = state
+        request.session['oidc_login_next'] = request.GET.get(redirect_field_name)
 
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=self.OIDC_OP_AUTH_ENDPOINT, query=query)
