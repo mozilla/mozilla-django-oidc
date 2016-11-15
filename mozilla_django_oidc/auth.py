@@ -5,11 +5,6 @@ import logging
 import requests
 
 try:
-    from urllib import urlencode
-except ImportError:
-    from urllib.parse import urlencode
-
-try:
     from django.utils.encoding import smart_bytes
 except ImportError:
     from django.utils.encoding import smart_str as smart_bytes
@@ -98,7 +93,7 @@ class OIDCAuthenticationBackend(object):
 
         # Get the token
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT,
-                                 json=token_payload,
+                                 data=token_payload,
                                  verify=import_from_settings('OIDC_VERIFY_SSL', True))
         response.raise_for_status()
 
@@ -107,11 +102,11 @@ class OIDCAuthenticationBackend(object):
         payload = self.verify_token(token_response.get('id_token'))
 
         if payload:
-            query = urlencode({
-                'access_token': token_response.get('access_token')
-            })
-            user_response = requests.get('{url}?{query}'.format(url=self.OIDC_OP_USER_ENDPOINT,
-                                                                query=query))
+            access_token = token_response.get('access_token')
+            user_response = requests.get(self.OIDC_OP_USER_ENDPOINT,
+                                         headers={
+                                             'Authorization': 'Bearer {0}'.format(access_token)
+                                         })
             user_response.raise_for_status()
             user_info = user_response.json()
             email = user_info.get('email')

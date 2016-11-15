@@ -83,10 +83,11 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(self.backend.authenticate(code='foo', state='bar'), user)
         token_mock.assert_called_once_with('id_token')
         request_mock.post.assert_called_once_with('https://server.example.com/token',
-                                                  json=post_data,
+                                                  data=post_data,
                                                   verify=True)
         request_mock.get.assert_called_once_with(
-            'https://server.example.com/user?access_token=access_granted'
+            'https://server.example.com/user',
+            headers={'Authorization': 'Bearer access_granted'}
         )
 
     @patch.object(settings, 'OIDC_USERNAME_ALGO')
@@ -126,10 +127,11 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         token_mock.assert_called_once_with('id_token')
         request_mock.post.assert_called_once_with('https://server.example.com/token',
-                                                  json=post_data,
+                                                  data=post_data,
                                                   verify=True)
         request_mock.get.assert_called_once_with(
-            'https://server.example.com/user?access_token=access_granted'
+            'https://server.example.com/user',
+            headers={'Authorization': 'Bearer access_granted'}
         )
 
     def test_authenticate_no_code_no_state(self):
