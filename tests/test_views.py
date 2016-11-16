@@ -287,3 +287,21 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         login_view(request)
         self.assertTrue('oidc_login_next' in request.session)
         self.assertTrue(request.session['oidc_login_next'] is None)
+
+
+class OIDCLogoutViewTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    @override_settings(LOGOUT_REDIRECT_URL='/example-logout')
+    def test_get(self):
+        url = reverse('oidc_logout')
+        request = self.factory.get(url)
+        logout_view = views.OIDCLogoutView.as_view()
+
+        with patch('mozilla_django_oidc.views.auth.logout') as mock_logout:
+            response = logout_view(request)
+            mock_logout.assert_called_once_with(request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/example-logout')

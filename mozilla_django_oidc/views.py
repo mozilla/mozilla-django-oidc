@@ -100,3 +100,18 @@ class OIDCAuthenticationRequestView(View):
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=self.OIDC_OP_AUTH_ENDPOINT, query=query)
         return HttpResponseRedirect(redirect_url)
+
+
+class OIDCLogoutView(View):
+    """Logout helper view"""
+
+    http_method_names = ['get']
+
+    @property
+    def redirect_url(self):
+        return import_from_settings('LOGOUT_REDIRECT_URL', '/')
+
+    def get(self, request):
+        """Log the user out"""
+        auth.logout(request)
+        return HttpResponseRedirect(self.redirect_url)
