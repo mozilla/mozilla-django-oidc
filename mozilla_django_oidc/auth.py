@@ -1,6 +1,6 @@
 import base64
 import hashlib
-import jwt
+import json
 import logging
 import requests
 
@@ -11,6 +11,8 @@ except ImportError:
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
+
+from jose import jws
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
 
@@ -68,21 +70,18 @@ class OIDCAuthenticationBackend(object):
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
         nonce = kwargs.get('nonce')
-        # Get JWT audience without signature verification
-        audience = jwt.decode(token, verify=False)['aud']
 
         secret = self.OIDC_RP_CLIENT_SECRET
         if import_from_settings('OIDC_RP_CLIENT_SECRET_ENCODED', False):
             secret = base64.urlsafe_b64decode(self.OIDC_RP_CLIENT_SECRET)
+        # Verify the token
+        verified_token = jws.verify(token, secret, algorithms=['HS256'])
+        token_nonce = json.loads(verified_token).get('nonce')
 
-        id_token = jwt.decode(token, secret,
-                              verify=import_from_settings('OIDC_VERIFY_JWT', True),
-                              audience=audience)
-
-        if import_from_settings('OIDC_USE_NONCE', True) and nonce != id_token['nonce']:
+        if import_from_settings('OIDC_USE_NONCE', True) and nonce != token_nonce:
             msg = 'JWT Nonce verification failed.'
             raise SuspiciousOperation(msg)
-        return id_token
+        return True
 
     def authenticate(self, **kwargs):
         """Authenticates a user based on the OIDC code flow."""
@@ -110,15 +109,14 @@ class OIDCAuthenticationBackend(object):
 
         # Validate the token
         token_response = response.json()
-        payload = self.verify_token(token_response.get('id_token'), nonce=nonce)
-
-        if payload:
+        if self.verify_token(token_response.get('id_token'), nonce=nonce):
             access_token = token_response.get('access_token')
             user_response = requests.get(self.OIDC_OP_USER_ENDPOINT,
                                          headers={
                                              'Authorization': 'Bearer {0}'.format(access_token)
                                          })
             user_response.raise_for_status()
+
             user_info = user_response.json()
             email = user_info.get('email')
 
