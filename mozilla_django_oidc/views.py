@@ -37,10 +37,16 @@ class OIDCAuthenticationCallbackView(View):
     def get(self, request):
         """Callback handler for OIDC authorization code flow"""
 
+        nonce = request.session.get('oidc_nonce')
+        if nonce:
+            # Make sure that nonce is not used twice
+            del request.session['oidc_nonce']
+
         if 'code' in request.GET and 'state' in request.GET:
             kwargs = {
                 'code': request.GET['code'],
-                'state': request.GET['state']
+                'state': request.GET['state'],
+                'nonce': nonce
             }
 
             if 'oidc_state' not in request.session:
@@ -80,6 +86,13 @@ class OIDCAuthenticationRequestView(View):
             'redirect_uri': absolutify(reverse('oidc_authentication_callback')),
             'state': state,
         }
+
+        if import_from_settings('OIDC_USE_NONCE', True):
+            nonce = get_random_string(import_from_settings('OIDC_NONCE_SIZE', 32))
+            params.update({
+                'nonce': nonce
+            })
+            request.session['oidc_nonce'] = nonce
 
         request.session['oidc_state'] = state
         request.session['oidc_login_next'] = request.GET.get(redirect_field_name)

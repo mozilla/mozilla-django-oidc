@@ -2,6 +2,7 @@ from mock import Mock, call, patch
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import SuspiciousOperation
 from django.test import TestCase, override_settings
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
@@ -81,7 +82,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'redirect_uri': 'http://site-url.com/callback/'
         }
         self.assertEqual(self.backend.authenticate(code='foo', state='bar'), user)
-        token_mock.assert_called_once_with('id_token')
+        token_mock.assert_called_once_with('id_token', nonce=None)
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
                                                   verify=True)
@@ -125,7 +126,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEquals(user.email, 'email@example.com')
         self.assertEquals(user.username, 'username_algo')
 
-        token_mock.assert_called_once_with('id_token')
+        token_mock.assert_called_once_with('id_token', nonce=None)
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
                                                   verify=True)
@@ -139,6 +140,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         self.assertEqual(self.backend.authenticate(code='', state=''), None)
 
+    @override_settings(OIDC_USE_NONCE=False)
     @patch('mozilla_django_oidc.auth.jwt')
     @patch('mozilla_django_oidc.auth.requests')
     def test_jwt_decode_params(self, request_mock, jwt_mock):
@@ -167,6 +169,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         jwt_mock.decode.assert_has_calls(calls)
 
     @override_settings(OIDC_VERIFY_JWT=False)
+    @override_settings(OIDC_USE_NONCE=False)
     @patch('mozilla_django_oidc.auth.jwt')
     @patch('mozilla_django_oidc.auth.requests')
     def test_jwt_decode_params_verify_false(self, request_mock, jwt_mock):
@@ -195,7 +198,22 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.backend.authenticate(code='foo', state='bar')
         jwt_mock.decode.assert_has_calls(calls)
 
+    @override_settings(OIDC_USE_NONCE=True)
+    @patch('mozilla_django_oidc.auth.jwt')
+    def test_jwt_failed_nonce(self, jwt_mock):
+        """Test Nonce verification."""
+
+        jwt_mock.decode.return_value = {
+            'nonce': 'foobar',
+            'aud': 'aud'
+        }
+        id_token = 'my_token'
+        with self.assertRaises(SuspiciousOperation) as context:
+            self.backend.verify_token(id_token, **{'nonce': 'foo'})
+        self.assertEqual('JWT Nonce verification failed.', str(context.exception))
+
     @override_settings(OIDC_CREATE_USER=False)
+    @override_settings(OIDC_USE_NONCE=False)
     @patch('mozilla_django_oidc.auth.jwt')
     @patch('mozilla_django_oidc.auth.requests')
     def test_create_user_disabled(self, request_mock, jwt_mock):
@@ -218,6 +236,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.jwt')
     @patch('mozilla_django_oidc.auth.requests')
+    @override_settings(OIDC_USE_NONCE=False)
     def test_create_user_enabled(self, request_mock, jwt_mock):
         """Test with user creation enabled and no user found."""
 
@@ -239,6 +258,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
                          User.objects.get(email='email@example.com'))
 
     @patch.object(settings, 'OIDC_USERNAME_ALGO')
+    @override_settings(OIDC_USE_NONCE=False)
     @patch('mozilla_django_oidc.auth.jwt')
     @patch('mozilla_django_oidc.auth.requests')
     def test_custom_username_algo(self, request_mock, jwt_mock, algo_mock):
@@ -262,6 +282,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(self.backend.authenticate(code='foo', state='bar'),
                          User.objects.get(username='username_algo'))
 
+    @override_settings(OIDC_USE_NONCE=False)
     @patch('mozilla_django_oidc.auth.jwt')
     @patch('mozilla_django_oidc.auth.requests')
     def test_duplicate_emails(self, request_mock, jwt_mock):
@@ -282,4 +303,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'access_token': 'access_granted'
         }
         request_mock.post.return_value = post_json_mock
-        self.assertEqual(self.backend.authenticate(code='foo', state='bar'), None)
+        auth_kwargs = {
+            'code': 'foo',
+            'state': 'bar'
+        }
+        self.assertEqual(self.backend.authenticate(**auth_kwargs), None)

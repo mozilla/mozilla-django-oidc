@@ -9,6 +9,7 @@ try:
 except ImportError:
     from django.utils.encoding import smart_str as smart_bytes
 from django.contrib.auth import get_user_model
+from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
@@ -18,6 +19,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def default_username_algo(email):
+    """Generate username for the Django user."""
     # bluntly stolen from django-browserid
     # store the username as a base64 encoded sha224 of the email address
     # this protects against data leakage because usernames are often
@@ -65,7 +67,7 @@ class OIDCAuthenticationBackend(object):
 
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
-
+        nonce = kwargs.get('nonce')
         # Get JWT audience without signature verification
         audience = jwt.decode(token, verify=False)['aud']
 
@@ -73,12 +75,21 @@ class OIDCAuthenticationBackend(object):
         if import_from_settings('OIDC_RP_CLIENT_SECRET_ENCODED', False):
             secret = base64.urlsafe_b64decode(self.OIDC_RP_CLIENT_SECRET)
 
-        return jwt.decode(token, secret,
-                          verify=import_from_settings('OIDC_VERIFY_JWT', True),
-                          audience=audience)
+        id_token = jwt.decode(token, secret,
+                              verify=import_from_settings('OIDC_VERIFY_JWT', True),
+                              audience=audience)
 
-    def authenticate(self, code=None, state=None):
+        if import_from_settings('OIDC_USE_NONCE', True) and nonce != id_token['nonce']:
+            msg = 'JWT Nonce verification failed.'
+            raise SuspiciousOperation(msg)
+        return id_token
+
+    def authenticate(self, **kwargs):
         """Authenticates a user based on the OIDC code flow."""
+
+        code = kwargs.pop('code', None)
+        state = kwargs.pop('state', None)
+        nonce = kwargs.pop('nonce', None)
 
         if not code or not state:
             return None
@@ -99,7 +110,7 @@ class OIDCAuthenticationBackend(object):
 
         # Validate the token
         token_response = response.json()
-        payload = self.verify_token(token_response.get('id_token'))
+        payload = self.verify_token(token_response.get('id_token'), nonce=nonce)
 
         if payload:
             access_token = token_response.get('access_token')
