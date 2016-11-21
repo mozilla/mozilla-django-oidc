@@ -1,3 +1,4 @@
+import json
 from mock import Mock, call, patch
 
 from django.conf import settings
@@ -17,7 +18,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     @override_settings(OIDC_OP_TOKEN_ENDPOINT='https://server.example.com/token')
     @override_settings(OIDC_OP_USER_ENDPOINT='https://server.example.com/user')
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
-    @override_settings(OIDC_RP_CLIENT_SECRET='example_secret')
+    @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
     def setUp(self):
         self.backend = OIDCAuthenticationBackend()
 
@@ -52,9 +53,9 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         self.assertEqual(self.backend.get_user(user_id=1), None)
 
+    @override_settings(SITE_URL='http://site-url.com')
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    @override_settings(SITE_URL='http://site-url.com')
     def test_successful_authentication_existing_user(self, token_mock, request_mock):
         """Test successful authentication for existing user."""
 
@@ -76,7 +77,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         post_data = {
             'client_id': 'example_id',
-            'client_secret': 'example_secret',
+            'client_secret': 'client_secret',
             'grant_type': 'authorization_code',
             'code': 'foo',
             'redirect_uri': 'http://site-url.com/callback/'
@@ -114,7 +115,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.return_value = post_json_mock
         post_data = {
             'client_id': 'example_id',
-            'client_secret': 'example_secret',
+            'client_secret': 'client_secret',
             'grant_type': 'authorization_code',
             'code': 'foo',
             'redirect_uri': 'http://site-url.com/callback/',
@@ -141,14 +142,14 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(self.backend.authenticate(code='', state=''), None)
 
     @override_settings(OIDC_USE_NONCE=False)
-    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.jws.verify')
     @patch('mozilla_django_oidc.auth.requests')
-    def test_jwt_decode_params(self, request_mock, jwt_mock):
+    def test_jwt_decode_params(self, request_mock, jws_mock):
         """Test jwt verification signature."""
 
-        jwt_mock.decode.return_value = {
+        jws_mock.return_value = json.dumps({
             'aud': 'audience'
-        }
+        })
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'username',
@@ -163,21 +164,20 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.return_value = post_json_mock
         self.backend.authenticate(code='foo', state='bar')
         calls = [
-            call('token', verify=False),
-            call('token', 'example_secret', verify=True, audience='audience')
+            call('token', 'client_secret', algorithms=['HS256'])
         ]
-        jwt_mock.decode.assert_has_calls(calls)
+        jws_mock.assert_has_calls(calls)
 
     @override_settings(OIDC_VERIFY_JWT=False)
     @override_settings(OIDC_USE_NONCE=False)
-    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.jws.verify')
     @patch('mozilla_django_oidc.auth.requests')
-    def test_jwt_decode_params_verify_false(self, request_mock, jwt_mock):
+    def test_jwt_decode_params_verify_false(self, request_mock, jws_mock):
         """Test jwt verification signature with verify False"""
 
-        jwt_mock.decode.return_value = {
+        jws_mock.return_value = json.dumps({
             'aud': 'audience'
-        }
+        })
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'username',
@@ -191,22 +191,22 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         }
         request_mock.post.return_value = post_json_mock
         calls = [
-            call('token', verify=False),
-            call('token', 'example_secret', verify=False, audience='audience')
+            call('token', 'client_secret', algorithms=['HS256'])
         ]
 
         self.backend.authenticate(code='foo', state='bar')
-        jwt_mock.decode.assert_has_calls(calls)
+        jws_mock.assert_has_calls(calls)
 
     @override_settings(OIDC_USE_NONCE=True)
-    @patch('mozilla_django_oidc.auth.jwt')
+    @override_settings(OIDC_RP_CLIENT_SECRET_ENCODED=False)
+    @patch('mozilla_django_oidc.auth.jws')
     def test_jwt_failed_nonce(self, jwt_mock):
         """Test Nonce verification."""
 
-        jwt_mock.decode.return_value = {
+        jwt_mock.verify.return_value = json.dumps({
             'nonce': 'foobar',
             'aud': 'aud'
-        }
+        })
         id_token = 'my_token'
         with self.assertRaises(SuspiciousOperation) as context:
             self.backend.verify_token(id_token, **{'nonce': 'foo'})
@@ -214,12 +214,14 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
     @override_settings(OIDC_CREATE_USER=False)
     @override_settings(OIDC_USE_NONCE=False)
-    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.jws.verify')
     @patch('mozilla_django_oidc.auth.requests')
-    def test_create_user_disabled(self, request_mock, jwt_mock):
+    def test_create_user_disabled(self, request_mock, jws_mock):
         """Test with user creation disabled and no user found."""
 
-        jwt_mock.return_value = True
+        jws_mock.return_value = json.dumps({
+            'nonce': 'nonce'
+        })
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'a_username',
@@ -234,14 +236,16 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.return_value = post_json_mock
         self.assertEqual(self.backend.authenticate(code='foo', state='bar'), None)
 
-    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.jws.verify')
     @patch('mozilla_django_oidc.auth.requests')
     @override_settings(OIDC_USE_NONCE=False)
-    def test_create_user_enabled(self, request_mock, jwt_mock):
+    def test_create_user_enabled(self, request_mock, jws_mock):
         """Test with user creation enabled and no user found."""
 
         self.assertEqual(User.objects.filter(email='email@example.com').exists(), False)
-        jwt_mock.return_value = True
+        jws_mock.return_value = json.dumps({
+            'nonce': 'nonce'
+        })
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'a_username',
@@ -259,14 +263,16 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
     @patch.object(settings, 'OIDC_USERNAME_ALGO')
     @override_settings(OIDC_USE_NONCE=False)
-    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.jws.verify')
     @patch('mozilla_django_oidc.auth.requests')
-    def test_custom_username_algo(self, request_mock, jwt_mock, algo_mock):
+    def test_custom_username_algo(self, request_mock, jws_mock, algo_mock):
         """Test user creation with custom username algorithm."""
 
         self.assertEqual(User.objects.filter(email='email@example.com').exists(), False)
         algo_mock.return_value = 'username_algo'
-        jwt_mock.return_value = True
+        jws_mock.return_value = json.dumps({
+            'nonce': 'nonce'
+        })
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'a_username',
@@ -283,14 +289,16 @@ class OIDCAuthenticationBackendTestCase(TestCase):
                          User.objects.get(username='username_algo'))
 
     @override_settings(OIDC_USE_NONCE=False)
-    @patch('mozilla_django_oidc.auth.jwt')
+    @patch('mozilla_django_oidc.auth.jws.verify')
     @patch('mozilla_django_oidc.auth.requests')
-    def test_duplicate_emails(self, request_mock, jwt_mock):
+    def test_duplicate_emails(self, request_mock, jws_mock):
         """Test auth with two users having the same email."""
 
         User.objects.create(username='user1', email='email@example.com')
         User.objects.create(username='user2', email='email@example.com')
-        jwt_mock.return_value = True
+        jws_mock.return_value = json.dumps({
+            'nonce': 'nonce'
+        })
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'a_username',
