@@ -43,7 +43,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
                 mock_auth.assert_called_once_with(code='example_code',
                                                   state='example_state',
-                                                  nonce=None)
+                                                  nonce=None,
+                                                  session=request.session)
                 mock_login.assert_called_once_with(request, user)
 
         self.assertEqual(response.status_code, 302)
@@ -73,7 +74,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
                 mock_auth.assert_called_once_with(code='example_code',
                                                   state='example_state',
-                                                  nonce=None)
+                                                  nonce=None,
+                                                  session=request.session)
                 mock_login.assert_called_once_with(request, user)
 
         self.assertEqual(response.status_code, 302)
@@ -100,7 +102,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
             mock_auth.assert_called_once_with(code='example_code',
                                               state='example_state',
-                                              nonce=None)
+                                              nonce=None,
+                                              session=request.session)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/failure')
@@ -130,7 +133,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
             mock_auth.assert_called_once_with(code='example_code',
                                               state='example_state',
-                                              nonce=None)
+                                              nonce=None,
+                                              session=request.session)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/failure')
@@ -223,7 +227,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
                 mock_auth.assert_called_once_with(code='example_code',
                                                   state='example_state',
-                                                  nonce='example_nonce')
+                                                  nonce='example_nonce',
+                                                  session=request.session)
                 mock_login.assert_called_once_with(request, user)
 
         self.assertEqual(response.status_code, 302)
