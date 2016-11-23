@@ -46,7 +46,8 @@ class OIDCAuthenticationCallbackView(View):
             kwargs = {
                 'code': request.GET['code'],
                 'state': request.GET['state'],
-                'nonce': nonce
+                'nonce': nonce,
+                'session': request.session
             }
 
             if 'oidc_state' not in request.session:

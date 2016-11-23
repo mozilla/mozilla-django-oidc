@@ -89,6 +89,7 @@ class OIDCAuthenticationBackend(object):
         code = kwargs.pop('code', None)
         state = kwargs.pop('state', None)
         nonce = kwargs.pop('nonce', None)
+        session = kwargs.pop('session', None)
 
         if not code or not state:
             return None
@@ -109,8 +110,13 @@ class OIDCAuthenticationBackend(object):
 
         # Validate the token
         token_response = response.json()
-        if self.verify_token(token_response.get('id_token'), nonce=nonce):
+        id_token = token_response.get('id_token')
+        if self.verify_token(id_token, nonce=nonce):
             access_token = token_response.get('access_token')
+
+            if import_from_settings('OIDC_STORE_ACCESS_TOKEN', False):
+                session['oidc_id_token'] = id_token
+
             user_response = requests.get(self.OIDC_OP_USER_ENDPOINT,
                                          headers={
                                              'Authorization': 'Bearer {0}'.format(access_token)
