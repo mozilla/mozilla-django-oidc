@@ -18,17 +18,6 @@ Documentation
 
 The full documentation is at https://mozilla-django-oidc.readthedocs.io.
 
-Quickstart
-----------
-
-Install mozilla-django-oidc::
-
-    pip install mozilla-django-oidc
-
-Then use it in a project::
-
-    import mozilla_django_oidc
-
 Running Tests
 --------------
 
