@@ -9,7 +9,7 @@ except ImportError:
     from distutils.core import setup
 
 
-from mozilla_django_oidc import VERSION
+from mozilla_django_oidc import __version__ as VERSION
 
 
 if sys.argv[-1] == 'publish':
