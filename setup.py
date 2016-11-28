@@ -8,7 +8,9 @@ try:
 except ImportError:
     from distutils.core import setup
 
-version = '0.1.0'
+
+from mozilla_django_oidc import VERSION
+
 
 if sys.argv[-1] == 'publish':
     try:
@@ -23,7 +25,7 @@ if sys.argv[-1] == 'publish':
 
 if sys.argv[-1] == 'tag':
     print('Tagging the version on git:')
-    os.system("git tag -a %s -m 'version %s'" % (version, version))
+    os.system("git tag -a %s -m 'version %s'" % (VERSION, VERSION))
     os.system('git push --tags')
     sys.exit()
 
@@ -32,7 +34,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
     name='mozilla-django-oidc',
-    version=version,
+    version=VERSION,
     description="""A lightweight authentication and access management library for integration with OpenID Connect enabled authentication services.""",  # noqa
     long_description=readme + '\n\n' + history,
     author='Tasos Katsoulas, John Giannelos',
