@@ -14,5 +14,7 @@ def refresh_id_token(id_token):
     }
 
     response = requests.post(delegation_url, data=data)
-    response.raise_for_status()
-    return response.json().get('id_token')
+
+    if response.status_code == requests.codes.ok:
+        return response.json().get('id_token')
+    return None
