@@ -15,6 +15,7 @@ class Auth0UtilsTestCase(TestCase):
     def test_successful_refresh_token(self, mock_post):
         """Test a successful attempt for a refresh id_token."""
         mock_response = Mock()
+        mock_response.status_code = 200
         mock_response.json.return_value = {
             'id_token': 'foobar'
         }
@@ -27,8 +28,8 @@ class Auth0UtilsTestCase(TestCase):
     def test_unsuccessful_attempt(self, mock_post):
         """Test an attempt to get a refresh token that raises an error."""
         mock_response = Mock()
+        mock_response.status_code = 401
         http_error = requests.exceptions.HTTPError()
         mock_response.raise_for_status.side_effect = http_error
         mock_post.return_value = mock_response
-        with self.assertRaises(Exception):
-            self.assertEqual(refresh_id_token('token'), None)
+        self.assertEqual(refresh_id_token('token'), None)
