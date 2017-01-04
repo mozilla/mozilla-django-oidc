@@ -86,13 +86,17 @@ class OIDCAuthenticationBackend(object):
     def authenticate(self, **kwargs):
         """Authenticates a user based on the OIDC code flow."""
 
-        code = kwargs.pop('code', None)
-        state = kwargs.pop('state', None)
+        self.request = kwargs.pop('request', None)
+        if not self.request:
+            raise SuspiciousOperation('Request object not found.')
+
+        state = self.request.GET.get('state')
+        code = self.request.GET.get('code')
         nonce = kwargs.pop('nonce', None)
-        session = kwargs.pop('session', None)
+        session = self.request.session
 
         if not code or not state:
-            return None
+            raise SuspiciousOperation('Code or state not found.')
 
         token_payload = {
             'client_id': self.OIDC_RP_CLIENT_ID,
