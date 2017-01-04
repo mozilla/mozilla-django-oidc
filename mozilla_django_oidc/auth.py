@@ -43,14 +43,14 @@ class OIDCAuthenticationBackend(object):
 
         self.UserModel = get_user_model()
 
-    def filter_users_by_claims(self, claims):
+    def filter_users_by_claims(self, claims, **kwargs):
         """Return all users matching the specified email."""
         email = claims.get('email')
         if not email:
             return self.UserModel.objects.none()
         return self.UserModel.objects.filter(email=email)
 
-    def create_user(self, claims):
+    def create_user(self, claims, **kwargs):
         """Return object for a newly created user account."""
         # bluntly stolen from django-browserid
         # https://github.com/mozilla/django-browserid/blob/master/django_browserid/auth.py
@@ -145,7 +145,7 @@ class OIDCAuthenticationBackend(object):
                 return None
         return None
 
-    def get_user(self, user_id):
+    def get_user(self, user_id, **kwargs):
         """Return a user based on the id."""
 
         try:

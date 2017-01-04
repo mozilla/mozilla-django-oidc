@@ -34,7 +34,7 @@ class OIDCAuthenticationCallbackView(View):
         auth.login(self.request, self.user)
         return HttpResponseRedirect(self.success_url)
 
-    def get(self, request):
+    def get(self, request, kwargs):
         """Callback handler for OIDC authorization code flow"""
 
         nonce = request.session.get('oidc_nonce')
@@ -43,7 +43,7 @@ class OIDCAuthenticationCallbackView(View):
             del request.session['oidc_nonce']
 
         if 'code' in request.GET and 'state' in request.GET:
-            kwargs = {
+            auth_kwargs = {
                 'code': request.GET['code'],
                 'state': request.GET['state'],
                 'nonce': nonce,
@@ -57,6 +57,7 @@ class OIDCAuthenticationCallbackView(View):
                 msg = 'Session `oidc_state` does not match the OIDC callback state'
                 raise SuspiciousOperation(msg)
 
+            kwargs.update(auth_kwargs)
             self.user = auth.authenticate(**kwargs)
 
             if self.user and self.user.is_active:
