@@ -18,19 +18,28 @@ class OIDCAuthenticationCallbackView(View):
 
     http_method_names = ['get']
 
+    def __init__(self, *args, **kwargs):
+        """Initialization method."""
+        self.user = None
+        super(OIDCAuthenticationCallbackView, self).__init__(*args, **kwargs)
+
     @property
     def failure_url(self):
+        """The url to return upon failure to login."""
         return import_from_settings('LOGIN_REDIRECT_URL_FAILURE', '/')
 
     @property
     def success_url(self):
+        """The url to return upon success to login."""
         next_url = self.request.session.get('oidc_login_next', None)
         return next_url or import_from_settings('LOGIN_REDIRECT_URL', '/')
 
     def login_failure(self):
+        """Redirect to failure_url on unsuccessful login attempt."""
         return HttpResponseRedirect(self.failure_url)
 
     def login_success(self):
+        """Redirect to success_url on successful login attempt."""
         auth.login(self.request, self.user)
         return HttpResponseRedirect(self.success_url)
 
