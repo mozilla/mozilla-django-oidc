@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
+from django.utils.module_loading import import_string
 from django.views.generic import View
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
@@ -104,14 +105,21 @@ class OIDCAuthenticationRequestView(View):
 class OIDCLogoutView(View):
     """Logout helper view"""
 
-    http_method_names = ['get']
+    http_method_names = ['get', 'post']
 
     @property
     def redirect_url(self):
         """Return the logout url defined in settings."""
         return import_from_settings('LOGOUT_REDIRECT_URL', '/')
 
-    def get(self, request):
-        """Log the user out"""
-        auth.logout(request)
+    def dispatch(self, request, *args, **kwargs):
+        """Log out the user."""
+
+        if request.user.is_authenticated():
+            auth.logout(request)
+
+            logout_view_path = import_from_settings('OIDC_OP_LOGOUT_VIEW', '')
+            if logout_view_path:
+                logout_view = import_string(logout_view_path)
+                return logout_view(request)
         return HttpResponseRedirect(self.redirect_url)

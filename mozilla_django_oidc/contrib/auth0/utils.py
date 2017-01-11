@@ -1,4 +1,10 @@
 import requests
+try:
+    from urllib import urlencode
+except ImportError:
+    from urllib.parse import urlencode
+
+from django.http import HttpResponseRedirect
 
 from mozilla_django_oidc.utils import import_from_settings
 
@@ -18,3 +24,13 @@ def refresh_id_token(id_token):
     if response.status_code == requests.codes.ok:
         return response.json().get('id_token')
     return None
+
+
+def logout(request):
+    """Log out the user from Auth0."""
+    url = 'https//' + import_from_settings('OIDC_OP_DOMAIN') + '/v2/logout'
+    url += '?' + urlencode({
+        'returnTo': import_from_settings('OIDC_OP_LOGOUT_URL', '/'),
+        'client_id': import_from_settings('OIDC_RP_CLIENT_ID')
+    })
+    return HttpResponseRedirect(url)

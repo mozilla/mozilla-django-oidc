@@ -12,7 +12,7 @@ class Auth0UtilsTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='client_id')
     @override_settings(OIDC_OP_DOMAIN='op_domain')
     @patch('mozilla_django_oidc.contrib.auth0.utils.requests.post')
-    def test_successful_refresh_token(self, mock_post):
+    def test_successful_attempt_to_refresh_token(self, mock_post):
         """Test a successful attempt for a refresh id_token."""
         mock_response = Mock()
         mock_response.status_code = 200
@@ -25,7 +25,7 @@ class Auth0UtilsTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='client_id')
     @override_settings(OIDC_OP_DOMAIN='op_domain')
     @patch('mozilla_django_oidc.contrib.auth0.utils.requests.post')
-    def test_unsuccessful_attempt(self, mock_post):
+    def test_unsuccessful_attempt_to_refresh_token(self, mock_post):
         """Test an attempt to get a refresh token that raises an error."""
         mock_response = Mock()
         mock_response.status_code = 401
