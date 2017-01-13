@@ -121,7 +121,7 @@ class OIDCLogoutView(View):
             # Check if a method exists to build the url to logout the user from the OP
             logout_from_op = import_from_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
             if logout_from_op:
-                logout_url = import_string(logout_from_op)
+                logout_url = import_string(logout_from_op)()
 
             # Log out the Django user.
             auth.logout(request)
