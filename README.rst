@@ -1,6 +1,6 @@
-=============================
+===================
 mozilla-django-oidc
-=============================
+===================
 
 .. image:: https://badge.fury.io/py/mozilla-django-oidc.png
     :target: https://badge.fury.io/py/mozilla-django-oidc
@@ -13,13 +13,15 @@ mozilla-django-oidc
 
 A lightweight authentication and access management library for integration with OpenID Connect enabled authentication services.
 
+
 Documentation
 -------------
 
-The full documentation is at https://mozilla-django-oidc.readthedocs.io.
+The full documentation is at `<https://mozilla-django-oidc.readthedocs.io>`_.
+
 
 Running Tests
---------------
+-------------
 
 Does the code actually work?
 
@@ -29,12 +31,15 @@ Does the code actually work?
     (myenv) $ pip install -r requirements/requirements_test.txt
     (myenv) $ python runtests.py
 
+
 License
---------
+-------
+
 This software is licensed under the MPL 2.0 license. For more info check the LICENSE file.
 
+
 Credits
----------
+-------
 
 Tools used in rendering this package:
 
