@@ -44,7 +44,11 @@ setup(
         'mozilla_django_oidc',
     ],
     include_package_data=True,
-    install_requires=['Django>1.7', 'python-jose', 'requests'],
+    install_requires=[
+        'Django>1.7',
+        'python-jose',
+        'requests'
+    ],
     license='MPL 2.0',
     zip_safe=False,
     keywords='mozilla-django-oidc',
@@ -54,6 +58,7 @@ setup(
         'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.9',
         'Framework :: Django :: 1.10',
+        'Framework :: Django :: 1.11',
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
         'Intended Audience :: Developers',
         'Natural Language :: English',
@@ -63,5 +68,6 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 )
