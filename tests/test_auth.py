@@ -22,6 +22,10 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     def setUp(self):
         self.backend = OIDCAuthenticationBackend()
 
+    def test_missing_request_arg(self):
+        """Test authentication returns `None` when `request` is not provided."""
+        self.assertEqual(self.backend.authenticate(request=None), None)
+
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     @patch('mozilla_django_oidc.auth.requests')
     def test_invalid_token(self, request_mock, token_mock):

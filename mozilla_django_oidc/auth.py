@@ -88,7 +88,7 @@ class OIDCAuthenticationBackend(object):
 
         self.request = kwargs.pop('request', None)
         if not self.request:
-            raise SuspiciousOperation('Request object not found.')
+            return None
 
         state = self.request.GET.get('state')
         code = self.request.GET.get('code')
