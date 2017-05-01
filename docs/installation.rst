@@ -76,3 +76,48 @@ Please add the following to your ``settings.py``:
 
 Finally let your OpenID connect OP know about your callback URL. In our example this is:
 ``http://127.0.0.1:8000/oidc/callback/``.
+
+
+Additional optional configuration
+=================================
+
+Connecting OIDC user identities to Django users
+-----------------------------------------------
+
+By default, mozilla-django-oidc looks up a Django user matching the email field
+to the email address returned in the user info data from the OIDC provider.
+
+This means that no two users in the Django user table can have the same email
+address. Since the email field is not unique, it's possible that this can
+happen. Especially if you allow users to change their email address. If it ever
+happens, then the users in question won't be able to authenticate.
+
+If you want different behavior, subclass the
+:py:class:`mozilla_django_oidc.auth.OIDCAuthenticationBackend` class and
+override the `filter_users_by_claims` method.
+
+For example, let's say we store the email address in a ``Profile`` table
+in a field that's marked unique so multiple users can't have the same
+email address. Then we could do this:
+
+.. code-block:: python
+
+   from mozilla_django_oidc.auth import OIDCAuthenticationBackend
+
+   class MyOIDCAB(OIDCAuthenticationBackend):
+       def filter_users_by_claims(self, claim):
+           email = claims.get('email')
+           if not email:
+               return self.UserModel.objects.none()
+
+           try:
+               profile = Profile.objects.get(email=email)
+               return profile.user
+
+           except Profile.DoesNotExist:
+               return self.UserModel.objects.none()
+
+
+Then you'd use the Python dotted path to that class in the
+``settings.AUTHENTICATION_BACKENDS`` instead of
+``mozilla_django_oidc.auth.OIDCAuthenticationBackend``.
