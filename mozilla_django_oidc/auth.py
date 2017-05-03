@@ -8,6 +8,7 @@ try:
     from django.utils.encoding import smart_bytes
 except ImportError:
     from django.utils.encoding import smart_str as smart_bytes
+from django.utils.encoding import smart_text
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
@@ -21,14 +22,22 @@ LOGGER = logging.getLogger(__name__)
 
 
 def default_username_algo(email):
-    """Generate username for the Django user."""
+    """Generate username for the Django user.
+
+    :arg str/unicode email: the email address to use to generate a username
+
+    :returns: str/unicode
+
+    """
     # bluntly stolen from django-browserid
     # store the username as a base64 encoded sha224 of the email address
     # this protects against data leakage because usernames are often
     # treated as public identifiers (so we can't use the email address).
-    return base64.urlsafe_b64encode(
+    username = base64.urlsafe_b64encode(
         hashlib.sha1(smart_bytes(email)).digest()
     ).rstrip(b'=')
+
+    return smart_text(username)
 
 
 class OIDCAuthenticationBackend(object):
