@@ -171,7 +171,8 @@ is created, then you should subclass the
 :py:class:`mozilla_django_oidc.auth.OIDCAuthenticationBackend` class and
 override the `create_user` method.
 
-For example, let's say you want to create a ``Profile``, too:
+For example, let's say you want to populate the ``User`` instance with other
+data from the claims:
 
 .. code-block:: python
 
@@ -181,7 +182,9 @@ For example, let's say you want to create a ``Profile``, too:
    class MyOIDCAB(OIDCAuthenticationBackend):
        def create_user(self, claims):
            user = super(OIDCAuthenticationRequestView, self).create_user(claims)
-           profile = Profile(user=user, is_new=True)
+
+           user.first_name = claim.get('given_name', '')
+           user.last_name = claim.get('family_name', '')
 
            return user
 
@@ -189,3 +192,8 @@ For example, let's say you want to create a ``Profile``, too:
 Then you'd use the Python dotted path to that class in the
 ``settings.AUTHENTICATION_BACKENDS`` instead of
 ``mozilla_django_oidc.auth.OIDCAuthenticationBackend``.
+
+
+.. seealso::
+
+   https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
