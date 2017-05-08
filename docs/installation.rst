@@ -121,3 +121,79 @@ email address. Then we could do this:
 Then you'd use the Python dotted path to that class in the
 ``settings.AUTHENTICATION_BACKENDS`` instead of
 ``mozilla_django_oidc.auth.OIDCAuthenticationBackend``.
+
+
+Creating a Django ``User`` record for new users
+-----------------------------------------------
+
+If a user logs into your site and doesn't already have an account, by default,
+mozilla-django-oidc will create a new Django user account. It will create the
+``User`` instance filling in the username (hash of the email address) and email
+fields.
+
+If you want something different, set ``settings.OIDC_USERNAME_ALGO`` to a Python
+dotted path to the function you want to use.
+
+The function takes in an email address as a text (Python 2 unicode or Python 3
+string) and returns a text (Python 2 unicode or Python 3 string).
+
+Here's an example function for Python 3 and Django 1.11 that doesn't convert
+the email address at all:
+
+.. code-block:: python
+
+   import unicodedata
+
+   def generate_username(email):
+       # Using Python 3 and Django 1.11, usernames can contain alphanumeric
+       # (ascii and unicode), _, @, +, . and - characters. So we normalize
+       # it and slice at 150 characters.
+       return unicodedata.normalize('NFKC', email)[:150]
+
+
+.. seealso::
+
+   Django 1.8 username:
+       https://docs.djangoproject.com/en/1.8/ref/contrib/auth/#django.contrib.auth.models.User.username
+
+   Django 1.9 username:
+       https://docs.djangoproject.com/en/1.9/ref/contrib/auth/#django.contrib.auth.models.User.username
+
+   Django 1.10 username:
+       https://docs.djangoproject.com/en/1.10/ref/contrib/auth/#django.contrib.auth.models.User.username
+
+   Django 1.11 username:
+       https://docs.djangoproject.com/en/1.11/ref/contrib/auth/#django.contrib.auth.models.User.username
+
+
+If your website needs to do other bookkeeping things when a new ``User`` record
+is created, then you should subclass the
+:py:class:`mozilla_django_oidc.auth.OIDCAuthenticationBackend` class and
+override the `create_user` method.
+
+For example, let's say you want to populate the ``User`` instance with other
+data from the claims:
+
+.. code-block:: python
+
+   from mozilla_django_oidc.auth import OIDCAuthenticationBackend
+   from myapp.models import Profile
+
+   class MyOIDCAB(OIDCAuthenticationBackend):
+       def create_user(self, claims):
+           user = super(OIDCAuthenticationRequestView, self).create_user(claims)
+
+           user.first_name = claim.get('given_name', '')
+           user.last_name = claim.get('family_name', '')
+
+           return user
+
+
+Then you'd use the Python dotted path to that class in the
+``settings.AUTHENTICATION_BACKENDS`` instead of
+``mozilla_django_oidc.auth.OIDCAuthenticationBackend``.
+
+
+.. seealso::
+
+   https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
