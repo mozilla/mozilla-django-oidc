@@ -48,7 +48,10 @@ Next, edit your ``urls.py`` and add the following:
        # ...
    )
 
-Then you need to add the login link to your Django templates. For example:
+Then you need to add the login link to the ``oidc_authentication_init`` view to
+your templates.
+
+Django templates example:
 
 .. code-block:: html+django
 
@@ -61,6 +64,22 @@ Then you need to add the login link to your Django templates. For example:
        {% endif %}
      </body>
    </html>
+
+
+Jinja2 templates example:
+
+.. code-block:: html+jinja2
+
+   <html>
+     <body>
+       {% if user.is_authenticated() %}
+         <p>Current user: {{ user.email }}</p>
+       {% else %}
+         <a href="{% url('oidc_authentication_init') %}">Login</a>
+       {% endif %}
+     </body>
+   </html>
+
 
 You also need to configure some OpenID connect related settings too.
 Please add the following to your ``settings.py``:
