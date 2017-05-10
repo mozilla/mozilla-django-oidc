@@ -6,18 +6,45 @@ At the command line::
 
     $ pip install mozilla-django-oidc
 
-.. _cookie-based sessions: https://docs.djangoproject.com/en/1.10/topics/http/sessions/#using-cookie-based-sessions
-
-.. warning::
-   We highly recommend to avoid using Django's cookie-based sessions because they might open you up to replay attacks.
-
-.. note::
-   You can find more info about `cookie-based sessions`_ in Django's documentation.
 
 Quick start
 ===========
 
-After installation, you'll need to configure your site to use ``mozilla-django-oidc``.
+After installation, you'll need to do some things to get your site using
+``mozilla-django-oidc``.
+
+
+Acquire a client id and client secret
+-------------------------------------
+
+Before you can configure your application, you need to set up a client with an
+OpenID Connect provider (OP).
+
+You'll need to set up a *different client* for every environment you have for
+your site. For example, if your site has a -dev, -stage, and -prod environments,
+each of those has a different hostname and thus you need to set up a separate
+client for each one.
+
+You need to provide your OpenID Connect provider (OP) the callback url for your
+site. The URL path for the callback url is ``/oidc/callback/``.
+
+Here are examples of callback urls:
+
+* ``http://127.0.0.1:8000/oidc/callback/`` -- for local development
+* ``https://myapp-dev.example.com/oidc/callback/`` -- -dev environment for myapp
+* ``https://myapp.herokuapps.com/oidc/callback/`` -- my app running on Heroku
+
+The OpenID Connect provider (OP) will then give you the following:
+
+1. a client id (``OIDC_OP_CLIENT_ID``)
+2. a client secret (``OIDC_OP_CLIENT_SECRET``)
+
+You'll need these values for settings.
+
+
+Add settings to settings.py
+---------------------------
+
 Start by making the following changes to your ``settings.py`` file.
 
 .. code-block:: python
@@ -38,6 +65,56 @@ Start by making the following changes to your ``settings.py`` file.
        # ...
    )
 
+You also need to configure some OpenID Connect related settings too.
+
+These values come from your OpenID Connect provider (OP).
+
+.. code-block:: python
+
+   OIDC_OP_CLIENT_ID = os.environ['OIDC_OP_CLIENT_ID']
+   OIDC_OP_CLIENT_SECRET = os.environ['OIDC_OP_CLIENT_SECRET']
+
+
+.. warning::
+   The OpenID Connect provider (OP) provided client id and secret are secret
+   values.
+
+   **DON'T** check them into version control--pull them in from the environment.
+
+   If you ever accidentally check them into version control, contact your OpenID
+   Connect provider (OP) as soon as you can, disable that set of client id and
+   secret, and generate a new set.
+
+
+These values are specific to your OpenID Connect provider (OP)--consult their
+documentation for the appropriate values.
+
+.. code-block:: python
+
+   OIDC_OP_AUTHORIZATION_ENDPOINT = "<URL of the OIDC OP authorization endpoint>"
+   OIDC_OP_TOKEN_ENDPOINT = "<URL of the OIDC OP token endpoint>"
+   OIDC_OP_USER_ENDPOINT = "<URL of the OIDC OP userinfo endpoint>"
+
+
+This value depends on your site.
+
+.. code-block:: python
+
+   SITE_URL = "<FQDN that users access the site from eg. http://127.0.0.1:8000/ >"
+
+
+.. warning::
+   Don't use Django's cookie-based sessions because they might open you up to
+   replay attacks.
+
+   You can find more info about `cookie-based sessions`_ in Django's documentation.
+
+.. _cookie-based sessions: https://docs.djangoproject.com/en/1.10/topics/http/sessions/#using-cookie-based-sessions
+
+
+Add routing to urls.py
+----------------------
+
 Next, edit your ``urls.py`` and add the following:
 
 .. code-block:: python
@@ -48,8 +125,12 @@ Next, edit your ``urls.py`` and add the following:
        # ...
    )
 
-Then you need to add the login link to the ``oidc_authentication_init`` view to
-your templates.
+
+Add login link to templates
+---------------------------
+
+Then you need to add the login link to your templates. The view name is
+``oidc_authentication_init``.
 
 Django templates example:
 
@@ -79,22 +160,6 @@ Jinja2 templates example:
        {% endif %}
      </body>
    </html>
-
-
-You also need to configure some OpenID connect related settings too.
-Please add the following to your ``settings.py``:
-
-.. code-block:: python
-
-   OIDC_OP_AUTHORIZATION_ENDPOINT = "<URL of the OIDC OP authorization endpoint>"
-   OIDC_OP_TOKEN_ENDPOINT = "<URL of the OIDC OP token endpoint>"
-   OIDC_OP_USER_ENDPOINT = "<URL of the OIDC OP userinfo endpoint>"
-   OIDC_OP_CLIENT_ID = "<OP issued client id>"
-   OIDC_OP_CLIENT_SECRET = "<OP issued client secret>"
-   SITE_URL = "<FQDN that users access the site from eg. http://127.0.0.1:8000/ >"
-
-Finally let your OpenID connect OP know about your callback URL. In our example this is:
-``http://127.0.0.1:8000/oidc/callback/``.
 
 
 Additional optional configuration
