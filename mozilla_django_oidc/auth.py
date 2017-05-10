@@ -82,7 +82,8 @@ class OIDCAuthenticationBackend(object):
 
         secret = self.OIDC_RP_CLIENT_SECRET
         if import_from_settings('OIDC_RP_CLIENT_SECRET_ENCODED', False):
-            secret = base64.urlsafe_b64decode(self.OIDC_RP_CLIENT_SECRET)
+            byte_secret = base64.urlsafe_b64decode(self.OIDC_RP_CLIENT_SECRET)
+            secret = byte_secret.decode('utf-8')
         # Verify the token
         verified_token = jws.verify(token, secret, algorithms=['HS256'])
         token_nonce = json.loads(verified_token).get('nonce')
