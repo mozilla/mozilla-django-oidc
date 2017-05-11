@@ -165,6 +165,41 @@ Jinja2 templates example:
 Additional optional configuration
 =================================
 
+Validate ID tokens by renewing them
+-----------------------------------
+
+Users log into your site by authenticating with an OIDC provider. While the user
+is doing things on your site, it's possible that the account that the user used
+to authenticate with the OIDC provider was disabled. A classic example of this
+is when a user quits his/her job and their LDAP account is disabled.
+
+However, even if that account was disabled, the user's account and session on
+your site will continue. In this way, a user can quit his/her job, lose access to
+his/her corporate account, but continue to use your website.
+
+To handle this scenario, your website needs to know if the user's ID token with
+the OIDC provider is still valid. You need to use the
+:py:class:`mozilla_django_oidc.contrib.auth0.middleware.RefreshIDToken` middleware.
+
+To add it to your site, put it in the settings::
+
+    MIDDLEWARE_CLASSES = [
+        # middleware involving session and autheentication must come first
+        # ...
+        'mozilla_django_oidc.contrib.auth0.middleware.RefreshIDToken',
+        # ...
+    ]
+
+
+The ``RefreshIDToken`` middleware will check that the id token is still valid
+with the OIDC provider every ``settings.OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS``
+which defaults to 15 minutes.
+
+.. note::
+   Currently, this is implemented using an Auth0-specific API endpoint. That
+   will change soon.
+
+
 Connecting OIDC user identities to Django users
 -----------------------------------------------
 
