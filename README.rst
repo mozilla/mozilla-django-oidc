@@ -23,13 +23,63 @@ The full documentation is at `<https://mozilla-django-oidc.readthedocs.io>`_.
 Running Tests
 -------------
 
-Does the code actually work?
+Use ``tox`` to run as many different versions of Python you have. If you
+don't have ``tox`` installed (and executable) already you can either
+install it in your system Python or `<https://pypi.python.org/pypi/pipsi>`_.
+Once installed, simply execute in the project root directory.
 
-::
+.. code-block:: shell
 
-    source <YOURVIRTUALENV>/bin/activate
-    (myenv) $ pip install -r requirements/requirements_test.txt
-    (myenv) $ python runtests.py
+    $ tox
+
+``tox`` will do the equivalent of installing virtual environments for every
+combination mentioned in the ``tox.ini`` file. If your system, for example,
+doesn't have ``python3.4`` those ``tox`` tests will be skipped.
+
+For a faster test-rinse-repeat cycle you can run tests in a specific
+environment with a specific version of Python and specific version of
+Django of your choice. Here is such an example:
+
+
+.. code-block:: shell
+
+    $ virtualenv -p /path/to/bin/python3.5 venv
+    $ source venv
+    (venv) $ pip install Django==1.11.1
+    (venv) $ pip install -r tests/requirements.txt
+    (venv) $ DJANGO_SETTINGS_MODULE=tests.settings django-admin.py test
+
+Measuring code coverage, continuing the steps above:
+
+.. code-block:: shell
+
+    (venv) $ pip install coverage
+    (venv) $ DJANGO_SETTINGS_MODULE=tests.settings coverage run --source mozilla_django_oidc `which django-admin.py` test
+    (venv) $ coverage report
+    (venv) $ coverage html
+    (venv) $ open htmlcov/index.html
+
+Linting
+-------
+
+All code is checked with `<https://pypi.python.org/pypi/flake8>`_ in
+continuous integration. To make sure your code still passes all style guides
+install ``flake8`` and check:
+
+.. code-block:: shell
+
+    $ flake8 mozilla_django_oidc tests
+
+.. note::
+
+    When you run ``tox`` it also does a ``flake8`` run on the main package
+    files and the tests.
+
+You can also run linting with ``tox``:
+
+.. code-block:: shell
+
+    $ tox -e lint
 
 
 License
