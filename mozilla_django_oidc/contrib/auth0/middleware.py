@@ -17,9 +17,8 @@ class RefreshIDToken(object):
 
     def process_request(self, request):
         if request.user.is_authenticated() and not request.is_ajax():
-
             if 'oidc_id_token' not in request.session:
-                return None
+                return
 
             cache_key = 'renew_id_token:{}'.format(request.user.id)
             if cache.get(cache_key):
