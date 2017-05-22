@@ -12,3 +12,4 @@ Contributors
 ------------
 
 * Will Kahn-Greene
+* Peter Bengtsson <@peterbe>
