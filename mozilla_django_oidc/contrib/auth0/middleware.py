@@ -1,3 +1,4 @@
+import django
 from django.core.cache import cache
 
 from six import string_types
@@ -7,7 +8,16 @@ from mozilla_django_oidc.utils import import_from_settings
 from mozilla_django_oidc.views import OIDCLogoutView
 
 
-class RefreshIDToken(object):
+# Django 1.11 makes changes to how middleware work. In Django 1.11+, we want to
+# use the mixin so that our middleware works as is.
+if tuple(django.VERSION[0:2]) >= (1, 10):
+    from django.utils.deprecation import MiddlewareMixin
+else:
+    class MiddlewareMixin(object):
+        pass
+
+
+class RefreshIDToken(MiddlewareMixin):
     """
     Bluntly stolen from mozilla/airmozilla
 
