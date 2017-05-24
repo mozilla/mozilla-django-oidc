@@ -3,7 +3,7 @@ Contributing
 ============
 
 Contributions are welcome, and they are greatly appreciated! Every
-little bit helps, and credit will always be given. 
+little bit helps, and credit will always be given.
 
 You can contribute in many ways:
 
@@ -36,7 +36,7 @@ is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-mozilla-django-oidc could always use more documentation, whether as part of the 
+mozilla-django-oidc could always use more documentation, whether as part of the
 official mozilla-django-oidc docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
@@ -81,7 +81,7 @@ Ready to contribute? Here's how to set up `mozilla-django-oidc` for local develo
        $ python setup.py test
        $ tox
 
-   To get flake8 and tox, just pip install them into your virtualenv. 
+   To get flake8 and tox, just pip install them into your virtualenv.
 
 6. Commit your changes and push your branch to GitHub::
 
@@ -100,13 +100,28 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 2.6, 2.7, and 3.3, and for PyPy. Check 
+3. The pull request should work for Python 2.6, 2.7, and 3.3, and for PyPy. Check
    `<https://travis-ci.org/mozilla/mozilla-django-oidc/pull_requests>`_
    and make sure that the tests pass for all supported Python versions.
 
 Tips
 ----
 
-To run a subset of tests::
+We use tox to run tests::
 
-    $ python -m unittest tests.test_mozilla_django_oidc
+    $ tox
+
+
+To run a specific environment, use the ``-e`` argument::
+
+    $ tox -e py27-django18
+
+
+You can also run the tests in a virtual environment without tox::
+
+    $ DJANGO_SETTINGS_MODULE=tests.settings django-admin.py test
+
+
+You can specify test modules to run rather than the whole suite::
+
+    $ DJANGO_SETTINGS_MODULE=tests.settings django-admin.py test tests.test_views
