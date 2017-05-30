@@ -112,6 +112,14 @@ This value depends on your site.
 .. _cookie-based sessions: https://docs.djangoproject.com/en/1.10/topics/http/sessions/#using-cookie-based-sessions
 
 
+These values relate to your site.
+
+.. code-block:: python
+
+   LOGIN_REDIRECT_URL = "<ULR path to redirect to after login>"
+   LOGOUT_REDIRECT_URL = "<URL path to redirect to after logout>"
+
+
 Add routing to urls.py
 ----------------------
 

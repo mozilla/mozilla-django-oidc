@@ -110,20 +110,27 @@ of ``mozilla-django-oidc``.
 
 .. py:attribute:: LOGIN_REDIRECT_URL
 
-    :default: ``/accounts/profile``
+   :default: ``/accounts/profile``
 
-    Path to redirect to on successful login. If you don't specify this, the
-    default Django value will be used.
+   Path to redirect to on successful login. If you don't specify this, the
+   default Django value will be used.
+
+   .. seealso::
+
+      https://docs.djangoproject.com/en/1.11/ref/settings/#login-redirect-url
 
 .. py:attribute:: LOGIN_REDIRECT_URL_FAILURE
 
-    :default: ``/``
+   :default: ``/``
 
-    Path to redirect to on an unsuccessful login attempt.
-
+   Path to redirect to on an unsuccessful login attempt.
 
 .. py:attribute:: LOGOUT_REDIRECT_URL
 
-   :default: ``/``
+   :default: ``/`` (Django <= 1.9) ``None`` (Django 1.10+)
 
-   Path to redirect to on logout.
+   After the logout view has logged the user out, it redirects to this url path.
+
+   .. seealso::
+
+      https://docs.djangoproject.com/en/1.11/ref/settings/#logout-redirect-url
