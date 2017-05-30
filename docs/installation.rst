@@ -36,8 +36,8 @@ Here are examples of callback urls:
 
 The OpenID Connect provider (OP) will then give you the following:
 
-1. a client id (``OIDC_OP_CLIENT_ID``)
-2. a client secret (``OIDC_OP_CLIENT_SECRET``)
+1. a client id (``OIDC_RP_CLIENT_ID``)
+2. a client secret (``OIDC_RP_CLIENT_SECRET``)
 
 You'll need these values for settings.
 
@@ -71,8 +71,8 @@ These values come from your OpenID Connect provider (OP).
 
 .. code-block:: python
 
-   OIDC_OP_CLIENT_ID = os.environ['OIDC_OP_CLIENT_ID']
-   OIDC_OP_CLIENT_SECRET = os.environ['OIDC_OP_CLIENT_SECRET']
+   OIDC_RP_CLIENT_ID = os.environ['OIDC_RP_CLIENT_ID']
+   OIDC_RP_CLIENT_SECRET = os.environ['OIDC_RP_CLIENT_SECRET']
 
 
 .. warning::
@@ -156,7 +156,7 @@ Jinja2 templates example:
        {% if user.is_authenticated() %}
          <p>Current user: {{ user.email }}</p>
        {% else %}
-         <a href="{% url('oidc_authentication_init') %}">Login</a>
+         <a href="{{ url('oidc_authentication_init') }}">Login</a>
        {% endif %}
      </body>
    </html>
