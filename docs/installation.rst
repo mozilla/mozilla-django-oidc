@@ -203,6 +203,18 @@ The ``RefreshIDToken`` middleware will check that the id token is still valid
 with the OIDC provider every ``settings.OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS``
 which defaults to 15 minutes.
 
+You also need to set ``OIDC_STORE_ACCESS_TOKEN``::
+
+    OIDC_STORE_ACCESS_TOKEN = True
+
+
+This stores the token that the middleware renews.
+
+You also need to set the domain for your Auth0 SSO::
+
+    OIDC_OP_DOMAIN = "<domain for OP>"
+
+
 .. note::
    Currently, this is implemented using an Auth0-specific API endpoint. That
    will change soon.
