@@ -1,3 +1,4 @@
+import time
 try:
     from urllib import urlencode
 except ImportError:
@@ -37,6 +38,12 @@ class OIDCAuthenticationCallbackView(View):
 
     def login_success(self):
         auth.login(self.request, self.user)
+
+        # Figure out when this id_token will expire. This is ignored unless you're
+        # using the RenewIDToken middleware.
+        expiration_interval = import_from_settings('OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS', 60 * 15)
+        self.request.session['oidc_id_token_expiration'] = time.time() + expiration_interval
+
         return HttpResponseRedirect(self.success_url)
 
     def get(self, request):
