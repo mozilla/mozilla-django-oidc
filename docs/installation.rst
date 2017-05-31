@@ -320,7 +320,7 @@ data from the claims:
 
    class MyOIDCAB(OIDCAuthenticationBackend):
        def create_user(self, claims):
-           user = super(OIDCAuthenticationRequestView, self).create_user(claims)
+           user = super(OIDCAuthenticationBackend, self).create_user(claims)
 
            user.first_name = claim.get('given_name', '')
            user.last_name = claim.get('family_name', '')
