@@ -114,15 +114,15 @@ class OIDCLogoutView(View):
 
     def dispatch(self, request, *args, **kwargs):
         """Log out the user."""
-
-        if request.user.is_authenticated():
+        # Check if a method exists to build the URL to log out the user
+        # from the OP.
+        logout_from_op = import_from_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
+        if logout_from_op:
+            logout_url = import_string(logout_from_op)()
+        else:
             logout_url = self.redirect_url
 
-            # Check if a method exists to build the url to logout the user from the OP
-            logout_from_op = import_from_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
-            if logout_from_op:
-                logout_url = import_string(logout_from_op)()
-
-            # Log out the Django user.
+        if request.user.is_authenticated():
+            # Log out the Django user, only if she was actually logged in.
             auth.logout(request)
         return HttpResponseRedirect(logout_url)
