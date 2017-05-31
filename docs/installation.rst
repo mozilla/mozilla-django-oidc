@@ -262,8 +262,11 @@ Then you'd use the Python dotted path to that class in the
 ``mozilla_django_oidc.auth.OIDCAuthenticationBackend``.
 
 
-Creating a Django ``User`` record for new users
------------------------------------------------
+Creating Django users
+---------------------
+
+Generating usernames
+~~~~~~~~~~~~~~~~~~~~
 
 If a user logs into your site and doesn't already have an account, by default,
 mozilla-django-oidc will create a new Django user account. It will create the
@@ -305,6 +308,9 @@ the email address at all:
        https://docs.djangoproject.com/en/1.11/ref/contrib/auth/#django.contrib.auth.models.User.username
 
 
+Changing how Django users are created
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 If your website needs to do other bookkeeping things when a new ``User`` record
 is created, then you should subclass the
 :py:class:`mozilla_django_oidc.auth.OIDCAuthenticationBackend` class and
@@ -320,7 +326,7 @@ data from the claims:
 
    class MyOIDCAB(OIDCAuthenticationBackend):
        def create_user(self, claims):
-           user = super(OIDCAuthenticationRequestView, self).create_user(claims)
+           user = super(OIDCAuthenticationBackend, self).create_user(claims)
 
            user.first_name = claim.get('given_name', '')
            user.last_name = claim.get('family_name', '')
@@ -336,3 +342,16 @@ Then you'd use the Python dotted path to that class in the
 .. seealso::
 
    https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
+
+
+Preventing mozilla-django-oidc from creating new Django users
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you don't want mozilla-django-oidc to create Django users, you can add this
+setting::
+
+    OIDC_CREATE_USER = False
+
+
+You might want to do this if you want to control user creation because your
+system requires additional process to allow people to use it.
