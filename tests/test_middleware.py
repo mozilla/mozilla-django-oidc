@@ -1,4 +1,5 @@
-from mock import patch
+import requests
+from mock import Mock, patch
 
 import django
 from django.conf.urls import url
@@ -9,7 +10,7 @@ from django.http import HttpResponse
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.test.client import ClientHandler
 
-from mozilla_django_oidc.contrib.auth0.middleware import RefreshIDToken
+from mozilla_django_oidc.middleware import RefreshIDToken, refresh_id_token
 from mozilla_django_oidc.urls import urlpatterns as orig_urlpatterns
 
 
@@ -17,6 +18,35 @@ User = get_user_model()
 
 
 DJANGO_VERSION = tuple(django.VERSION[0:2])
+
+
+class Auth0UtilsTestCase(TestCase):
+    """Tests for the Auth0 utils."""
+
+    @override_settings(OIDC_RP_CLIENT_ID='client_id')
+    @override_settings(OIDC_OP_DOMAIN='op_domain')
+    @patch('mozilla_django_oidc.middleware.requests.post')
+    def test_successful_attempt_to_refresh_token(self, mock_post):
+        """Test a successful attempt for a refresh id_token."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'id_token': 'foobar'
+        }
+        mock_post.return_value = mock_response
+        self.assertEqual(refresh_id_token('token'), 'foobar')
+
+    @override_settings(OIDC_RP_CLIENT_ID='client_id')
+    @override_settings(OIDC_OP_DOMAIN='op_domain')
+    @patch('mozilla_django_oidc.middleware.requests.post')
+    def test_unsuccessful_attempt_to_refresh_token(self, mock_post):
+        """Test an attempt to get a refresh token that raises an error."""
+        mock_response = Mock()
+        mock_response.status_code = 401
+        http_error = requests.exceptions.HTTPError()
+        mock_response.raise_for_status.side_effect = http_error
+        mock_post.return_value = mock_response
+        self.assertEqual(refresh_id_token('token'), None)
 
 
 class RefreshIDTokenTestCase(TestCase):
@@ -49,7 +79,7 @@ class RefreshIDTokenTestCase(TestCase):
         response = self.middleware.process_request(request)
         self.assertTrue(not response)
 
-    @patch('mozilla_django_oidc.contrib.auth0.middleware.cache')
+    @patch('mozilla_django_oidc.middleware.cache')
     def test_user_token_in_session(self, mock_cache):
         request = self.factory.get('/foo')
         request.user = self.user
@@ -60,8 +90,8 @@ class RefreshIDTokenTestCase(TestCase):
         response = self.middleware.process_request(request)
         self.assertTrue(not response)
 
-    @patch('mozilla_django_oidc.contrib.auth0.middleware.refresh_id_token')
-    @patch('mozilla_django_oidc.contrib.auth0.middleware.cache')
+    @patch('mozilla_django_oidc.middleware.refresh_id_token')
+    @patch('mozilla_django_oidc.middleware.cache')
     @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
     def test_stale_cache_valid_token(self, mock_cache, mock_refresh):
         request = self.factory.get('/foo')
@@ -78,8 +108,8 @@ class RefreshIDTokenTestCase(TestCase):
         mock_cache.set.assert_called_once_with(cache_key, True, 120)
 
     @patch('mozilla_django_oidc.views.auth.logout')
-    @patch('mozilla_django_oidc.contrib.auth0.middleware.refresh_id_token')
-    @patch('mozilla_django_oidc.contrib.auth0.middleware.cache')
+    @patch('mozilla_django_oidc.middleware.refresh_id_token')
+    @patch('mozilla_django_oidc.middleware.cache')
     @override_settings(LOGOUT_REDIRECT_URL='/logout_url')
     @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
     def test_stale_cache_invalid_token(self, mock_cache, mock_refresh, mock_logout):
@@ -110,7 +140,7 @@ urlpatterns = list(orig_urlpatterns) + [
 def override_middleware(fun):
     classes = [
         'django.contrib.sessions.middleware.SessionMiddleware',
-        'mozilla_django_oidc.contrib.auth0.middleware.RefreshIDToken',
+        'mozilla_django_oidc.middleware.RefreshIDToken',
     ]
     if DJANGO_VERSION >= (1, 10):
         return override_settings(MIDDLEWARE=classes)(fun)
@@ -162,7 +192,7 @@ class ClientWithUser(Client):
         return ret
 
 
-@override_settings(ROOT_URLCONF='tests.auth0_tests.test_middleware')
+@override_settings(ROOT_URLCONF='tests.test_middleware')
 @override_middleware
 class MiddlewareTestCase(TestCase):
     def setUp(self):
@@ -175,7 +205,7 @@ class MiddlewareTestCase(TestCase):
         resp = client.get('/mdo_fake_view/')
         self.assertEqual(resp.status_code, 200)
 
-    @patch('mozilla_django_oidc.contrib.auth0.middleware.cache')
+    @patch('mozilla_django_oidc.middleware.cache')
     def test_authenticated(self, mock_cache):
         client = ClientWithUser()
         client.login(username=self.user.username, password='password')
@@ -189,8 +219,8 @@ class MiddlewareTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     @patch('mozilla_django_oidc.views.auth.logout')
-    @patch('mozilla_django_oidc.contrib.auth0.middleware.refresh_id_token')
-    @patch('mozilla_django_oidc.contrib.auth0.middleware.cache')
+    @patch('mozilla_django_oidc.middleware.refresh_id_token')
+    @patch('mozilla_django_oidc.middleware.cache')
     @override_settings(LOGOUT_REDIRECT_URL='/logout_url')
     def test_expired(self, mock_cache, mock_refresh, mock_logout):
         client = ClientWithUser()
