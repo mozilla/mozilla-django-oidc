@@ -85,7 +85,14 @@ class OIDCAuthenticationBackend(object):
             secret = base64.urlsafe_b64decode(self.OIDC_RP_CLIENT_SECRET)
         # Verify the token
         verified_token = jws.verify(token, secret, algorithms=['HS256'])
-        token_nonce = json.loads(verified_token).get('nonce')
+        # The 'verified_token' will always be a byte string since it's
+        # the result of base64.urlsafe_b64decode().
+        # The payload is always the result of base64.urlsafe_b64decode().
+        # In Python 3 and 2, that's always a byte string.
+        # In Python3.6, the json.loads() function can accept a byte string
+        # as it will automagically decode it to a unicode string before
+        # deserializing https://bugs.python.org/issue17909
+        token_nonce = json.loads(verified_token.decode('utf-8')).get('nonce')
 
         if import_from_settings('OIDC_USE_NONCE', True) and nonce != token_nonce:
             msg = 'JWT Nonce verification failed.'

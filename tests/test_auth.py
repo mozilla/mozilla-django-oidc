@@ -194,7 +194,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         jws_mock.return_value = json.dumps({
             'aud': 'audience'
-        })
+        }).encode('utf-8')
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'username',
@@ -225,7 +225,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         jws_mock.return_value = json.dumps({
             'aud': 'audience'
-        })
+        }).encode('utf-8')
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'username',
@@ -254,7 +254,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         jwt_mock.verify.return_value = json.dumps({
             'nonce': 'foobar',
             'aud': 'aud'
-        })
+        }).encode('utf-8')
         id_token = 'my_token'
         with self.assertRaisesMessage(SuspiciousOperation, 'JWT Nonce verification failed.'):
             self.backend.verify_token(id_token, **{'nonce': 'foo'})
@@ -271,7 +271,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         jws_mock.return_value = json.dumps({
             'nonce': 'nonce'
-        })
+        }).encode('utf-8')
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'a_username',
@@ -298,7 +298,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(User.objects.filter(email='email@example.com').exists(), False)
         jws_mock.return_value = json.dumps({
             'nonce': 'nonce'
-        })
+        }).encode('utf-8')
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'a_username',
@@ -328,7 +328,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         algo_mock.return_value = 'username_algo'
         jws_mock.return_value = json.dumps({
             'nonce': 'nonce'
-        })
+        }).encode('utf-8')
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'a_username',
@@ -357,7 +357,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         User.objects.create(username='user2', email='email@example.com')
         jws_mock.return_value = json.dumps({
             'nonce': 'nonce'
-        })
+        }).encode('utf-8')
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             'nickname': 'a_username',
