@@ -339,3 +339,25 @@ setting::
 
 You might want to do this if you want to control user creation because your
 system requires additional process to allow people to use it.
+
+
+Troubleshooting
+---------------
+
+mozilla-django-oidc logs using the ``mozilla_django_oidc`` logger. Enable that
+logger in settings to see logging messages to help you debug:
+
+.. code-block:: python
+
+   LOGGING = {
+       ...
+       'loggers': {
+           'mozilla_django_oidc': {
+               'handlers': ['console'],
+               'level': 'DEBUG'
+           },
+       ...
+   }
+
+
+Make sure to use the appropriate handler for your app.
