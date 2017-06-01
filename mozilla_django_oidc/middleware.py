@@ -92,7 +92,7 @@ class RefreshIDToken(MiddlewareMixin):
         now = time.time()
         if expiration > now:
             # The id_token is still valid, so we don't have to do anything.
-            LOGGER.debug('id token is still valid (%s %s)', expiration, now)
+            LOGGER.debug('id token is still valid (%s > %s)', expiration, now)
             return
 
         LOGGER.debug('id token has expired')
