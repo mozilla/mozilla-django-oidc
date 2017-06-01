@@ -11,7 +11,11 @@ from django.utils.crypto import get_random_string
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings
+from mozilla_django_oidc.utils import (
+    absolutify,
+    import_from_settings,
+    is_authenticated,
+)
 
 
 class OIDCAuthenticationCallbackView(View):
@@ -116,7 +120,7 @@ class OIDCLogoutView(View):
         """Log out the user."""
         logout_url = self.redirect_url
 
-        if request.user.is_authenticated():
+        if is_authenticated(request.user):
             # Check if a method exists to build the URL to log out the user
             # from the OP.
             logout_from_op = import_from_settings('OIDC_OP_LOGOUT_URL_METHOD', '')

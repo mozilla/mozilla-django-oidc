@@ -4,7 +4,7 @@ from django.core.cache import cache
 from six import string_types
 
 from mozilla_django_oidc.contrib.auth0.utils import refresh_id_token
-from mozilla_django_oidc.utils import import_from_settings
+from mozilla_django_oidc.utils import import_from_settings, is_authenticated
 from mozilla_django_oidc.views import OIDCLogoutView
 
 
@@ -26,7 +26,7 @@ class RefreshIDToken(MiddlewareMixin):
     """
 
     def process_request(self, request):
-        if request.user.is_authenticated() and not request.is_ajax():
+        if is_authenticated(request.user) and not request.is_ajax():
             if 'oidc_id_token' not in request.session:
                 return
 
