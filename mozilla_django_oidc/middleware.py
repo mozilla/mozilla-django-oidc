@@ -54,7 +54,7 @@ class RefreshIDToken(MiddlewareMixin):
     def process_request(self, request):
         if ((request.method == 'GET' and
              is_authenticated(request.user) and
-             not request.path in OIDC_URLS and
+             request.path not in OIDC_URLS and
              not request.is_ajax())):
             expiration = request.session.get('oidc_id_token_expiration')
             if expiration is not None and expiration > time.time():
