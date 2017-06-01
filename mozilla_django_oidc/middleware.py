@@ -45,7 +45,7 @@ class RefreshIDToken(MiddlewareMixin):
 
     """
     def get_exempt_urls(self):
-        """Generate a return a set of url paths to exempt from RefreshIDToken
+        """Generate and return a set of url paths to exempt from RefreshIDToken
 
         This takes the value of ``settings.OIDC_EXEMPT_URLS`` and appends three
         urls that mozilla-django-oidc uses. These values can be view names or
