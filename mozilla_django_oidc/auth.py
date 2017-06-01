@@ -57,7 +57,7 @@ class OIDCAuthenticationBackend(object):
         email = claims.get('email')
         if not email:
             return self.UserModel.objects.none()
-        return self.UserModel.objects.filter(email=email)
+        return self.UserModel.objects.filter(email__iexact=email)
 
     def create_user(self, claims):
         """Return object for a newly created user account."""
