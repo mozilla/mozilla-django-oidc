@@ -298,9 +298,6 @@ the email address at all:
    Django 1.8 username:
        https://docs.djangoproject.com/en/1.8/ref/contrib/auth/#django.contrib.auth.models.User.username
 
-   Django 1.9 username:
-       https://docs.djangoproject.com/en/1.9/ref/contrib/auth/#django.contrib.auth.models.User.username
-
    Django 1.10 username:
        https://docs.djangoproject.com/en/1.10/ref/contrib/auth/#django.contrib.auth.models.User.username
 
