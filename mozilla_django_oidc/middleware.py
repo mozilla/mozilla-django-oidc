@@ -1,9 +1,9 @@
+import logging
+import time
 try:
     from urllib import urlencode
 except ImportError:
     from urllib.parse import urlencode
-
-import time
 
 import django
 from django.core.urlresolvers import reverse
@@ -11,6 +11,9 @@ from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings, is_authenticated
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 # Django 1.10 makes changes to how middleware work. In Django 1.10+, we want to
@@ -82,13 +85,17 @@ class RefreshIDToken(MiddlewareMixin):
 
     def process_request(self, request):
         if not self.is_refreshable_url(request):
+            LOGGER.debug('request is not refreshable')
             return
 
         expiration = request.session.get('oidc_id_token_expiration', 0)
-        if expiration > time.time():
+        now = time.time()
+        if expiration > now:
             # The id_token is still valid, so we don't have to do anything.
+            LOGGER.debug('id token is still valid (%s %s)', expiration, now)
             return
 
+        LOGGER.debug('id token has expired')
         # The id_token has expired, so we have to re-authenticate silently.
         auth_url = import_from_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
         client_id = import_from_settings('OIDC_RP_CLIENT_ID')
