@@ -13,13 +13,23 @@ from django.utils.crypto import get_random_string
 from mozilla_django_oidc.utils import absolutify, import_from_settings, is_authenticated
 
 
-# Django 1.11 makes changes to how middleware work. In Django 1.11+, we want to
+# Django 1.10 makes changes to how middleware work. In Django 1.10+, we want to
 # use the mixin so that our middleware works as is.
-if tuple(django.VERSION[0:2]) >= (1, 10):
+if django.VERSION >= (1, 10):
     from django.utils.deprecation import MiddlewareMixin
 else:
     class MiddlewareMixin(object):
         pass
+
+
+OIDC_URLS = [
+    reverse(name)
+    for name in [
+        'oidc_authentication_init',
+        'oidc_authentication_callback',
+        'oidc_logout'
+    ]
+]
 
 
 # FIXME(willkg): This doesn't appear to be used anywhere.
@@ -44,7 +54,7 @@ class RefreshIDToken(MiddlewareMixin):
     def process_request(self, request):
         if ((request.method == 'GET' and
              is_authenticated(request.user) and
-             not request.path.startswith('/oidc/') and
+             not request.path in OIDC_URLS and
              not request.is_ajax())):
             expiration = request.session.get('oidc_id_token_expiration')
             if expiration is not None and expiration > time.time():
