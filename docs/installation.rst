@@ -185,39 +185,26 @@ However, even if that account was disabled, the user's account and session on
 your site will continue. In this way, a user can quit his/her job, lose access to
 his/her corporate account, but continue to use your website.
 
-To handle this scenario, your website needs to know if the user's ID token with
+To handle this scenario, your website needs to know if the user's id token with
 the OIDC provider is still valid. You need to use the
-:py:class:`mozilla_django_oidc.contrib.auth0.middleware.RefreshIDToken` middleware.
+:py:class:`mozilla_django_oidc.middleware.RefreshIDToken` middleware.
 
 To add it to your site, put it in the settings::
 
     MIDDLEWARE_CLASSES = [
         # middleware involving session and autheentication must come first
         # ...
-        'mozilla_django_oidc.contrib.auth0.middleware.RefreshIDToken',
+        'mozilla_django_oidc.middleware.RefreshIDToken',
         # ...
     ]
 
 
-The ``RefreshIDToken`` middleware will check that the id token is still valid
-with the OIDC provider every ``settings.OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS``
-which defaults to 15 minutes.
+The ``RefreshIDToken`` middleware will check to see if the user's id token has
+expired and if so, redirect to the OIDC provider's authentication endpoint
+for a silent re-auth. That will redirect back to the page the user was going to.
 
-You also need to set ``OIDC_STORE_ACCESS_TOKEN``::
-
-    OIDC_STORE_ACCESS_TOKEN = True
-
-
-This stores the token that the middleware renews.
-
-You also need to set the domain for your Auth0 SSO::
-
-    OIDC_OP_DOMAIN = "<domain for OP>"
-
-
-.. note::
-   Currently, this is implemented using an Auth0-specific API endpoint. That
-   will change soon.
+The length of time it takes for an id token to expire is set in
+``settings.OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS`` which defaults to 15 minutes.
 
 
 Connecting OIDC user identities to Django users
@@ -352,3 +339,25 @@ setting::
 
 You might want to do this if you want to control user creation because your
 system requires additional process to allow people to use it.
+
+
+Troubleshooting
+---------------
+
+mozilla-django-oidc logs using the ``mozilla_django_oidc`` logger. Enable that
+logger in settings to see logging messages to help you debug:
+
+.. code-block:: python
+
+   LOGGING = {
+       ...
+       'loggers': {
+           'mozilla_django_oidc': {
+               'handlers': ['console'],
+               'level': 'DEBUG'
+           },
+       ...
+   }
+
+
+Make sure to use the appropriate handler for your app.

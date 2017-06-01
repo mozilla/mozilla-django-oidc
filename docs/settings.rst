@@ -72,6 +72,14 @@ of ``mozilla-django-oidc``.
 
    Controls whether the OpenID Connect client verifies the SSL certificate of the OP responses
 
+.. py:attribute:: OIDC_EXEMPT_URLS
+
+   :default: ``[]``
+
+   This is a list of url paths or Django view names. This plus the
+   mozilla-django-oidc urls are exempted from the id token renewal by the
+   ``RenewIDToken`` middleware.
+
 .. py:attribute:: OIDC_CREATE_USER
 
    :default: ``True``
