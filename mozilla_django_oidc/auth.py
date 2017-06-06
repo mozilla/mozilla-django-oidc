@@ -80,11 +80,12 @@ class OIDCAuthenticationBackend(object):
         """Validate the token signature."""
         nonce = kwargs.get('nonce')
 
-        secret = self.OIDC_RP_CLIENT_SECRET
-        if import_from_settings('OIDC_RP_CLIENT_SECRET_ENCODED', False):
-            secret = base64.urlsafe_b64decode(self.OIDC_RP_CLIENT_SECRET)
         # Verify the token
-        verified_token = jws.verify(token, secret, algorithms=['HS256'])
+        verified_token = jws.verify(
+            token,
+            self.OIDC_RP_CLIENT_SECRET,
+            algorithms=['HS256']
+        )
         # The 'verified_token' will always be a byte string since it's
         # the result of base64.urlsafe_b64decode().
         # The payload is always the result of base64.urlsafe_b64decode().
