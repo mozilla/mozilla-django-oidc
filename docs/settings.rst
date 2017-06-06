@@ -48,12 +48,6 @@ of ``mozilla-django-oidc``.
 
    OpenID Connect client secret provided by your OP
 
-.. py:attribute:: OIDC_RP_CLIENT_SECRET_ENCODED
-
-   :default: ``False``
-
-   Controls whether your client secret requires base64 decoding for verification
-
 .. py:attribute:: OIDC_VERIFY_JWT
 
    :default: ``True``

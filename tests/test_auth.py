@@ -288,7 +288,6 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         jws_mock.assert_has_calls(calls)
 
     @override_settings(OIDC_USE_NONCE=True)
-    @override_settings(OIDC_RP_CLIENT_SECRET_ENCODED=False)
     @patch('mozilla_django_oidc.auth.jws')
     def test_jwt_failed_nonce(self, jwt_mock):
         """Test Nonce verification."""
