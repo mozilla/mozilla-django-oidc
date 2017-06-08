@@ -120,7 +120,10 @@ class OIDCAuthenticationBackend(object):
             'client_secret': self.OIDC_RP_CLIENT_SECRET,
             'grant_type': 'authorization_code',
             'code': code,
-            'redirect_uri': absolutify(reverse('oidc_authentication_callback'))
+            'redirect_uri': absolutify(
+                self.request,
+                reverse('oidc_authentication_callback')
+            ),
         }
 
         # Get the token

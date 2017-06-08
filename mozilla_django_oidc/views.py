@@ -94,7 +94,10 @@ class OIDCAuthenticationRequestView(View):
             'response_type': 'code',
             'scope': 'openid',
             'client_id': self.OIDC_RP_CLIENT_ID,
-            'redirect_uri': absolutify(reverse('oidc_authentication_callback')),
+            'redirect_uri': absolutify(
+                request,
+                reverse('oidc_authentication_callback')
+            ),
             'state': state,
         }
 

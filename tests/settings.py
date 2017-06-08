@@ -32,9 +32,7 @@ INSTALLED_APPS = [
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
-SITE_ID = 1
-
-SITE_URL = 'http://example.com'
+SITE_ID = 1# XXX can this be deleted too?
 
 if tuple(django.VERSION[0:2]) >= (1, 10):
     MIDDLEWARE = []

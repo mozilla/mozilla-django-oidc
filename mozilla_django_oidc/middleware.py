@@ -106,7 +106,10 @@ class RefreshIDToken(MiddlewareMixin):
         params = {
             'response_type': 'code',
             'client_id': client_id,
-            'redirect_uri': absolutify(reverse('oidc_authentication_callback')),
+            'redirect_uri': absolutify(
+                request,
+                reverse('oidc_authentication_callback')
+            ),
             'state': state,
             'scope': 'openid',
             'prompt': 'none',

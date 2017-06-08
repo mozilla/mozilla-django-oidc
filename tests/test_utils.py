@@ -1,5 +1,6 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
+from django.test.client import RequestFactory
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
 
@@ -21,7 +22,20 @@ class SettingImportTestCase(TestCase):
 
 
 class AbsolutifyTestCase(TestCase):
-    @override_settings(SITE_URL='http://site-url.com')
+
     def test_absolutify(self):
-        url = absolutify('/foo/bar')
-        self.assertEqual(url, 'http://site-url.com/foo/bar')
+        req = RequestFactory().get('/something/else')
+        url = absolutify(req, '/foo/bar')
+        self.assertEqual(url, 'http://testserver/foo/bar')
+
+        req = RequestFactory().get('/something/else', SERVER_PORT=8888)
+        url = absolutify(req, '/foo/bar')
+        self.assertEqual(url, 'http://testserver:8888/foo/bar')
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=('HTTP_X_FORWARDED_PROTO', 'https'))
+    def test_absolutify_https(self):
+        req = RequestFactory(
+            HTTP_X_FORWARDED_PROTO='https'
+        ).get('/', SERVER_PORT=443)
+        url = absolutify(req, '/foo/bar')
+        self.assertEqual(url, 'https://testserver/foo/bar')

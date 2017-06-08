@@ -85,7 +85,6 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         self.assertEqual(self.backend.get_user(user_id=1), None)
 
-    @override_settings(SITE_URL='http://site-url.com')
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     def test_successful_authentication_existing_user(self, token_mock, request_mock):
@@ -115,7 +114,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'client_secret': 'client_secret',
             'grant_type': 'authorization_code',
             'code': 'foo',
-            'redirect_uri': 'http://site-url.com/callback/'
+            'redirect_uri': 'http://testserver/callback/'
         }
         self.assertEqual(self.backend.authenticate(request=auth_request), user)
         token_mock.assert_called_once_with('id_token', nonce=None)
@@ -127,7 +126,6 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             headers={'Authorization': 'Bearer access_granted'}
         )
 
-    @override_settings(SITE_URL='http://site-url.com')
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     def test_successful_authentication_existing_user_upper_case(self, token_mock, request_mock):
@@ -157,7 +155,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'client_secret': 'client_secret',
             'grant_type': 'authorization_code',
             'code': 'foo',
-            'redirect_uri': 'http://site-url.com/callback/'
+            'redirect_uri': 'http://testserver/callback/'
         }
         self.assertEqual(self.backend.authenticate(request=auth_request), user)
         token_mock.assert_called_once_with('id_token', nonce=None)
@@ -172,7 +170,6 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     @patch.object(settings, 'OIDC_USERNAME_ALGO')
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    @override_settings(SITE_URL='http://site-url.com')
     def test_successful_authentication_new_user(self, token_mock, request_mock, algo_mock):
         """Test successful authentication and user creation."""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
@@ -198,7 +195,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'client_secret': 'client_secret',
             'grant_type': 'authorization_code',
             'code': 'foo',
-            'redirect_uri': 'http://site-url.com/callback/',
+            'redirect_uri': 'http://testserver/callback/',
         }
         self.assertEqual(User.objects.all().count(), 0)
         self.backend.authenticate(request=auth_request)

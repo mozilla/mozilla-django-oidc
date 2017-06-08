@@ -233,7 +233,6 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
-    @override_settings(SITE_URL='http://site-url.com')
     @patch('mozilla_django_oidc.views.get_random_string')
     def test_get(self, mock_random_string):
         """Test initiation of a successful OIDC attempt."""
@@ -250,7 +249,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'response_type': ['code'],
             'scope': ['openid'],
             'client_id': ['example_id'],
-            'redirect_uri': ['http://site-url.com/callback/'],
+            'redirect_uri': ['http://testserver/callback/'],
             'state': ['examplestring'],
             'nonce': ['examplestring']
         }

@@ -5,19 +5,6 @@ Settings
 This document describes the Django settings that can be used to customize the configuration
 of ``mozilla-django-oidc``.
 
-.. py:attribute:: SITE_URL
-
-   :default: No default
-
-   URL that users access your site from. Make sure that you provide the protocol, domain,
-   path and port if needed (e.g. ``<protocol>://<domain>:<port>/<path>``)
-
-   .. note::
-      This does not have to be a publicly accessible URL, so local URLs
-      like ``http://localhost:8000`` or ``http://127.0.0.1`` are acceptable as
-      long as they match what you are using to access your site.
-
-
 .. py:attribute:: OIDC_OP_AUTHORIZATION_ENDPOINT
 
    :default: No default
