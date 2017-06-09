@@ -17,6 +17,10 @@ from mozilla_django_oidc import views
 User = get_user_model()
 
 
+def my_custom_op_logout(*args, **kwargs):
+    return 'http://example.com/logged/out'
+
+
 class OIDCAuthorizationCallbackViewTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
@@ -330,3 +334,19 @@ class OIDCLogoutViewTestCase(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/example-logout')
+
+    @override_settings(LOGOUT_REDIRECT_URL='/example-logout')
+    @override_settings(OIDC_OP_LOGOUT_URL_METHOD='tests.test_views.my_custom_op_logout')
+    def test_post_with_OIDC_OP_LOGOUT_URL_METHOD(self):
+        user = User.objects.create_user('example_username')
+        url = reverse('oidc_logout')
+        request = self.factory.post(url)
+        request.user = user
+        logout_view = views.OIDCLogoutView.as_view()
+
+        with patch('mozilla_django_oidc.views.auth.logout') as mock_logout:
+            response = logout_view(request)
+            mock_logout.assert_called_once_with(request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, 'http://example.com/logged/out')
