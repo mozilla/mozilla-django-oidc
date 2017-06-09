@@ -201,9 +201,11 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'redirect_uri': 'http://site-url.com/callback/',
         }
         self.assertEqual(User.objects.all().count(), 0)
-        self.backend.authenticate(request=auth_request)
+        result = self.backend.authenticate(request=auth_request)
         self.assertEqual(User.objects.all().count(), 1)
         user = User.objects.all()[0]
+        self.assertEquals(user, result)
+
         self.assertEquals(user.email, 'email@example.com')
         self.assertEquals(user.username, 'username_algo')
 
@@ -215,6 +217,31 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'https://server.example.com/user',
             headers={'Authorization': 'Bearer access_granted'}
         )
+
+    @patch('mozilla_django_oidc.auth.requests')
+    @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
+    def test_successful_authentication_no_email(self, token_mock, request_mock):
+        """What happens if the auth "works" but it doesn't have an email?"""
+        auth_request = RequestFactory().get('/foo', {'code': 'foo',
+                                                     'state': 'bar'})
+        auth_request.session = {}
+
+        token_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'a_username',
+            'email': ''
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'id_token',
+            'access_token': 'access_granted'
+        }
+        request_mock.post.return_value = post_json_mock
+        result = self.backend.authenticate(request=auth_request)
+        assert result is None
+        self.assertEqual(User.objects.all().count(), 0)
 
     def test_authenticate_no_code_no_state(self):
         """Test authenticate with wrong parameters."""
