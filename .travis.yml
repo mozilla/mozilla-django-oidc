@@ -19,3 +19,13 @@ script:
 
 after_success:
   - codecov
+
+deploy:
+  - provider: pypi
+    user: parsys-python
+    password:
+      secure: "TArcjP6zBGBQHkZCa4H8WRCA+Jwy+UWuNQhif3vC67OY1RQjV1HpMbk7tm7pWB+Ljr45aBZ+O4vUwoNfBvilXKzi6vUtX9KjhTPidcRxdWtUoRcaDmpN1mU0q8z56ssAGY9QVz7KsVYLN3ehjO9gOhPKrYMNpzeeDWfPTvas1HOn7KGQHKVl2pxegtkAEmFyBheor4isV7tO1ST7m95haZwC52VGwIvY8iFwHkDZFRSAcGuWDoZ4NH5UR/+j6A4M/y8kUdATTIVkFbLpSkCK4nxUkgE0ae03OcN5yHeyRJ7l/nYaE8pTyC6OaPpZ9KHNrFnC+JK7Q68Uou1goKyQd2eR+uiM/eKCRLtgYJzKPvKnKwS2UyP/S+XdsH92ucSa/UD1I7UcgAvwqf18l+E/yb5AQJDKsrP69FXmjeUuG7RcoWTLqYSkGRtMi3/LwQxxzsZTIdMF9PoKr2q2Lgog7aC1m/b5PRtO5JHkuU/N1vFVOK9t6+aHXGOPTi0JniLL3dqDRaRPtkEKJIX9g3vpP81XBxqanWgJwZ2mp66FqKbfbdP9UjPJ+8Bx7XXJq8vEa+VHsQkXNbrwp+qKztlSeSiaR8yx901DzS4ZwpoCXwsOFdwRSkmYZe9h379qGasqyESJUb1b36K8P6A3XhH+hmYXnzrxKN0SeyUjUKOOXh8="
+    on:
+      repo: mozilla/mozilla-django-oidc
+      tags: true
+    distributions: "sdist bdist_wheel"

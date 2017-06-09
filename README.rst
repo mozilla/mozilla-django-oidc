@@ -82,6 +82,27 @@ You can also run linting with ``tox``:
     $ tox -e lint
 
 
+Releasing a new version
+------------------------
+
+``mozilla-django-oidc`` releases are hosted in `PyPI <https://pypi.python.org/pypi/mozilla-django-oidc>`_.
+Here are the steps you need to follow in order to push a new release:
+
+* Make sure that ``HISTORY.rst`` is up-to-date focusing mostly on backwards incompatible changes.
+* Bump the project version and create a commit for the new version.
+   * You can use ``bumpversion`` for that. It is a tool to automate this procedure following the `semantic versioning scheme <http://semver.org/>`_.
+      * For a patch version update (eg ``0.1.1 to 0.1.2`` you can run ``bumpversion patch``.
+      * For a minor version update (eg ``0.1.0 to 0.2.0``) you can run ``bumpversion minor``.
+      * For a major version update (eg ``0.1.0 to 1.0.0``) you can run ``bumpversion major``.
+
+* Create a `signed tag <https://git-scm.com/book/tr/v2/Git-Tools-Signing-Your-Work>`_ for that version
+   * ``git tag -s 0.1.1 -m 'Bump version: 0.1.0 to 0.1.1'``
+* Push the signed tag to Github
+   * ``git push origin 0.1.1``
+
+The release is pushed automatically to PyPI using a travis deployment hook on every new tag.
+
+
 License
 -------
 
