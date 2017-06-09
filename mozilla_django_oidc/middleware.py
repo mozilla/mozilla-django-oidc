@@ -25,17 +25,6 @@ else:
         pass
 
 
-# FIXME(willkg): This doesn't appear to be used anywhere.
-def logout_url():
-    """Log out the user from Auth0."""
-    url = 'https://' + import_from_settings('OIDC_OP_DOMAIN') + '/v2/logout'
-    url += '?' + urlencode({
-        'returnTo': import_from_settings('LOGOUT_REDIRECT_URL', '/'),
-        'client_id': import_from_settings('OIDC_RP_CLIENT_ID')
-    })
-    return url
-
-
 class RefreshIDToken(MiddlewareMixin):
     """Renews id_tokens after expiry seconds
 
