@@ -1,7 +1,8 @@
 try:
-    from urlparse import parse_qs, urlparse
-except ImportError:
     from urllib.parse import parse_qs, urlparse
+except ImportError:
+    # Python < 3
+    from urlparse import parse_qs, urlparse
 
 from mock import patch
 

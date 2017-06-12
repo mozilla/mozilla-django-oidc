@@ -4,11 +4,7 @@ import json
 import logging
 import requests
 
-try:
-    from django.utils.encoding import smart_bytes
-except ImportError:
-    from django.utils.encoding import smart_str as smart_bytes
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_bytes, smart_text
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse

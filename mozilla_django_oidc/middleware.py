@@ -1,9 +1,10 @@
 import logging
 import time
 try:
-    from urllib import urlencode
-except ImportError:
     from urllib.parse import urlencode
+except ImportError:
+    # Python < 3
+    from urllib import urlencode
 
 import django
 from django.core.urlresolvers import reverse
