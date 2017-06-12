@@ -96,13 +96,6 @@ documentation for the appropriate values.
    OIDC_OP_USER_ENDPOINT = "<URL of the OIDC OP userinfo endpoint>"
 
 
-This value depends on your site.
-
-.. code-block:: python
-
-   SITE_URL = "<FQDN that users access the site from eg. http://127.0.0.1:8000/ >"
-
-
 .. warning::
    Don't use Django's cookie-based sessions because they might open you up to
    replay attacks.

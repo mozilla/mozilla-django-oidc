@@ -78,7 +78,7 @@ class RefreshIDTokenMiddlewareTestCase(TestCase):
         self.assertEquals(url, 'http://example.com/authorize')
         expected_query = {
             'response_type': ['code'],
-            'redirect_uri': ['http://example.com/callback/'],
+            'redirect_uri': ['http://testserver/callback/'],
             'client_id': ['foo'],
             'nonce': ['examplestring'],
             'prompt': ['none'],
@@ -107,7 +107,7 @@ class RefreshIDTokenMiddlewareTestCase(TestCase):
         self.assertEquals(url, 'http://example.com/authorize')
         expected_query = {
             'response_type': ['code'],
-            'redirect_uri': ['http://example.com/callback/'],
+            'redirect_uri': ['http://testserver/callback/'],
             'client_id': ['foo'],
             'nonce': ['examplestring'],
             'prompt': ['none'],
@@ -249,7 +249,7 @@ class MiddlewareTestCase(TestCase):
         self.assertEquals(url, 'http://example.com/authorize')
         expected_query = {
             'response_type': ['code'],
-            'redirect_uri': ['http://example.com/callback/'],
+            'redirect_uri': ['http://testserver/callback/'],
             'client_id': ['foo'],
             'nonce': ['examplestring'],
             'prompt': ['none'],
