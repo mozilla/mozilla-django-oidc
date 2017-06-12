@@ -6,7 +6,6 @@ import sys
 try:
     from setuptools import setup
 except ImportError:
-    # FIXME(peterbe): In what circumstances do you NOT have setuptools?
     from distutils.core import setup
 
 
