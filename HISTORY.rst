@@ -2,6 +2,24 @@
 
 History
 -------
+0.3.0 (2017-06-13)
+++++++++++++++++++
+
+Backwards-incompatible changes:
+
+* The settings.SITE_URL is no longer used. Instead the absolute URL is
+  derived from the request's get_host().
+* Only log out by HTTP POST allowed.
+
+Features:
+
+* None
+
+Bugs:
+
+* Logout using POST not GET (#126)
+* Test suite maintenance (#108, #109, #142)
+
 0.2.0 (2017-06-07)
 +++++++++++++++++++
 
