@@ -294,29 +294,13 @@ class OIDCLogoutViewTestCase(TestCase):
         self.factory = RequestFactory()
 
     @override_settings(LOGOUT_REDIRECT_URL='/example-logout')
-    def test_get(self):
-        user = User.objects.create_user('example_username')
-        url = reverse('oidc_logout')
-        request = self.factory.get(url)
-        request.user = user
-        logout_view = views.OIDCLogoutView.as_view()
-
-        with patch('mozilla_django_oidc.views.auth.logout') as mock_logout:
-            response = logout_view(request)
-            mock_logout.assert_called_once_with(request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/example-logout')
-
-    @override_settings(LOGOUT_REDIRECT_URL='/example-logout')
     def test_get_anonymous_user(self):
         url = reverse('oidc_logout')
-        request = self.factory.get(url)
+        request = self.factory.post(url)
         request.user = AnonymousUser()
         logout_view = views.OIDCLogoutView.as_view()
 
         response = logout_view(request)
-
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/example-logout')
 
