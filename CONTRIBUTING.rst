@@ -83,19 +83,24 @@ Ready to contribute? Here's how to set up `mozilla-django-oidc` for local develo
 
    To get flake8 and tox, just pip install them into your virtualenv.
 
-6. Commit your changes and push your branch to GitHub::
+6. Make sure you update ``HISTORY.rst`` with your changes in the following categories
+
+    * Backwards-incompatible changes
+    * Features
+    * Bugs
+
+7. Commit your changes and push your branch to GitHub::
 
        $ git add .
        $ git commit -m "Your detailed description of your changes."
        $ git push origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
+8. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------
 
 Before you submit a pull request, check that it meets these guidelines:
-
 1. The pull request should include tests.
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
