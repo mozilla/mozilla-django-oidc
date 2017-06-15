@@ -2,6 +2,21 @@
 
 History
 -------
+0.3.1 (2017-06-15)
+++++++++++++++++++
+
+Backwards-incompatible changes:
+
+* None
+
+Features:
+
+* None
+
+Bugs:
+
+* Sanitize `next` url for the authentication view. Prevents open redirects.
+
 0.3.0 (2017-06-13)
 ++++++++++++++++++
 
