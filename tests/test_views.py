@@ -6,6 +6,7 @@ except ImportError:
 
 from mock import patch
 
+import django
 from django.core.exceptions import SuspiciousOperation
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -230,6 +231,100 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/success')
         self.assertTrue('oidc_nonce' not in request.session)
+
+
+class GetNextURLTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def build_request(self, next_url):
+        return self.factory.get('/', data={'next': next_url})
+
+    def test_no_param(self):
+        req = self.factory.get('/')
+        next_url = views.get_next_url(req, 'next')
+        self.assertEqual(next_url, None)
+
+    def test_non_next_param(self):
+        req = self.factory.get('/', data={'redirectto': '/foo'})
+        next_url = views.get_next_url(req, 'redirectto')
+        self.assertEqual(next_url, '/foo')
+
+    def test_good_urls(self):
+        urls = [
+            '/',
+            '/foo',
+            '/foo?bar=baz',
+            'http://testserver/foo',
+        ]
+        for url in urls:
+            req = self.build_request(next_url=url)
+            next_url = views.get_next_url(req, 'next')
+
+            self.assertEqual(next_url, url)
+
+    def test_bad_urls(self):
+        urls = [
+            '',
+            # NOTE(willkg): Test data taken from the Django is_safe_url tests.
+            'http://example.com',
+            'http:///example.com',
+            'https://example.com',
+            'ftp://example.com',
+            r'\\example.com',
+            r'\\\example.com',
+            r'/\\/example.com',
+            r'\\\example.com',
+            r'\\example.com',
+            r'\\//example.com',
+            r'/\/example.com',
+            r'\/example.com',
+            r'/\example.com',
+            'http:///example.com',
+            r'http:/\//example.com',
+            r'http:\/example.com',
+            r'http:/\example.com',
+            'javascript:alert("XSS")',
+            '\njavascript:alert(x)',
+            '\x08//example.com',
+            r'http://otherserver\@example.com',
+            r'http:\\testserver\@example.com',
+            r'http://testserver\me:pass@example.com',
+            r'http://testserver\@example.com',
+            r'http:\\testserver\confirm\me@example.com',
+            'http:999999999',
+            'ftp:9999999999',
+            '\n',
+        ]
+        for url in urls:
+            req = self.build_request(next_url=url)
+            next_url = views.get_next_url(req, 'next')
+
+            self.assertEqual(next_url, None)
+
+    def test_https(self):
+        # If the request is for HTTPS and the next url is HTTPS, then that
+        # works with all Djangos.
+        req = self.factory.get(
+            '/',
+            data={'next': 'https://testserver/foo'},
+            secure=True,
+        )
+        self.assertEquals(req.is_secure(), True)
+        next_url = views.get_next_url(req, 'next')
+        self.assertEqual(next_url, 'https://testserver/foo')
+
+        # For Django 1.11+, if the request is for HTTPS and the next url is
+        # HTTP, then that fails.
+        if django.VERSION >= (1, 11):
+            req = self.factory.get(
+                '/',
+                data={'next': 'http://testserver/foo'},
+                secure=True,
+            )
+            self.assertEquals(req.is_secure(), True)
+            next_url = views.get_next_url(req, 'next')
+            self.assertEqual(next_url, None)
 
 
 class OIDCAuthorizationRequestViewTestCase(TestCase):

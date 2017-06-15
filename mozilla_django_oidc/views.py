@@ -5,11 +5,13 @@ except ImportError:
     # Python < 3
     from urllib import urlencode
 
+import django
 from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
+from django.utils.http import is_safe_url
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
@@ -31,6 +33,8 @@ class OIDCAuthenticationCallbackView(View):
 
     @property
     def success_url(self):
+        # Pull the next url from the session or settings--we don't need to
+        # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get('oidc_login_next', None)
         return next_url or import_from_settings('LOGIN_REDIRECT_URL', '/')
 
@@ -75,6 +79,33 @@ class OIDCAuthenticationCallbackView(View):
         return self.login_failure()
 
 
+def get_next_url(request, redirect_field_name):
+    """Retrieves next url from request
+
+    Note: This verifies that the url is safe before returning it. If the url
+    is not safe, this returns None.
+
+    :arg HttpRequest request: the http request
+    :arg str redirect_field_name: the name of the field holding the next url
+
+    :returns: safe url or None
+
+    """
+    next_url = request.GET.get(redirect_field_name)
+    if next_url:
+        kwargs = {
+            'url': next_url,
+            'host': request.get_host()
+        }
+        # NOTE(willkg): Django 1.11+ allows us to require https, too.
+        if django.VERSION >= (1, 11):
+            kwargs['require_https'] = request.is_secure()
+        is_safe = is_safe_url(**kwargs)
+        if is_safe:
+            return next_url
+    return None
+
+
 class OIDCAuthenticationRequestView(View):
     """OIDC client authentication HTTP endpoint"""
 
@@ -110,7 +141,7 @@ class OIDCAuthenticationRequestView(View):
             request.session['oidc_nonce'] = nonce
 
         request.session['oidc_state'] = state
-        request.session['oidc_login_next'] = request.GET.get(redirect_field_name)
+        request.session['oidc_login_next'] = get_next_url(request, redirect_field_name)
 
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=self.OIDC_OP_AUTH_ENDPOINT, query=query)
