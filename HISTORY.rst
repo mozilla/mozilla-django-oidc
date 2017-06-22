@@ -5,20 +5,16 @@ History
 0.3.1 (2017-06-15)
 ++++++++++++++++++
 
-Backwards-incompatible changes:
+Security issues:
 
-* None
-
-Features:
-
-* None
-
-Bugs:
-
-* Sanitize `next` url for the authentication view. Prevents open redirects.
+* **Medium**: Sanitize next url for authentication view
 
 0.3.0 (2017-06-13)
 ++++++++++++++++++
+
+Security issues:
+
+* **Low**: Logout using POST not GET (#126)
 
 Backwards-incompatible changes:
 
@@ -26,17 +22,12 @@ Backwards-incompatible changes:
   derived from the request's get_host().
 * Only log out by HTTP POST allowed.
 
-Features:
-
-* None
-
 Bugs:
 
-* Logout using POST not GET (#126)
 * Test suite maintenance (#108, #109, #142)
 
 0.2.0 (2017-06-07)
-+++++++++++++++++++
+++++++++++++++++++
 
 Backwards-incompatible changes:
 
@@ -50,8 +41,8 @@ Backwards-incompatible changes:
   You'll need to update your `MIDDLEWARE_CLASSES`/`MIDDLEWARE`
   setting accordingly.
 
-*  Remove legacy base64 handling of OIDC secret. Now RP secret
-   should be plaintext.
+* Remove legacy base64 handling of OIDC secret. Now RP secret
+  should be plaintext.
 
 Features:
 
