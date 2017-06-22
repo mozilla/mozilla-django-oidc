@@ -126,7 +126,9 @@ class OIDCAuthenticationBackend(object):
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT,
                                  data=token_payload,
                                  verify=import_from_settings('OIDC_VERIFY_SSL', True))
-        response.raise_for_status()
+
+        if not response.status_code == requests.codes.ok:
+            return None
 
         # Validate the token
         token_response = response.json()

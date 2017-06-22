@@ -107,6 +107,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'id_token': 'id_token',
             'access_token': 'access_granted'
         }
+        post_json_mock.status_code = 200
+        request_mock.codes.ok = 200
         request_mock.post.return_value = post_json_mock
 
         post_data = {
@@ -148,6 +150,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'id_token': 'id_token',
             'access_token': 'access_granted'
         }
+        post_json_mock.status_code = 200
+        request_mock.codes.ok = 200
         request_mock.post.return_value = post_json_mock
 
         post_data = {
@@ -189,6 +193,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'id_token': 'id_token',
             'access_token': 'access_granted'
         }
+        post_json_mock.status_code = 200
+        request_mock.codes.ok = 200
         request_mock.post.return_value = post_json_mock
         post_data = {
             'client_id': 'example_id',
@@ -245,6 +251,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'id_token': 'token',
             'access_token': 'access_token'
         }
+        post_json_mock.status_code = 200
+        request_mock.codes.ok = 200
         request_mock.post.return_value = post_json_mock
         self.backend.authenticate(request=auth_request)
         calls = [
@@ -276,6 +284,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'id_token': 'token',
             'access_token': 'access_token'
         }
+        post_json_mock.status_code = 200
+        request_mock.codes.ok = 200
         request_mock.post.return_value = post_json_mock
         calls = [
             call('token', 'client_secret', algorithms=['HS256'])
@@ -348,6 +358,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'id_token': 'id_token',
             'access_token': 'access_granted'
         }
+        post_json_mock.status_code = 200
+        request_mock.codes.ok = 200
         request_mock.post.return_value = post_json_mock
         self.assertEqual(self.backend.authenticate(request=auth_request),
                          User.objects.get(email='email@example.com'))
@@ -378,6 +390,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'id_token': 'id_token',
             'access_token': 'access_granted'
         }
+        post_json_mock.status_code = 200
+        request_mock.codes.ok = 200
         request_mock.post.return_value = post_json_mock
         self.assertEqual(self.backend.authenticate(request=auth_request),
                          User.objects.get(username='username_algo'))
