@@ -60,6 +60,8 @@ setup(
         'Framework :: Django :: 1.11',
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
         'Intended Audience :: Developers',
+        'Operating System :: MacOS',
+        'Operating System :: POSIX :: Linux',
         'Natural Language :: English',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
