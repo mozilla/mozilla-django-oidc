@@ -14,6 +14,12 @@ After installation, you'll need to do some things to get your site using
 ``mozilla-django-oidc``.
 
 
+Requirements
+------------
+
+This library supports Python 2.7 and 3.3+ on OSX and Linux.
+
+
 Acquire a client id and client secret
 -------------------------------------
 
