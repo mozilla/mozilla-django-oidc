@@ -25,5 +25,3 @@ deploy:
   user: parsys-python
   password: not_a_real_password
   server: https://104.131.121.162
-  on:
-    all_branches: true
