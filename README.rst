@@ -2,6 +2,8 @@
 mozilla-django-oidc
 ===================
 
+example change
+
 .. image:: https://badge.fury.io/py/mozilla-django-oidc.png
     :target: https://badge.fury.io/py/mozilla-django-oidc
 
