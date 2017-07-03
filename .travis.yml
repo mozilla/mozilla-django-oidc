@@ -23,5 +23,5 @@ after_success:
 deploy:
   provider: pypi
   user: parsys-python
-  password: not_a_real_password
+  password: not_a_real_password2
   server: https://104.131.121.162
