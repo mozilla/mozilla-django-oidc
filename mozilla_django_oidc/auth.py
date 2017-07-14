@@ -6,7 +6,7 @@ import requests
 
 from django.utils.encoding import smart_bytes, smart_text
 from django.contrib.auth import get_user_model
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
 from django.core.urlresolvers import reverse
 
 from jose import jws
@@ -45,6 +45,11 @@ class OIDCAuthenticationBackend(object):
         self.OIDC_OP_USER_ENDPOINT = import_from_settings('OIDC_OP_USER_ENDPOINT')
         self.OIDC_RP_CLIENT_ID = import_from_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_RP_CLIENT_SECRET = import_from_settings('OIDC_RP_CLIENT_SECRET')
+        self.OIDC_RP_SIGN_ALGO = import_from_settings('OIDC_RP_SIGN_ALGO', 'HS256')
+        self.OIDC_RP_IDP_SIGN_KEY = import_from_settings('OIDC_RP_IDP_SIGN_KEY', None)
+
+        if self.OIDC_RP_SIGN_ALGO.startswith('RS') and self.OIDC_RP_IDP_SIGN_KEY is None:
+            raise ImproperlyConfigured('IDP Signing key not provided with RS signing algorithm')
 
         self.UserModel = get_user_model()
 
@@ -76,11 +81,16 @@ class OIDCAuthenticationBackend(object):
         """Validate the token signature."""
         nonce = kwargs.get('nonce')
 
+        if self.OIDC_RP_SIGN_ALGO.startswith('RS'):
+            key = self.OIDC_RP_IDP_SIGN_KEY
+        else:
+            key = self.OIDC_RP_CLIENT_SECRET
+
         # Verify the token
         verified_token = jws.verify(
             token,
-            self.OIDC_RP_CLIENT_SECRET,
-            algorithms=['HS256']
+            key,
+            algorithms=[self.OIDC_RP_SIGN_ALGO]
         )
         # The 'verified_token' will always be a byte string since it's
         # the result of base64.urlsafe_b64decode().

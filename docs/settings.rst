@@ -130,6 +130,19 @@ of ``mozilla-django-oidc``.
 
    Additional parameters to include in the initial authorization request.
 
+.. py:attribute:: OIDC_RP_SIGN_ALGO
+
+   :default: ``HS256``
+
+   Sets the algorithm the IdP uses to sign ID tokens.
+
+.. py:attribute:: OIDC_RP_IDP_SIGN_KEY
+
+   :default: ``None``
+
+   Sets the key the IdP uses to sign ID tokens in the case of an RSA sign algorithm.
+   Should be the JWK as a python dict.
+
 .. py:attribute:: LOGIN_REDIRECT_URL
 
    :default: ``/accounts/profile``
