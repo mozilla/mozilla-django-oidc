@@ -347,7 +347,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         o = urlparse(response.url)
         expected_query = {
             'response_type': ['code'],
-            'scope': ['openid'],
+            'scope': ['openid email'],
             'client_id': ['example_id'],
             'redirect_uri': ['http://testserver/callback/'],
             'state': ['examplestring'],

@@ -11,7 +11,11 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings, is_authenticated
+from mozilla_django_oidc.utils import (
+    absolutify,
+    import_from_settings,
+    is_authenticated
+)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -101,7 +105,7 @@ class RefreshIDToken(MiddlewareMixin):
                 reverse('oidc_authentication_callback')
             ),
             'state': state,
-            'scope': 'openid',
+            'scope': import_from_settings('OIDC_RP_SCOPES', 'openid email'),
             'prompt': 'none',
         }
 

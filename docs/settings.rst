@@ -97,6 +97,12 @@ of ``mozilla-django-oidc``.
       When using a custom callback view, it is generally a good idea to subclass the
       default ``OIDCAuthenticationCallbackView`` and override the methods you want to change.
 
+.. py:attribute:: OIDC_RP_SCOPES
+
+   :default: ``openid email``
+
+   The OpenID Connect scopes to request during login.
+
 .. py:attribute:: LOGIN_REDIRECT_URL
 
    :default: ``/accounts/profile``
