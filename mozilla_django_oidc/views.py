@@ -18,7 +18,7 @@ from django.views.generic import View
 from mozilla_django_oidc.utils import (
     absolutify,
     import_from_settings,
-    is_authenticated,
+    is_authenticated
 )
 
 
@@ -124,7 +124,7 @@ class OIDCAuthenticationRequestView(View):
 
         params = {
             'response_type': 'code',
-            'scope': 'openid',
+            'scope': import_from_settings('OIDC_RP_SCOPES', 'openid email'),
             'client_id': self.OIDC_RP_CLIENT_ID,
             'redirect_uri': absolutify(
                 request,
