@@ -123,7 +123,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
-            headers={'Authorization': 'Bearer access_granted'}
+            headers={'Authorization': 'Bearer access_granted'},
+            verify=True
         )
 
     @patch('mozilla_django_oidc.auth.requests')
@@ -164,7 +165,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
-            headers={'Authorization': 'Bearer access_granted'}
+            headers={'Authorization': 'Bearer access_granted'},
+            verify=True
         )
 
     @patch.object(settings, 'OIDC_USERNAME_ALGO')
@@ -210,7 +212,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
-            headers={'Authorization': 'Bearer access_granted'}
+            headers={'Authorization': 'Bearer access_granted'},
+            verify=True
         )
 
     def test_authenticate_no_code_no_state(self):
