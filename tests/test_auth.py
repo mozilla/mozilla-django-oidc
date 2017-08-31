@@ -126,6 +126,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             headers={'Authorization': 'Bearer access_granted'}
         )
 
+    @override_settings(OIDC_STORE_ACCESS_TOKEN=True)
+    @override_settings(OIDC_STORE_ID_TOKEN=True)
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     def test_successful_authentication_existing_user_upper_case(self, token_mock, request_mock):
@@ -166,6 +168,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'https://server.example.com/user',
             headers={'Authorization': 'Bearer access_granted'}
         )
+        self.assertEqual(auth_request.session.get('oidc_id_token'), 'id_token')
+        self.assertEqual(auth_request.session.get('oidc_access_token'), 'access_granted')
 
     @patch.object(settings, 'OIDC_USERNAME_ALGO')
     @patch('mozilla_django_oidc.auth.requests')

@@ -103,6 +103,27 @@ of ``mozilla-django-oidc``.
 
    The OpenID Connect scopes to request during login.
 
+.. py:attribute:: OIDC_STORE_ACCESS_TOKEN
+
+   :default: ``False``
+
+   Controls whether the OpenID Connect client stores the OIDC ``access_token`` in the user session.
+   The session key used to store the data is ``oidc_access_token``.
+
+   By default we want to store as few credentials as possible so this feature defaults to ``False``
+   and it's use is discouraged.
+
+   .. warning::
+      This feature stores authentication information in the session. If used in combination with Django's
+      cookie-based session backend, those tokens will be visible in the browser's cookie store.
+
+.. py:attribute:: OIDC_STORE_ID_TOKEN
+
+   :default: ``False``
+
+   Controls whether the OpenID Connect client stores the OIDC ``id_token`` in the user session.
+   The session key used to store the data is ``oidc_id_token``.
+
 .. py:attribute:: LOGIN_REDIRECT_URL
 
    :default: ``/accounts/profile``
