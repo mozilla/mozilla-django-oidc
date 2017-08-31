@@ -133,6 +133,9 @@ class OIDCAuthenticationRequestView(View):
             'state': state,
         }
 
+        extra = import_from_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
+        params.update(extra)
+
         if import_from_settings('OIDC_USE_NONCE', True):
             nonce = get_random_string(import_from_settings('OIDC_NONCE_SIZE', 32))
             params.update({
