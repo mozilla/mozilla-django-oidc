@@ -169,7 +169,7 @@ class OIDCLogoutView(View):
             if logout_from_op:
                 logout_url = import_string(logout_from_op)()
 
-            # Log out the Django user, only if she was actually logged in.
+            # Log out the Django user if they were logged in.
             auth.logout(request)
 
         return HttpResponseRedirect(logout_url)
