@@ -39,3 +39,12 @@ class AbsolutifyTestCase(TestCase):
         ).get('/', SERVER_PORT=443)
         url = absolutify(req, '/foo/bar')
         self.assertEqual(url, 'https://testserver/foo/bar')
+
+
+    @override_settings(SECURE_PROXY_SSL_HEADER=('HTTP_X_FORWARDED_PROTO', 'https'))
+    def test_absolutify_path_host_injection(self):
+        req = RequestFactory(
+            HTTP_X_FORWARDED_PROTO='https'
+        ).get('/', SERVER_PORT=443)
+        url = absolutify(req, 'evil.com/bar')
+        self.assertEqual(url, 'https://testserver/evil.com/foo/bar')
