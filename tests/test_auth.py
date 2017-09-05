@@ -80,6 +80,14 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         user = User.objects.create_user('example_username')
         self.assertEqual(self.backend.get_user(user.pk), user)
 
+    def test_get_multiple_user(self):
+        """Test get_user method with multiple valid users."""
+
+        user = User.objects.create_user('example_username')
+        user2 = User.objects.create_user('example_username')
+
+        self.assertEqual(self.backend.get_user(user.pk), None)
+
     def test_get_invalid_user(self):
         """Test get_user method with non existing user."""
 
