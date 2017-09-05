@@ -46,5 +46,5 @@ class AbsolutifyTestCase(TestCase):
         req = RequestFactory(
             HTTP_X_FORWARDED_PROTO='https'
         ).get('/', SERVER_PORT=443)
-        url = absolutify(req, 'evil.com/bar')
+        url = absolutify(req, 'evil.com/foo/bar')
         self.assertEqual(url, 'https://testserver/evil.com/foo/bar')
