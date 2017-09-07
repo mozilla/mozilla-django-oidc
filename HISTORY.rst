@@ -2,6 +2,18 @@
 
 History
 -------
+
+development
+++++++++++++++++++
+
+
+Bugs:
+
+* Use ``settings.OIDC_VERIFY_SSL`` also when validating the token.
+  Thanks `@GermanoGuerrini`_
+
+.. _`@GermanoGuerrini`: https://github.com/GermanoGuerrini
+
 0.3.1 (2017-06-15)
 ++++++++++++++++++
 
