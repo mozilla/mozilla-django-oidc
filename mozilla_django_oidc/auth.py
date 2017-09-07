@@ -140,7 +140,8 @@ class OIDCAuthenticationBackend(object):
             user_response = requests.get(self.OIDC_OP_USER_ENDPOINT,
                                          headers={
                                              'Authorization': 'Bearer {0}'.format(access_token)
-                                         })
+                                         },
+                                         verify=import_from_settings('OIDC_VERIFY_SSL', True))
             user_response.raise_for_status()
 
             user_info = user_response.json()
