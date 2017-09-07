@@ -103,6 +103,18 @@ of ``mozilla-django-oidc``.
 
    The OpenID Connect scopes to request during login.
 
+.. py:attribute:: OIDC_STORE_ACCESS_TOKEN
+
+   :default: ``False``
+
+   If true, store the access_token in ``session['oidc_access_token']``.
+
+.. py:attribute:: OIDC_STORE_ID_TOKEN
+
+   :default: ``False``
+
+   If true, store the id_token in ``session['oidc_id_token']``.
+
 .. py:attribute:: LOGIN_REDIRECT_URL
 
    :default: ``/accounts/profile``
