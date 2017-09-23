@@ -181,6 +181,28 @@ class OIDCAuthenticationBackend(ModelBackend):
             raise SuspiciousOperation(msg)
         return verified_id
 
+    def get_token_response(self, payload):
+        """Obtains the OIDC token"""
+
+        response = requests.post(
+            self.OIDC_OP_TOKEN_ENDPOINT,
+            data=payload,
+            verify=import_from_settings('OIDC_VERIFY_SSL', True))
+        response.raise_for_status()
+        return response.json()
+
+    def get_userinfo(self, access_token, id_token, verified_id):
+        """Retrieve user details"""
+
+        user_response = requests.get(
+            self.OIDC_OP_USER_ENDPOINT,
+            headers={
+                'Authorization': 'Bearer {0}'.format(access_token)
+            },
+            verify=import_from_settings('OIDC_VERIFY_SSL', True))
+        user_response.raise_for_status()
+        return user_response.json()
+
     def authenticate(self, **kwargs):
         """Authenticates a user based on the OIDC code flow."""
 
@@ -191,7 +213,6 @@ class OIDCAuthenticationBackend(ModelBackend):
         state = self.request.GET.get('state')
         code = self.request.GET.get('code')
         nonce = kwargs.pop('nonce', None)
-        session = self.request.session
 
         if not code or not state:
             return None
@@ -211,56 +232,51 @@ class OIDCAuthenticationBackend(ModelBackend):
         }
 
         # Get the token
-        response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT,
-                                 data=token_payload,
-                                 verify=import_from_settings('OIDC_VERIFY_SSL', True))
-        response.raise_for_status()
+        token_response = self.get_token_response(token_payload)
+        id_token = token_response.get('id_token')
+        access_token = token_response.get('access_token')
 
         # Validate the token
-        token_response = response.json()
-        id_token = token_response.get('id_token')
-        if self.verify_token(id_token, nonce=nonce):
-            access_token = token_response.get('access_token')
+        verified_id = self.verify_token(id_token, nonce=nonce)
 
-            if import_from_settings('OIDC_STORE_ACCESS_TOKEN', False):
-                session['oidc_access_token'] = access_token
+        if verified_id:
+            return self.handle_verified_id(access_token, id_token, verified_id)
 
-            if import_from_settings('OIDC_STORE_ID_TOKEN', False):
-                session['oidc_id_token'] = id_token
-
-            user_response = requests.get(self.OIDC_OP_USER_ENDPOINT,
-                                         headers={
-                                             'Authorization': 'Bearer {0}'.format(access_token)
-                                         },
-                                         verify=import_from_settings('OIDC_VERIFY_SSL', True))
-            user_response.raise_for_status()
-
-            user_info = user_response.json()
-            email = user_info.get('email')
-
-            claims_verified = self.verify_claims(user_info)
-            if not claims_verified:
-                LOGGER.debug('Login failed: Claims verification for %s failed.', email)
-                return None
-
-            # email based filtering
-            users = self.filter_users_by_claims(user_info)
-
-            if len(users) == 1:
-                return self.update_user(users[0], user_info)
-            elif len(users) > 1:
-                # In the rare case that two user accounts have the same email address,
-                # log and bail. Randomly selecting one seems really wrong.
-                LOGGER.warn('Multiple users with email address %s.', email)
-                return None
-            elif import_from_settings('OIDC_CREATE_USER', True):
-                user = self.create_user(user_info)
-                return user
-            else:
-                LOGGER.debug('Login failed: No user with email %s found, and '
-                             'OIDC_CREATE_USER is False', email)
-                return None
         return None
+
+    def handle_verified_id(self, access_token, id_token, verified_id):
+        """Get or create the user"""
+
+        session = self.request.session
+
+        if import_from_settings('OIDC_STORE_ACCESS_TOKEN', False):
+            session['oidc_access_token'] = access_token
+
+        if import_from_settings('OIDC_STORE_ID_TOKEN', False):
+            session['oidc_id_token'] = id_token
+
+        # get userinfo
+        user_info = self.get_userinfo(access_token, id_token, verified_id)
+
+        # email based filtering
+        users = self.filter_users_by_claims(user_info)
+
+        email = user_info.get('email')
+
+        if len(users) == 1:
+            return self.update_user(users[0], user_info)
+        elif len(users) > 1:
+            # In the rare case that two user accounts have the same email
+            # address, log and bail. Randomly selecting one seems really wrong.
+            LOGGER.warn('Multiple users with email address %s.', email)
+            return None
+        elif import_from_settings('OIDC_CREATE_USER', True):
+            user = self.create_user(user_info)
+            return user
+        else:
+            LOGGER.debug('Login failed: No user with email %s found, and '
+                         'OIDC_CREATE_USER is False', email)
+            return None
 
     def get_user(self, user_id):
         """Return a user based on the id."""
