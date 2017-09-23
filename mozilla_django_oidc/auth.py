@@ -150,6 +150,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
+
         nonce = kwargs.get('nonce')
 
         token = force_bytes(token)
@@ -171,12 +172,14 @@ class OIDCAuthenticationBackend(ModelBackend):
         # In Python3.6, the json.loads() function can accept a byte string
         # as it will automagically decode it to a unicode string before
         # deserializing https://bugs.python.org/issue17909
-        token_nonce = json.loads(verified_token.decode('utf-8')).get('nonce')
+        verified_id = json.loads(verified_token.decode('utf-8'))
+        token_nonce = verified_id.get('nonce')
 
-        if import_from_settings('OIDC_USE_NONCE', True) and nonce != token_nonce:
+        if import_from_settings('OIDC_USE_NONCE', True) \
+           and nonce != token_nonce:
             msg = 'JWT Nonce verification failed.'
             raise SuspiciousOperation(msg)
-        return True
+        return verified_id
 
     def authenticate(self, **kwargs):
         """Authenticates a user based on the OIDC code flow."""
