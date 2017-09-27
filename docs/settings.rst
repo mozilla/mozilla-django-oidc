@@ -97,6 +97,19 @@ of ``mozilla-django-oidc``.
       When using a custom callback view, it is generally a good idea to subclass the
       default ``OIDCAuthenticationCallbackView`` and override the methods you want to change.
 
+.. py:attribute:: OIDC_RP_SIGN_ALGO
+
+   :default: ``HS256``
+
+   Sets the algorithm the IdP uses to sign ID tokens.
+
+.. py:attribute:: OIDC_RP_IDP_SIGN_KEY
+
+   :default: ``None``
+
+   Sets the key the IdP uses to sign ID tokens in the case of an RSA sign algorithm.
+   Should be the JWK as a python dict.
+
 .. py:attribute:: OIDC_RP_SCOPES
 
    :default: ``openid email``
