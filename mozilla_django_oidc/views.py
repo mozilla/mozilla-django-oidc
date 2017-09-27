@@ -18,7 +18,7 @@ from django.views.generic import View
 from mozilla_django_oidc.utils import (
     absolutify,
     import_from_settings,
-    is_authenticated,
+    is_authenticated
 )
 
 
@@ -124,7 +124,7 @@ class OIDCAuthenticationRequestView(View):
 
         params = {
             'response_type': 'code',
-            'scope': 'openid',
+            'scope': import_from_settings('OIDC_RP_SCOPES', 'openid email'),
             'client_id': self.OIDC_RP_CLIENT_ID,
             'redirect_uri': absolutify(
                 request,
@@ -132,6 +132,9 @@ class OIDCAuthenticationRequestView(View):
             ),
             'state': state,
         }
+
+        extra = import_from_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
+        params.update(extra)
 
         if import_from_settings('OIDC_USE_NONCE', True):
             nonce = get_random_string(import_from_settings('OIDC_NONCE_SIZE', 32))
@@ -169,7 +172,7 @@ class OIDCLogoutView(View):
             if logout_from_op:
                 logout_url = import_string(logout_from_op)()
 
-            # Log out the Django user, only if she was actually logged in.
+            # Log out the Django user if they were logged in.
             auth.logout(request)
 
         return HttpResponseRedirect(logout_url)

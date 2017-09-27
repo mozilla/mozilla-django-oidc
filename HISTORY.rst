@@ -2,6 +2,18 @@
 
 History
 -------
+
+development
+++++++++++++++++++
+
+
+Bugs:
+
+* Use ``settings.OIDC_VERIFY_SSL`` also when validating the token.
+  Thanks `@GermanoGuerrini`_
+
+.. _`@GermanoGuerrini`: https://github.com/GermanoGuerrini
+
 0.3.1 (2017-06-15)
 ++++++++++++++++++
 
@@ -18,8 +30,8 @@ Security issues:
 
 Backwards-incompatible changes:
 
-* The settings.SITE_URL is no longer used. Instead the absolute URL is
-  derived from the request's get_host().
+* The ``settings.SITE_URL`` is no longer used. Instead the absolute URL is
+  derived from the request's ``get_host()``.
 * Only log out by HTTP POST allowed.
 
 Bugs:
@@ -35,13 +47,13 @@ Backwards-incompatible changes:
 
   If you're using Django 1.9, you should update Django first.
 
-* Move middleware to `mozilla_django_oidc.middleware` and
-  change it to use authentication endpoint with `prompt=none` (#94)
+* Move middleware to ``mozilla_django_oidc.middleware`` and
+  change it to use authentication endpoint with ``prompt=none`` (#94)
 
-  You'll need to update your `MIDDLEWARE_CLASSES`/`MIDDLEWARE`
+  You'll need to update your ``MIDDLEWARE_CLASSES``/``MIDDLEWARE``
   setting accordingly.
 
-* Remove legacy base64 handling of OIDC secret. Now RP secret
+* Remove legacy ``base64`` handling of OIDC secret. Now RP secret
   should be plaintext.
 
 Features:
@@ -53,7 +65,7 @@ Features:
 
 Bugs:
 
-* always decode verified token before json.load() (#116)
+* always decode verified token before ``json.load()`` (#116)
 * always redirect to logout_url even when logged out (#121)
 * Change email matching to be case-insensitive (#102)
 * Allow combining OIDCAuthenticationBackend with other backends (#87)

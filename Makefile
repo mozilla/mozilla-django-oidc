@@ -20,13 +20,13 @@ lint: ## check style with flake8
 	flake8 mozilla_django_oidc tests
 
 test: ## run tests quickly with the default Python
-	python runtests.py tests
+	DJANGO_SETTINGS_MODULE=tests.settings django-admin.py test
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source mozilla_django_oidc runtests.py tests
+	DJANGO_SETTINGS_MODULE=tests.settings coverage run --source mozilla_django_oidc  `which django-admin.py` test
 	coverage report -m
 	coverage html
 	open htmlcov/index.html

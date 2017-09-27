@@ -83,7 +83,7 @@ class RefreshIDTokenMiddlewareTestCase(TestCase):
             'client_id': ['foo'],
             'nonce': ['examplestring'],
             'prompt': ['none'],
-            'scope': ['openid'],
+            'scope': ['openid email'],
             'state': ['examplestring'],
         }
         self.assertEquals(expected_query, parse_qs(qs))
@@ -112,7 +112,7 @@ class RefreshIDTokenMiddlewareTestCase(TestCase):
             'client_id': ['foo'],
             'nonce': ['examplestring'],
             'prompt': ['none'],
-            'scope': ['openid'],
+            'scope': ['openid email'],
             'state': ['examplestring'],
         }
         self.assertEquals(expected_query, parse_qs(qs))
@@ -254,7 +254,7 @@ class MiddlewareTestCase(TestCase):
             'client_id': ['foo'],
             'nonce': ['examplestring'],
             'prompt': ['none'],
-            'scope': ['openid'],
+            'scope': ['openid email'],
             'state': ['examplestring'],
         }
         self.assertEquals(expected_query, parse_qs(qs))

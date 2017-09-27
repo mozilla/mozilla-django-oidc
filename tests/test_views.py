@@ -347,11 +347,39 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         o = urlparse(response.url)
         expected_query = {
             'response_type': ['code'],
-            'scope': ['openid'],
+            'scope': ['openid email'],
             'client_id': ['example_id'],
             'redirect_uri': ['http://testserver/callback/'],
             'state': ['examplestring'],
             'nonce': ['examplestring']
+        }
+        self.assertDictEqual(parse_qs(o.query), expected_query)
+        self.assertEqual(o.hostname, 'server.example.com')
+        self.assertEqual(o.path, '/auth')
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(OIDC_AUTH_REQUEST_EXTRA_PARAMS={'audience': 'some-api.example.com'})
+    @patch('mozilla_django_oidc.views.get_random_string')
+    def test_get_with_audience(self, mock_random_string):
+        """Test initiation of a successful OIDC attempt."""
+        mock_random_string.return_value = 'examplestring'
+        url = reverse('oidc_authentication_init')
+        request = self.factory.get(url)
+        request.session = dict()
+        login_view = views.OIDCAuthenticationRequestView.as_view()
+        response = login_view(request)
+        self.assertEqual(response.status_code, 302)
+
+        o = urlparse(response.url)
+        expected_query = {
+            'response_type': ['code'],
+            'scope': ['openid email'],
+            'client_id': ['example_id'],
+            'redirect_uri': ['http://testserver/callback/'],
+            'state': ['examplestring'],
+            'nonce': ['examplestring'],
+            'audience': ['some-api.example.com'],
         }
         self.assertDictEqual(parse_qs(o.query), expected_query)
         self.assertEqual(o.hostname, 'server.example.com')

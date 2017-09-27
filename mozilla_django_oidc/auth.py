@@ -145,12 +145,16 @@ class OIDCAuthenticationBackend(object):
             access_token = token_response.get('access_token')
 
             if import_from_settings('OIDC_STORE_ACCESS_TOKEN', False):
+                session['oidc_access_token'] = access_token
+
+            if import_from_settings('OIDC_STORE_ID_TOKEN', False):
                 session['oidc_id_token'] = id_token
 
             user_response = requests.get(self.OIDC_OP_USER_ENDPOINT,
                                          headers={
                                              'Authorization': 'Bearer {0}'.format(access_token)
-                                         })
+                                         },
+                                         verify=import_from_settings('OIDC_VERIFY_SSL', True))
             user_response.raise_for_status()
 
             user_info = user_response.json()
