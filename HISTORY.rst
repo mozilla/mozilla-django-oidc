@@ -3,16 +3,27 @@
 History
 -------
 
-development
+0.3.2 (2017-10-03)
 ++++++++++++++++++
 
+Features:
+
+* Implement RS256 verification
+  Thanks `@puiterwijk`_
 
 Bugs:
 
 * Use ``settings.OIDC_VERIFY_SSL`` also when validating the token.
   Thanks `@GermanoGuerrini`_
+* Make OpenID Connect scope configurable.
+  Thanks `@puiterwijk`_
+* Add path host injection unit-test (#171)
+* Revisit OIDC_STORE_{ACCESS,ID}_TOKEN config entries
+* Allow configuration of additional auth parameters
+
 
 .. _`@GermanoGuerrini`: https://github.com/GermanoGuerrini
+.. _`@puiterwijk`: https://github.com/puiterwijk
 
 0.3.1 (2017-06-15)
 ++++++++++++++++++
