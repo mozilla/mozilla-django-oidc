@@ -6,6 +6,7 @@ import requests
 
 from django.utils.encoding import smart_bytes, smart_text
 from django.contrib.auth import get_user_model
+from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
 from django.core.urlresolvers import reverse
 
@@ -36,7 +37,7 @@ def default_username_algo(email):
     return smart_text(username)
 
 
-class OIDCAuthenticationBackend(object):
+class OIDCAuthenticationBackend(ModelBackend):
     """Override Django's authentication."""
 
     def __init__(self, *args, **kwargs):
