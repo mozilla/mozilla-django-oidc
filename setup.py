@@ -46,7 +46,10 @@ setup(
     include_package_data=True,
     install_requires=[
         'Django>1.7',
-        'python-jose',
+        # cryptography dropped supporting Python 3.3 at some point
+        "cryptography<1.9; python_version == '3.3'",
+        "cryptography>=1.9; python_version == '2.7' or python_version > '3.4'",
+        'josepy',
         'requests'
     ],
     license='MPL 2.0',

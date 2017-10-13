@@ -10,7 +10,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
 from django.core.urlresolvers import reverse
 
-from jose import jws
+from josepy.jws import JWS
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
 
@@ -78,6 +78,24 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         return self.UserModel.objects.create_user(username, email)
 
+    def _verify_jws(self, payload, key):
+        """Verify the given JWS payload with the given key and return the payload"""
+        jws = JWS.from_compact(payload)
+        if not jws.verify(key):
+            msg = 'JWS token verification failed.'
+            raise SuspiciousOperation(msg)
+
+        try:
+            alg = jws.signature.to_json()['header']['alg']
+            if alg != self.OIDC_RP_SIGN_ALGO:
+                msg = 'The specified alg value is not allowed'
+                raise SuspiciousOperation(msg)
+        except KeyError:
+            msg = 'No alg value found in header'
+            raise SuspiciousOperation(msg)
+
+        return jws.payload
+
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
         nonce = kwargs.get('nonce')
@@ -88,10 +106,10 @@ class OIDCAuthenticationBackend(ModelBackend):
             key = self.OIDC_RP_CLIENT_SECRET
 
         # Verify the token
-        verified_token = jws.verify(
+        verified_token = self._verify_jws(
             token,
             key,
-            algorithms=[self.OIDC_RP_SIGN_ALGO]
+            algorithm=self.OIDC_RP_SIGN_ALGO,
         )
         # The 'verified_token' will always be a byte string since it's
         # the result of base64.urlsafe_b64decode().
