@@ -2,10 +2,10 @@
 mozilla-django-oidc
 ===================
 
-.. image:: https://badge.fury.io/py/mozilla-django-oidc.png
+.. image:: https://badge.fury.io/py/mozilla-django-oidc.svg
     :target: https://badge.fury.io/py/mozilla-django-oidc
 
-.. image:: https://travis-ci.org/mozilla/mozilla-django-oidc.png?branch=master
+.. image:: https://travis-ci.org/mozilla/mozilla-django-oidc.svg?branch=master
     :target: https://travis-ci.org/mozilla/mozilla-django-oidc
 
 .. image:: https://img.shields.io/codecov/c/github/mozilla/mozilla-django-oidc.svg
