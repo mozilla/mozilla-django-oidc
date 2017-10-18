@@ -10,6 +10,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
 from django.core.urlresolvers import reverse
 
+from josepy.jwk import JWK
 from josepy.jws import JWS
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
@@ -80,13 +81,15 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def _verify_jws(self, payload, key):
         """Verify the given JWS payload with the given key and return the payload"""
+
         jws = JWS.from_compact(payload)
-        if not jws.verify(key):
+        jwk = JWK.load(key)
+        if not jws.verify(jwk):
             msg = 'JWS token verification failed.'
             raise SuspiciousOperation(msg)
 
         try:
-            alg = jws.signature.to_json()['header']['alg']
+            alg = jws.signature.combined.alg.name
             if alg != self.OIDC_RP_SIGN_ALGO:
                 msg = 'The specified alg value is not allowed'
                 raise SuspiciousOperation(msg)
@@ -109,7 +112,6 @@ class OIDCAuthenticationBackend(ModelBackend):
         verified_token = self._verify_jws(
             token,
             key,
-            algorithm=self.OIDC_RP_SIGN_ALGO,
         )
         # The 'verified_token' will always be a byte string since it's
         # the result of base64.urlsafe_b64decode().
