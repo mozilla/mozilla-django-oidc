@@ -255,7 +255,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.return_value = post_json_mock
         self.backend.authenticate(request=auth_request)
         calls = [
-            call('token', 'client_secret', algorithm='HS256')
+            call('token', 'client_secret')
         ]
         jws_mock.assert_has_calls(calls)
 
@@ -285,7 +285,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         }
         request_mock.post.return_value = post_json_mock
         calls = [
-            call('token', 'client_secret', algorithm='HS256')
+            call('token', 'client_secret')
         ]
 
         self.backend.authenticate(request=auth_request)
