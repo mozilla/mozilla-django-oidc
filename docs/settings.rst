@@ -141,7 +141,7 @@ of ``mozilla-django-oidc``.
    :default: ``None``
 
    Sets the key the IdP uses to sign ID tokens in the case of an RSA sign algorithm.
-   Should be the JWK as a python dict.
+   Should be the signing key in PEM or DER format.
 
 .. py:attribute:: LOGIN_REDIRECT_URL
 
