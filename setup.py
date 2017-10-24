@@ -32,6 +32,18 @@ if sys.argv[-1] == 'tag':
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
+install_requirements = [
+    'Django>1.7',
+    'josepy',
+    'requests'
+]
+# cryptography dropped supporting Python 3.2/3.3 at some point
+if sys.version_info[:2] > (2, 7) and sys.version_info[:2] < (3, 4):
+    install_requirements.append('cryptography<1.9')
+else:
+    install_requirements.append('cryptography>1.9')
+
+
 setup(
     name='mozilla-django-oidc',
     version=VERSION,
@@ -40,15 +52,9 @@ setup(
     author='Tasos Katsoulas, John Giannelos',
     author_email='akatsoulas@mozilla.com, jgiannelos@mozilla.com',
     url='https://github.com/mozilla/mozilla-django-oidc',
-    packages=[
-        'mozilla_django_oidc',
-    ],
+    packages=['mozilla_django_oidc'],
     include_package_data=True,
-    install_requires=[
-        'Django>1.7',
-        'python-jose',
-        'requests'
-    ],
+    install_requires=install_requirements,
     license='MPL 2.0',
     zip_safe=False,
     keywords='mozilla-django-oidc',
