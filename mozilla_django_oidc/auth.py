@@ -110,8 +110,8 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         # Verify the token
         verified_token = self._verify_jws(
-            token,
-            key,
+            smart_bytes(token),
+            smart_bytes(key),
         )
         # The 'verified_token' will always be a byte string since it's
         # the result of base64.urlsafe_b64decode().

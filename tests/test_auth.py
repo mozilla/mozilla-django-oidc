@@ -254,9 +254,14 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         }
         request_mock.post.return_value = post_json_mock
         self.backend.authenticate(request=auth_request)
-        calls = [
-            call('token', 'client_secret')
-        ]
+        if six.PY2:
+            calls = [
+                call('token', 'client_secret')
+            ]
+        else:
+            calls = [
+                call(b'token', b'client_secret')
+            ]
         jws_mock.assert_has_calls(calls)
 
     @override_settings(OIDC_VERIFY_JWT=False)
@@ -284,9 +289,16 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'access_token': 'access_token'
         }
         request_mock.post.return_value = post_json_mock
-        calls = [
-            call('token', 'client_secret')
-        ]
+        # Whichever Python version you use, always expect the jws_mock
+        # to be called with byte strings.
+        if six.PY2:
+            calls = [
+                call('token', 'client_secret')
+            ]
+        else:
+            calls = [
+                call(b'token', b'client_secret')
+            ]
 
         self.backend.authenticate(request=auth_request)
         jws_mock.assert_has_calls(calls)
