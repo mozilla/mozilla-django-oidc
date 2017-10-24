@@ -3,6 +3,18 @@
 History
 -------
 
+0.4.0 (2017-11-24)
+++++++++++++++++++
+
+Security issues:
+
+* **High**: Replace python-jose with josepy and use pyca/cryptography instead of pycrypto (CVE-2013-7459).
+
+Backwards-incompatible changes:
+
+* ``OIDC_RP_IDP_SIGN_KEY`` no longer uses the JWK json as ``dict`` but PEM or DER keys instead.
+
+
 0.3.2 (2017-10-03)
 ++++++++++++++++++
 
