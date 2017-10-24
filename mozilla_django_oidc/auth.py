@@ -4,7 +4,7 @@ import json
 import logging
 import requests
 
-from django.utils.encoding import smart_bytes, smart_text
+from django.utils.encoding import force_bytes, smart_text
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
@@ -32,7 +32,7 @@ def default_username_algo(email):
     # this protects against data leakage because usernames are often
     # treated as public identifiers (so we can't use the email address).
     username = base64.urlsafe_b64encode(
-        hashlib.sha1(smart_bytes(email)).digest()
+        hashlib.sha1(force_bytes(email)).digest()
     ).rstrip(b'=')
 
     return smart_text(username)
@@ -110,8 +110,8 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         # Verify the token
         verified_token = self._verify_jws(
-            smart_bytes(token),
-            smart_bytes(key),
+            force_bytes(token),
+            force_bytes(key),
         )
         # The 'verified_token' will always be a byte string since it's
         # the result of base64.urlsafe_b64decode().
