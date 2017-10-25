@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils import six
+from django.utils.encoding import force_bytes
 
 from mozilla_django_oidc.auth import (
     default_username_algo,
@@ -255,7 +256,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.return_value = post_json_mock
         self.backend.authenticate(request=auth_request)
         calls = [
-            call('token', 'client_secret')
+            call(force_bytes('token'), force_bytes('client_secret'))
         ]
         jws_mock.assert_has_calls(calls)
 
@@ -285,9 +286,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         }
         request_mock.post.return_value = post_json_mock
         calls = [
-            call('token', 'client_secret')
+            call(force_bytes('token'), force_bytes('client_secret'))
         ]
-
         self.backend.authenticate(request=auth_request)
         jws_mock.assert_has_calls(calls)
 
