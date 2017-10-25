@@ -4,7 +4,7 @@ import json
 import logging
 import requests
 
-from django.utils.encoding import force_bytes, smart_text
+from django.utils.encoding import force_bytes, smart_text, smart_bytes
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
@@ -111,7 +111,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         # Verify the token
         verified_token = self._verify_jws(
             force_bytes(token),
-            force_bytes(key),
+            # Use smart_bytes here since the key string comes from settings.
+            smart_bytes(key),
         )
         # The 'verified_token' will always be a byte string since it's
         # the result of base64.urlsafe_b64decode().
