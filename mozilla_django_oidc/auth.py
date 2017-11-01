@@ -4,11 +4,13 @@ import json
 import logging
 import requests
 
-from django.utils.encoding import force_bytes, smart_text, smart_bytes
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.utils.encoding import force_bytes, smart_text, smart_bytes
+from django.utils.module_loading import import_string
+from django.utils import six
 
 from josepy.jwk import JWK
 from josepy.jws import JWS
@@ -73,6 +75,8 @@ class OIDCAuthenticationBackend(ModelBackend):
             return None
 
         if username_algo:
+            if isinstance(username_algo, six.string_types):
+                username_algo = import_string(username_algo)
             username = username_algo(email)
         else:
             username = default_username_algo(email)
