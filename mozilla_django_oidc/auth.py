@@ -64,6 +64,10 @@ class OIDCAuthenticationBackend(ModelBackend):
             return self.UserModel.objects.none()
         return self.UserModel.objects.filter(email__iexact=email)
 
+    def verify_claims(self, claims):
+        """Verify the provided claims to decide if authentication should be allowed."""
+        return True
+
     def create_user(self, claims):
         """Return object for a newly created user account."""
         # bluntly stolen from django-browserid
@@ -185,6 +189,11 @@ class OIDCAuthenticationBackend(ModelBackend):
 
             user_info = user_response.json()
             email = user_info.get('email')
+
+            claims_verified = self.verify_claims(user_info)
+            if not claims_verified:
+                LOGGER.debug('Login failed: Claims verification for %s failed.', email)
+                return None
 
             # email based filtering
             users = self.filter_users_by_claims(user_info)
