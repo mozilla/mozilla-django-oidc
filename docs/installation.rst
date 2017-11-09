@@ -309,7 +309,7 @@ data from the claims:
 
    class MyOIDCAB(OIDCAuthenticationBackend):
        def create_user(self, claims):
-           user = super(OIDCAuthenticationBackend, self).create_user(claims)
+           user = super(MyOIDCAB, self).create_user(claims)
 
            user.first_name = claim.get('given_name', '')
            user.last_name = claim.get('family_name', '')
@@ -338,6 +338,29 @@ setting::
 
 You might want to do this if you want to control user creation because your
 system requires additional process to allow people to use it.
+
+
+Advanced user verification based on their claims
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In case you need to check additional values in the user's claims to decide
+if the authentication should happen at all (included creating new users
+if ``OIDC_CREATE_USER`` is ``True``), then you should subclass the
+:py:class:`mozilla_django_oidc.auth.OIDCAuthenticationBackend` class and
+override the `verify_claims` method. It should return either ``True`` or
+``False`` to either continue or stop the whole authentication process.
+
+.. code-block:: python
+
+   class MyOIDCAB(OIDCAuthenticationBackend):
+       def verify_claims(self, claims):
+           verified = super(MyOIDCAB, self).verify_claims(claims)
+           is_admin = 'admin' in claims.get('group', [])
+           return verified and is_admin
+
+.. seealso::
+
+   https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
 
 
 Troubleshooting
