@@ -9,6 +9,8 @@ History
 * Add OIDC_AUTHENTICATION_CALLBACK_URL as a new configuration parameter
 * Fail earlier when JWS algorithm does not OIDC_RP_SIGN_ALGO.
   Thanks `@anlutro`_
+* RS256 verification through ``settings.OIDC_OP_JWKS_ENDPOINT``
+  Thanks `@GermanoGuerrini`_
 
 Backwards-incompatible changes:
 
