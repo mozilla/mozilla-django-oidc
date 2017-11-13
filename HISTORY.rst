@@ -2,6 +2,12 @@
 
 History
 -------
+0.4.2 (2017-11-13)
+++++++++++++++++++
+
+Features:
+
+* RS256 verification through ``settings.OIDC_OP_JWKS_ENDPOINT``
 
 0.4.1 (2017-10-25)
 ++++++++++++++++++
