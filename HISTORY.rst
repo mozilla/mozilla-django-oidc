@@ -3,6 +3,12 @@
 History
 -------
 
+0.4.2 (2017-11-29)
+++++++++++++++++++
+
+* Fix OIDC_USERNAME_ALGO to actually load dotted import path of callback.
+* Add verify_claims method for advanced authentication checks
+
 0.4.1 (2017-10-25)
 ++++++++++++++++++
 
