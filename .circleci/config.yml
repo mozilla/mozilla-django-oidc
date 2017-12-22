@@ -1,0 +1,29 @@
+version: 2
+jobs:
+  build_lib:
+    docker:
+      - image: circleci/python:3
+    steps:
+      - checkout
+      - run: mkdir workspace
+      - run: make sdist
+      - run: mv dist/mozilla-django-oidc-* workspace/mozilla-django-oidc-dev.tar.gz
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - mozilla-django-oidc-dev.tar.gz
+  test:
+    docker:
+      - image: mozillaparsys/oidc_testrp:py3
+        name: testrp
+      - image: mozillaparsys/oidc_testprovider
+        name: testprovider
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: pip install /tmp/workspace/mozilla-django-oidc-dev.tar.gz
+      - run:
+          command: ./bin/run_rs.sh
+          background: True
+      - run: python integration_tests.py
