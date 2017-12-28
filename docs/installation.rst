@@ -297,7 +297,7 @@ Changing how Django users are created
 If your website needs to do other bookkeeping things when a new ``User`` record
 is created, then you should subclass the
 :py:class:`mozilla_django_oidc.auth.OIDCAuthenticationBackend` class and
-override the `create_user` method.
+override the `create_user` method, and optionally, the `update_user` method.
 
 For example, let's say you want to populate the ``User`` instance with other
 data from the claims:
@@ -311,6 +311,13 @@ data from the claims:
        def create_user(self, claims):
            user = super(MyOIDCAB, self).create_user(claims)
 
+           user.first_name = claims.get('given_name', '')
+           user.last_name = claims.get('family_name', '')
+           user.save()
+
+           return user
+
+       def update_user(self, user, claims):
            user.first_name = claims.get('given_name', '')
            user.last_name = claims.get('family_name', '')
            user.save()
