@@ -311,8 +311,9 @@ data from the claims:
        def create_user(self, claims):
            user = super(MyOIDCAB, self).create_user(claims)
 
-           user.first_name = claim.get('given_name', '')
-           user.last_name = claim.get('family_name', '')
+           user.first_name = claims.get('given_name', '')
+           user.last_name = claims.get('family_name', '')
+           user.save()
 
            return user
 
