@@ -3,6 +3,16 @@
 History
 -------
 
+0.5.0 (2018-01-10)
+++++++++++++++++++
+
+* Add Django 2.0 support
+* Fix tox configuration
+
+Backwards-incompatible changes:
+
+* Drop Django 1.10 support
+
 0.4.2 (2017-11-29)
 ++++++++++++++++++
 
