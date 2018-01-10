@@ -1,0 +1,18 @@
+version: "3"
+services:
+  testprovider:
+    image: mozillaparsys/oidc_testprovider
+    ports:
+      - "8080:8080"
+    command: ./bin/run.sh
+  testrp:
+    image: mozillaparsys/oidc_testrp:py${RP_PYTHON_VERSION}
+    volumes:
+      - ./vendor:/vendor
+    links:
+      - "testprovider:testprovider"
+    ports:
+      - "8081:8081"
+    command: bash -c "pip install /vendor/mozilla-django-oidc-latest.tar.gz && ./bin/run_${VALIDATION_ALGO}.sh"
+volumes:
+  vendor:
