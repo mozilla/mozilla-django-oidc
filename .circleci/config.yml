@@ -29,10 +29,10 @@ common_steps: &common_steps
         working_directory: /testrp
     - run:
         name: Wait for testprovider
-        command: wait-for-it -p 8080 -h localhost
+        command: wait-for-it -p 8080 -h localhost -t 60
     - run:
         name: Wait for testrp
-        command: wait-for-it -p 8081 -h localhost
+        command: wait-for-it -p 8081 -h localhost -t 60
     - run:
         name: Python version
         command: python --version
