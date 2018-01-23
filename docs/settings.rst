@@ -97,6 +97,18 @@ of ``mozilla-django-oidc``.
       When using a custom callback view, it is generally a good idea to subclass the
       default ``OIDCAuthenticationCallbackView`` and override the methods you want to change.
 
+.. py:attribute:: OIDC_AUTHENTICATE_CLASS
+
+   :default: ``mozilla_django_oidc.views.OIDCAuthenticationRequestView``
+
+   Allows you to substitute a custom class-based view to be used as OpenID Connect
+   authenticate URL.
+
+   .. note::
+
+      When using a custom authenticate view, it is generally a good idea to subclass the
+      default ``OIDCAuthenticationRequestView`` and override the methods you want to change.
+
 .. py:attribute:: OIDC_RP_SCOPES
 
    :default: ``openid email``
