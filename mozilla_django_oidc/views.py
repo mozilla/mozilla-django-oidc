@@ -137,8 +137,7 @@ class OIDCAuthenticationRequestView(View):
             'state': state,
         }
 
-        extra = import_from_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
-        params.update(extra)
+        params.update(self.get_extra_params(request))
 
         if import_from_settings('OIDC_USE_NONCE', True):
             nonce = get_random_string(import_from_settings('OIDC_NONCE_SIZE', 32))
@@ -153,6 +152,9 @@ class OIDCAuthenticationRequestView(View):
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=self.OIDC_OP_AUTH_ENDPOINT, query=query)
         return HttpResponseRedirect(redirect_url)
+
+    def get_extra_params(self, request):
+        return import_from_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
 
 
 class OIDCLogoutView(View):

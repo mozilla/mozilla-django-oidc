@@ -391,6 +391,41 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @patch('mozilla_django_oidc.views.get_random_string')
+    @patch('mozilla_django_oidc.views.OIDCAuthenticationRequestView.get_extra_params')
+    def test_get_with_overridden_extra_params(self, mock_extra_params, mock_random_string):
+        """Test overriding OIDCAuthenticationRequestView.get_extra_params()."""
+        mock_random_string.return_value = 'examplestring'
+
+        mock_extra_params.return_value = {
+            'connection': 'foo'
+        }
+
+        url = reverse('oidc_authentication_init')
+        request = self.factory.get(url)
+        request.session = dict()
+        login_view = views.OIDCAuthenticationRequestView.as_view()
+        response = login_view(request)
+        self.assertEqual(response.status_code, 302)
+
+        o = urlparse(response.url)
+        expected_query = {
+            'response_type': ['code'],
+            'scope': ['openid email'],
+            'client_id': ['example_id'],
+            'redirect_uri': ['http://testserver/callback/'],
+            'state': ['examplestring'],
+            'nonce': ['examplestring'],
+            'connection': ['foo'],
+        }
+        self.assertDictEqual(parse_qs(o.query), expected_query)
+        self.assertEqual(o.hostname, 'server.example.com')
+        self.assertEqual(o.path, '/auth')
+
+        mock_extra_params.assert_called_with(request)
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
     def test_next_url(self):
         """Test that `next` url gets stored to user session."""
         url = reverse('oidc_authentication_init')
