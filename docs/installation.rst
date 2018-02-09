@@ -65,8 +65,6 @@ Start by making the following changes to your ``settings.py`` file.
 
    # Add 'mozilla_django_oidc' authentication backend
    AUTHENTICATION_BACKENDS = (
-       # ...
-       'django.contrib.auth.backends.ModelBackend',
        'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
        # ...
    )
