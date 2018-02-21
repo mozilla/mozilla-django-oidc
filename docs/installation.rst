@@ -113,7 +113,7 @@ These values relate to your site.
 
 .. code-block:: python
 
-   LOGIN_REDIRECT_URL = "<ULR path to redirect to after login>"
+   LOGIN_REDIRECT_URL = "<URL path to redirect to after login>"
    LOGOUT_REDIRECT_URL = "<URL path to redirect to after logout>"
 
 
