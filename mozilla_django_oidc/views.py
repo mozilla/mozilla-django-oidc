@@ -7,7 +7,11 @@ except ImportError:
 
 import django
 from django.core.exceptions import SuspiciousOperation
-from django.core.urlresolvers import reverse
+try:
+    from django.urls import reverse
+except ImportError:
+    # Django < 2.0.0
+    from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string

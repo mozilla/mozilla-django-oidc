@@ -9,6 +9,22 @@ Features:
 
 * RS256 verification through ``settings.OIDC_OP_JWKS_ENDPOINT``
 
+0.5.0 (2018-01-10)
+++++++++++++++++++
+
+* Add Django 2.0 support
+* Fix tox configuration
+
+Backwards-incompatible changes:
+
+* Drop Django 1.10 support
+
+0.4.2 (2017-11-29)
+++++++++++++++++++
+
+* Fix OIDC_USERNAME_ALGO to actually load dotted import path of callback.
+* Add verify_claims method for advanced authentication checks
+
 0.4.1 (2017-10-25)
 ++++++++++++++++++
 

@@ -83,8 +83,6 @@ Start by making the following changes to your ``settings.py`` file.
 
    # Add 'mozilla_django_oidc' authentication backend
    AUTHENTICATION_BACKENDS = (
-       # ...
-       'django.contrib.auth.backends.ModelBackend',
        'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
        # ...
    )
@@ -126,14 +124,14 @@ documentation for the appropriate values.
 
    You can find more info about `cookie-based sessions`_ in Django's documentation.
 
-.. _cookie-based sessions: https://docs.djangoproject.com/en/1.10/topics/http/sessions/#using-cookie-based-sessions
+.. _cookie-based sessions: https://docs.djangoproject.com/en/1.11/topics/http/sessions/#using-cookie-based-sessions
 
 
 These values relate to your site.
 
 .. code-block:: python
 
-   LOGIN_REDIRECT_URL = "<ULR path to redirect to after login>"
+   LOGIN_REDIRECT_URL = "<URL path to redirect to after login>"
    LOGOUT_REDIRECT_URL = "<URL path to redirect to after logout>"
 
 
@@ -302,11 +300,11 @@ the email address at all:
    Django 1.8 username:
        https://docs.djangoproject.com/en/1.8/ref/contrib/auth/#django.contrib.auth.models.User.username
 
-   Django 1.10 username:
-       https://docs.djangoproject.com/en/1.10/ref/contrib/auth/#django.contrib.auth.models.User.username
-
    Django 1.11 username:
        https://docs.djangoproject.com/en/1.11/ref/contrib/auth/#django.contrib.auth.models.User.username
+
+   Django 2.0 username:
+       https://docs.djangoproject.com/en/2.0/ref/contrib/auth/#django.contrib.auth.models.User.username
 
 
 Changing how Django users are created
