@@ -1,3 +1,4 @@
+import json
 import time
 
 try:
@@ -51,15 +52,39 @@ class RefreshIDTokenMiddlewareTestCase(TestCase):
         response = self.middleware.process_request(request)
         self.assertTrue(not response)
 
-    def test_is_ajax(self):
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize')
+    @override_settings(OIDC_RP_CLIENT_ID='foo')
+    @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_is_ajax(self, mock_random_string):
+        mock_random_string.return_value = 'examplestring'
+
         request = self.factory.get(
             '/foo',
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
+        request.session = {}
         request.user = self.user
 
         response = self.middleware.process_request(request)
-        self.assertTrue(not response)
+        self.assertEquals(response.status_code, 403)
+        # The URL to go to is available both as a header and as a key
+        # in the JSON response.
+        self.assertTrue(response['refresh_url'])
+        url, qs = response['refresh_url'].split('?')
+        self.assertEquals(url, 'http://example.com/authorize')
+        expected_query = {
+            'response_type': ['code'],
+            'redirect_uri': ['http://testserver/callback/'],
+            'client_id': ['foo'],
+            'nonce': ['examplestring'],
+            'prompt': ['none'],
+            'scope': ['openid email'],
+            'state': ['examplestring'],
+        }
+        self.assertEquals(expected_query, parse_qs(qs))
+        json_payload = json.loads(response.content.decode('utf-8'))
+        self.assertEquals(json_payload['refresh_url'], response['refresh_url'])
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize')
     @override_settings(OIDC_RP_CLIENT_ID='foo')

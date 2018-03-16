@@ -12,7 +12,7 @@ try:
 except ImportError:
     # Django < 2.0.0
     from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
 
@@ -78,7 +78,6 @@ class RefreshIDToken(MiddlewareMixin):
         return (
             request.method == 'GET' and
             is_authenticated(request.user) and
-            not request.is_ajax() and
             request.path not in self.exempt_urls
         )
 
@@ -126,4 +125,16 @@ class RefreshIDToken(MiddlewareMixin):
 
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=auth_url, query=query)
+        if request.is_ajax():
+            # Almost all XHR request handling in client-side code struggles
+            # with redirects since redirecting to a page where the user
+            # is supposed to do something is extremely unlikely to work
+            # in an XHR request. Make a special response for these kinds
+            # of requests.
+            # The use of 403 Forbidden is to match the fact that this
+            # middleware doesn't really want the user in if they don't
+            # refresh their session.
+            response = JsonResponse({'refresh_url': redirect_url}, status=403)
+            response['refresh_url'] = redirect_url
+            return response
         return HttpResponseRedirect(redirect_url)
