@@ -14,6 +14,7 @@ except ImportError:
     from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
+from django.utils.functional import cached_property
 
 from mozilla_django_oidc.utils import (
     absolutify,
@@ -42,7 +43,9 @@ class RefreshIDToken(MiddlewareMixin):
     re-authenticate silently.
 
     """
-    def get_exempt_urls(self):
+
+    @cached_property
+    def exempt_urls(self):
         """Generate and return a set of url paths to exempt from RefreshIDToken
 
         This takes the value of ``settings.OIDC_EXEMPT_URLS`` and appends three
@@ -59,10 +62,10 @@ class RefreshIDToken(MiddlewareMixin):
             'oidc_logout',
         ])
 
-        return [
+        return set([
             url if url.startswith('/') else reverse(url)
             for url in exempt_urls
-        ]
+        ])
 
     def is_refreshable_url(self, request):
         """Takes a request and returns whether it triggers a refresh examination
@@ -72,13 +75,11 @@ class RefreshIDToken(MiddlewareMixin):
         :returns: boolean
 
         """
-        exempt_urls = self.get_exempt_urls()
-
         return (
             request.method == 'GET' and
             is_authenticated(request.user) and
-            request.path not in exempt_urls and
-            not request.is_ajax()
+            not request.is_ajax() and
+            request.path not in self.exempt_urls
         )
 
     def process_request(self, request):

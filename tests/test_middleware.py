@@ -196,7 +196,7 @@ class MiddlewareTestCase(TestCase):
     def test_get_exempt_urls_setting_view_name(self):
         middleware = RefreshIDToken()
         self.assertEquals(
-            sorted(middleware.get_exempt_urls()),
+            sorted(list(middleware.exempt_urls)),
             [u'/authenticate/', u'/callback/', u'/logout/', u'/mdo_fake_view/']
         )
 
@@ -204,7 +204,7 @@ class MiddlewareTestCase(TestCase):
     def test_get_exempt_urls_setting_url_path(self):
         middleware = RefreshIDToken()
         self.assertEquals(
-            sorted(middleware.get_exempt_urls()),
+            sorted(list(middleware.exempt_urls)),
             [u'/authenticate/', u'/callback/', u'/foo/', u'/logout/']
         )
 
