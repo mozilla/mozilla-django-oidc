@@ -308,7 +308,13 @@ class MiddlewareTestCase(TestCase):
             'error_description': 'Multifactor authentication required',
         })
         self.assertEqual(resp.status_code, 302)
-        self.assertEquals(resp.url, '/')
+        # Note, in other versions of Django this 'resp.url' will be
+        # an absolute URL, so we need to make this split to make sure the
+        # test suite works in old and new versions of Django.
+        if 'http://testserver' in resp.url:
+            self.assertEquals(resp.url, 'http://testserver/')
+        else:
+            self.assertEquals(resp.url, '/')
 
         # Since the user in 'client' doesn't change, we have to use other
         # queues to assert that the user got logged out properly.
