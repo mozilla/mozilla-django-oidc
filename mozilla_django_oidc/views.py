@@ -63,7 +63,16 @@ class OIDCAuthenticationCallbackView(View):
             # Make sure that nonce is not used twice
             del request.session['oidc_nonce']
 
-        if 'code' in request.GET and 'state' in request.GET:
+        if request.GET.get('error'):
+            # Ouch! Something important failed.
+            # Make sure the user doesn't get to continue to be logged in
+            # otherwise the refresh middleware will force the user to
+            # redirect to authorize again if the session refresh has
+            # expired.
+            if is_authenticated(request.user):
+                auth.logout(request)
+            assert not is_authenticated(request.user)
+        elif 'code' in request.GET and 'state' in request.GET:
             kwargs = {
                 'request': request,
                 'nonce': nonce,
