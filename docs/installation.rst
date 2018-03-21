@@ -154,7 +154,7 @@ Django templates example:
 
 Jinja2 templates example:
 
-.. code-block:: html+jinja2
+.. code-block:: html+jinja
 
    <html>
      <body>
