@@ -175,14 +175,13 @@ class OIDCAuthenticationBackend(ModelBackend):
         verified_id = json.loads(verified_token.decode('utf-8'))
         token_nonce = verified_id.get('nonce')
 
-        if import_from_settings('OIDC_USE_NONCE', True) \
-           and nonce != token_nonce:
+        if import_from_settings('OIDC_USE_NONCE', True) and nonce != token_nonce:
             msg = 'JWT Nonce verification failed.'
             raise SuspiciousOperation(msg)
         return verified_id
 
-    def get_token_response(self, payload):
-        """Obtains the OIDC token"""
+    def get_token(self, payload):
+        """Return token object as a dictionary."""
 
         response = requests.post(
             self.OIDC_OP_TOKEN_ENDPOINT,
@@ -192,7 +191,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         return response.json()
 
     def get_userinfo(self, access_token, id_token, verified_id):
-        """Retrieve user details"""
+        """Return user details dictionary."""
 
         user_response = requests.get(
             self.OIDC_OP_USER_ENDPOINT,
@@ -232,20 +231,21 @@ class OIDCAuthenticationBackend(ModelBackend):
         }
 
         # Get the token
-        token_response = self.get_token_response(token_payload)
-        id_token = token_response.get('id_token')
-        access_token = token_response.get('access_token')
+        token_info = self.get_token(token_payload)
+        id_token = token_info.get('id_token')
+        access_token = token_info.get('access_token')
 
         # Validate the token
         verified_id = self.verify_token(id_token, nonce=nonce)
 
         if verified_id:
-            return self.handle_verified_id(access_token, id_token, verified_id)
+            return self.get_or_create_user(access_token, id_token, verified_id)
 
         return None
 
-    def handle_verified_id(self, access_token, id_token, verified_id):
-        """Get or create the user"""
+    def get_or_create_user(self, access_token, id_token, verified_id):
+        """Returns a User instance if 1 user is found. Creates a user if not found
+        and configured to do so. Returns nothing if multiple users are matched."""
 
         session = self.request.session
 
