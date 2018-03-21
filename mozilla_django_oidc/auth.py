@@ -258,16 +258,21 @@ class OIDCAuthenticationBackend(ModelBackend):
         # get userinfo
         user_info = self.get_userinfo(access_token, id_token, verified_id)
 
+        email = user_info.get('email')
+
+        claims_verified = self.verify_claims(user_info)
+        if not claims_verified:
+            LOGGER.debug('Login failed: Claims verification for %s failed.', email)
+            return None
+
         # email based filtering
         users = self.filter_users_by_claims(user_info)
-
-        email = user_info.get('email')
 
         if len(users) == 1:
             return self.update_user(users[0], user_info)
         elif len(users) > 1:
-            # In the rare case that two user accounts have the same email
-            # address, log and bail. Randomly selecting one seems really wrong.
+            # In the rare case that two user accounts have the same email address,
+            # log and bail. Randomly selecting one seems really wrong.
             LOGGER.warn('Multiple users with email address %s.', email)
             return None
         elif import_from_settings('OIDC_CREATE_USER', True):
