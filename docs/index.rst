@@ -11,3 +11,4 @@ Contents:
    contributing
    authors
    history
+   source/modules.rst
