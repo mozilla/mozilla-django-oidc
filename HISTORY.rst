@@ -3,6 +3,13 @@
 History
 -------
 
+0.6.0 (2018-03-27)
+++++++++++++++++++
+
+* Add e2e tests and automation
+* Add caching for exempt URLs
+* Fix logout when session refresh fails
+
 0.5.0 (2018-01-10)
 ++++++++++++++++++
 
