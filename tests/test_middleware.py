@@ -308,7 +308,7 @@ class MiddlewareTestCase(TestCase):
             'error_description': 'Multifactor authentication required',
         })
         self.assertEqual(resp.status_code, 302)
-        # Note, in other versions of Django this 'resp.url' will be
+        # Note, in versions of Django <=1.8, this 'resp.url' will be
         # an absolute URL, so we need to make this split to make sure the
         # test suite works in old and new versions of Django.
         if 'http://testserver' in resp.url:
