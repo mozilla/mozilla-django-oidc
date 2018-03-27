@@ -11,8 +11,10 @@ from mock import patch
 import django
 from django.conf.urls import url
 from django.contrib.auth import get_user_model
+from django.contrib.auth.signals import user_logged_out
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
+from django.dispatch import receiver
 from django.http import HttpResponse
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.test.client import ClientHandler
@@ -258,3 +260,69 @@ class MiddlewareTestCase(TestCase):
             'state': ['examplestring'],
         }
         self.assertEquals(expected_query, parse_qs(qs))
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize')
+    @override_settings(OIDC_RP_CLIENT_ID='foo')
+    @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_fails_for_already_signed_in_user(self, mock_random_string):
+        mock_random_string.return_value = 'examplestring'
+
+        # Mutable to log which users get logged out.
+        logged_out_users = []
+
+        # Register a signal on 'user_logged_out' so we can
+        # update 'logged_out_users'.
+        @receiver(user_logged_out)
+        def logged_out(sender, user=None, **kwargs):
+            logged_out_users.append(user)
+
+        client = ClientWithUser()
+        # First confirm that the home page is a public page.
+        resp = client.get('/')
+        # At least security doesn't kick you out.
+        self.assertEquals(resp.status_code, 404)
+        # Also check that this page doesn't force you to redirect
+        # to authenticate.
+        resp = client.get('/mdo_fake_view/')
+        self.assertEquals(resp.status_code, 200)
+        client.login(username=self.user.username, password='password')
+
+        # Set expiration to some time in the past
+        session = client.session
+        session['oidc_id_token_expiration'] = time.time() - 100
+        session.save()
+
+        # Confirm that now you're forced to authenticate again.
+        resp = client.get('/mdo_fake_view/')
+        self.assertEquals(resp.status_code, 302)
+        self.assertTrue(
+            'http://example.com/authorize' in resp.url and
+            'prompt=none' in resp.url
+        )
+        # Now suppose the user goes there and something goes wrong.
+        # For example, the user might have become "blocked" or the 2FA
+        # verficiation has expired and needs to be done again.
+        resp = client.get('/callback/', {
+            'error': 'login_required',
+            'error_description': 'Multifactor authentication required',
+        })
+        self.assertEqual(resp.status_code, 302)
+        # Note, in versions of Django <=1.8, this 'resp.url' will be
+        # an absolute URL, so we need to make this split to make sure the
+        # test suite works in old and new versions of Django.
+        if 'http://testserver' in resp.url:
+            self.assertEquals(resp.url, 'http://testserver/')
+        else:
+            self.assertEquals(resp.url, '/')
+
+        # Since the user in 'client' doesn't change, we have to use other
+        # queues to assert that the user got logged out properly.
+
+        # The session gets flushed when you get signed out.
+        # This is the only decent way to know the user lost all
+        # request.session and
+        self.assertTrue(not client.session.items())
+
+        # The signal we registered should have fired for this user.
+        self.assertEquals(client.user, logged_out_users[0])
