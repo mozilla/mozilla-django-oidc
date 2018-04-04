@@ -150,7 +150,6 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
-
         nonce = kwargs.get('nonce')
 
         token = force_bytes(token)
