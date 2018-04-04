@@ -191,7 +191,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         return response.json()
 
     def get_userinfo(self, access_token, id_token, verified_id):
-        """Return user details dictionary."""
+        """Return user details dictionary. The id_token and verified_id are not used in
+        the default implementation, but may be used when overriding this method"""
 
         user_response = requests.get(
             self.OIDC_OP_USER_ENDPOINT,
