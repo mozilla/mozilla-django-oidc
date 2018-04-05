@@ -8,6 +8,7 @@ Contents:
 
    installation
    settings
+   xhr
    contributing
    authors
    history
