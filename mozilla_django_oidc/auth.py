@@ -91,6 +91,10 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         return self.UserModel.objects.create_user(username, email)
 
+    def update_user(self, user, claims):
+        """Update existing user with new claims, if necessary save, and return user"""
+        return user
+
     def _verify_jws(self, payload, key):
         """Verify the given JWS payload with the given key and return the payload"""
 
@@ -203,7 +207,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             users = self.filter_users_by_claims(user_info)
 
             if len(users) == 1:
-                return users[0]
+                return self.update_user(users[0], user_info)
             elif len(users) > 1:
                 # In the rare case that two user accounts have the same email address,
                 # log and bail. Randomly selecting one seems really wrong.
