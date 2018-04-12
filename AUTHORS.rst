@@ -20,3 +20,4 @@ Contributors
 * Giorgos Logiotatidis (`@glogiotatidis <https://github.com/glogiotatidis>`_)
 * Olle Jonsson (`@olleolleolle <https://github.com/olleolleolle>`_)
 * `@GermanoGuerrini <https://github.com/GermanoGuerrini>`_
+* John Paulett (`@johnpaulett <https://github.com/johnpaulett>`_)
