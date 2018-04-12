@@ -369,6 +369,33 @@ override the `verify_claims` method. It should return either ``True`` or
    https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
 
 
+Log user out of the OpenID Connect provider
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a user logs out, by default, mozilla-django-oidc will end the current
+Django session.  However, the user may still have an active session with the
+OpenID Connect provider, in which case, the user would likely not be prompted
+to log back in.
+
+Some OpenID Connect providers support a custom (not part of OIDC spec) mechanism
+to end the provider's session.  We can build a function for
+``OIDC_OP_LOGOUT_URL_METHOD`` that will redirect the user to the provider after
+mozilla-django-oidc ends the Django session.
+
+
+.. code-block:: python
+
+   def provider_logout(request):
+       # See your provider's documentation for details on if and how this is
+       # supported
+       redirect_url = 'https://myprovider.com/logout'
+       return redirect_url
+
+
+The ``request.build_absolute_uri`` can be used if the provider requires
+a return-to location.
+
+
 Troubleshooting
 ---------------
 
