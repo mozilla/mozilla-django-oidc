@@ -181,3 +181,13 @@ of ``mozilla-django-oidc``.
    .. seealso::
 
       https://docs.djangoproject.com/en/1.11/ref/settings/#logout-redirect-url
+
+.. py:attribute:: OIDC_OP_LOGOUT_URL_METHOD
+
+   :default: ``''`` (will use ``LOGOUT_REDIRECT_URL``)
+
+   Function path that returns a URL to redirect the user to after
+   ``auth.logout()`` is called.
+
+   .. versionchanged:: 0.7.0
+      The function must now take a ``request`` parameter.

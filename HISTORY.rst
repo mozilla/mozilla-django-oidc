@@ -3,6 +3,14 @@
 History
 -------
 
+0.7.0 (unreleased)
+++++++++++++++++++
+
+Backwards-incompatible changes:
+
+* ``OIDC_OP_LOGOUT_URL_METHOD`` takes a ``request`` parameter now.
+
+
 0.6.0 (2018-03-27)
 ++++++++++++++++++
 
