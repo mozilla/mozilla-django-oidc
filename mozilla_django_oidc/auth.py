@@ -159,6 +159,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         if not code or not state:
             raise SuspiciousOperation('Code or state not found.')
 
+        reverse_url = import_from_settings('OIDC_AUTHENTICATION_CALLBACK_URL',
+                                           'oidc_authentication_callback')
+
         token_payload = {
             'client_id': self.OIDC_RP_CLIENT_ID,
             'client_secret': self.OIDC_RP_CLIENT_SECRET,
@@ -166,7 +169,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             'code': code,
             'redirect_uri': absolutify(
                 self.request,
-                reverse('oidc_authentication_callback')
+                reverse(reverse_url)
             ),
         }
 

@@ -191,3 +191,14 @@ of ``mozilla-django-oidc``.
 
    .. versionchanged:: 0.7.0
       The function must now take a ``request`` parameter.
+
+.. py:attribute:: OIDC_AUTHENTICATION_CALLBACK_URL
+
+   :default: ``oidc_authentication_callback``
+
+   URL pattern name for ``OIDCAuthenticationCallbackView``. Will be passed to ``reverse``.
+   The pattern can also include namespace in order to resolve included urls.
+
+   .. seealso::
+
+      https://docs.djangoproject.com/en/2.0/topics/http/urls/#url-namespaces
