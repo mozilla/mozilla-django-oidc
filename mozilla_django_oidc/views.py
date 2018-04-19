@@ -134,6 +134,8 @@ class OIDCAuthenticationRequestView(View):
         """OIDC client authentication initialization HTTP endpoint"""
         state = get_random_string(import_from_settings('OIDC_STATE_SIZE', 32))
         redirect_field_name = import_from_settings('OIDC_REDIRECT_FIELD_NAME', 'next')
+        reverse_url = import_from_settings('OIDC_AUTHENTICATION_CALLBACK_URL',
+                                           'oidc_authentication_callback')
 
         params = {
             'response_type': 'code',
@@ -141,7 +143,7 @@ class OIDCAuthenticationRequestView(View):
             'client_id': self.OIDC_RP_CLIENT_ID,
             'redirect_uri': absolutify(
                 request,
-                reverse('oidc_authentication_callback')
+                reverse(reverse_url)
             ),
             'state': state,
         }
