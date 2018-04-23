@@ -99,18 +99,21 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Verify the given JWS payload with the given key and return the payload"""
 
         jws = JWS.from_compact(payload)
-        jwk = JWK.load(key)
-        if not jws.verify(jwk):
-            msg = 'JWS token verification failed.'
-            raise SuspiciousOperation(msg)
 
         try:
             alg = jws.signature.combined.alg.name
-            if alg != self.OIDC_RP_SIGN_ALGO:
-                msg = 'The specified alg value is not allowed'
-                raise SuspiciousOperation(msg)
         except KeyError:
             msg = 'No alg value found in header'
+            raise SuspiciousOperation(msg)
+
+        if alg != self.OIDC_RP_SIGN_ALGO:
+            msg = "The provider algorithm {!r} does not match the client's " \
+                  "OIDC_RP_SIGN_ALGO.".format(alg)
+            raise SuspiciousOperation(msg)
+
+        jwk = JWK.load(key)
+        if not jws.verify(jwk):
+            msg = 'JWS token verification failed.'
             raise SuspiciousOperation(msg)
 
         return jws.payload
