@@ -317,8 +317,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         # there are no GET params
         request = RequestFactory().get('/foo')
         request.session = {}
-        with self.assertRaisesMessage(SuspiciousOperation, 'Code or state not found'):
-            self.backend.authenticate(request=request)
+        self.assertIsNone(self.backend.authenticate(request=request))
 
     @override_settings(OIDC_USE_NONCE=False)
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend._verify_jws')
