@@ -3,7 +3,7 @@
 History
 -------
 
-0.7.0 (unreleased)
+1.0.0 (unreleased)
 ++++++++++++++++++
 
 * Add OIDC_AUTHENTICATION_CALLBACK_URL as a new configuration parameter
@@ -11,6 +11,7 @@ History
 Backwards-incompatible changes:
 
 * ``OIDC_OP_LOGOUT_URL_METHOD`` takes a ``request`` parameter now.
+* Changed name of ``RefreshIDToken`` middleware to ``SessionRefresh``.
 
 
 0.6.0 (2018-03-27)
