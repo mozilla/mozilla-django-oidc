@@ -157,7 +157,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         session = self.request.session
 
         if not code or not state:
-            raise SuspiciousOperation('Code or state not found.')
+            return None
 
         reverse_url = import_from_settings('OIDC_AUTHENTICATION_CALLBACK_URL',
                                            'oidc_authentication_callback')
