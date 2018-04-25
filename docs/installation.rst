@@ -47,6 +47,24 @@ The OpenID Connect provider (OP) will then give you the following:
 
 You'll need these values for settings.
 
+Choose the appropriate algorithm
+--------------------------------
+
+Depending on your OpenID Connect provider (OP) you might need to change the
+default signing algorithm from ``HS256`` to ``RS256`` by settings the
+``OIDC_RP_SIGN_ALGO`` value accordingly.
+
+For ``RS256`` algorithm to work, you need to set either the OP Sign Key or
+the OP Jwks Endpoint.
+
+The corresponding settings values are:
+
+.. code-block:: python
+
+    OIDC_RP_IDP_SIGN_KEY = "OP Sign key in PEM or DER format"
+    OIDC_OP_JWKS_ENDPOINT = "<URL of the OIDC OP jwks endpoint>"
+
+If both specified, the key takes precedence.
 
 Add settings to settings.py
 ---------------------------

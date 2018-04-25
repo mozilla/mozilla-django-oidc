@@ -17,7 +17,7 @@ from django.utils.module_loading import import_string
 from django.utils import six
 
 from josepy.jwk import JWK
-from josepy.jws import JWS
+from josepy.jws import JWS, Header
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
 
@@ -51,13 +51,19 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Initialize settings."""
         self.OIDC_OP_TOKEN_ENDPOINT = import_from_settings('OIDC_OP_TOKEN_ENDPOINT')
         self.OIDC_OP_USER_ENDPOINT = import_from_settings('OIDC_OP_USER_ENDPOINT')
+        self.OIDC_OP_JWKS_ENDPOINT = import_from_settings('OIDC_OP_JWKS_ENDPOINT', None)
         self.OIDC_RP_CLIENT_ID = import_from_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_RP_CLIENT_SECRET = import_from_settings('OIDC_RP_CLIENT_SECRET')
         self.OIDC_RP_SIGN_ALGO = import_from_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = import_from_settings('OIDC_RP_IDP_SIGN_KEY', None)
 
-        if self.OIDC_RP_SIGN_ALGO.startswith('RS') and self.OIDC_RP_IDP_SIGN_KEY is None:
-            raise ImproperlyConfigured('IDP Signing key not provided with RS signing algorithm')
+        if self.OIDC_RP_SIGN_ALGO.startswith('RS') and (
+            self.OIDC_RP_IDP_SIGN_KEY is None and
+            self.OIDC_OP_JWKS_ENDPOINT is None
+        ):
+            raise ImproperlyConfigured('RS signing algorithm requires '
+                                       'the IDP Signing key or '
+                                       'the IP jwks endpoint')
 
         self.UserModel = get_user_model()
 
@@ -97,9 +103,15 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def _verify_jws(self, payload, key):
         """Verify the given JWS payload with the given key and return the payload"""
-
         jws = JWS.from_compact(payload)
-        jwk = JWK.load(key)
+
+        if isinstance(key, six.string_types):
+            # Use smart_bytes here since the key string comes from settings.
+            jwk = JWK.load(smart_bytes(key))
+        else:
+            # The key is a json returned from the IDP JWKS endpoint.
+            jwk = JWK.from_json(key)
+
         if not jws.verify(jwk):
             msg = 'JWS token verification failed.'
             raise SuspiciousOperation(msg)
@@ -115,21 +127,46 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         return jws.payload
 
+    def retrieve_matching_jwk(self, token):
+        """Get the signing key by exploring the jwks endpoint of the identity
+        provider."""
+        response_jwks = requests.get(
+            self.OIDC_OP_JWKS_ENDPOINT,
+            verify=import_from_settings('OIDC_VERIFY_SSL', True)
+        )
+        response_jwks.raise_for_status()
+        jwks = response_jwks.json()
+
+        # Compute the current header from the given token to find a match
+        jws = JWS.from_compact(token)
+        json_header = jws.signature.protected
+        header = Header.json_loads(json_header)
+
+        key = None
+        for jwk in jwks['keys']:
+            if (jwk['alg'] == smart_text(header.alg) and
+                    jwk['kid'] == smart_text(header.kid)):
+                key = jwk
+        if key is None:
+            raise SuspiciousOperation('Could not find a valid JWKS.')
+        return key
+
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
         nonce = kwargs.get('nonce')
 
+        token = force_bytes(token)
         if self.OIDC_RP_SIGN_ALGO.startswith('RS'):
-            key = self.OIDC_RP_IDP_SIGN_KEY
+            if self.OIDC_RP_IDP_SIGN_KEY is not None:
+                key = self.OIDC_RP_IDP_SIGN_KEY
+            else:
+                key = self.retrieve_matching_jwk(token)
         else:
             key = self.OIDC_RP_CLIENT_SECRET
 
         # Verify the token
-        verified_token = self._verify_jws(
-            force_bytes(token),
-            # Use smart_bytes here since the key string comes from settings.
-            smart_bytes(key),
-        )
+        verified_token = self._verify_jws(token, key)
+
         # The 'verified_token' will always be a byte string since it's
         # the result of base64.urlsafe_b64decode().
         # The payload is always the result of base64.urlsafe_b64decode().
