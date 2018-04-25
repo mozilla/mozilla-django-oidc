@@ -20,7 +20,7 @@ from django.http import HttpResponse
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.test.client import ClientHandler
 
-from mozilla_django_oidc.middleware import RefreshIDToken
+from mozilla_django_oidc.middleware import SessionRefresh
 from mozilla_django_oidc.urls import urlpatterns as orig_urlpatterns
 
 
@@ -30,10 +30,10 @@ User = get_user_model()
 DJANGO_VERSION = tuple(django.VERSION[0:2])
 
 
-class RefreshIDTokenMiddlewareTestCase(TestCase):
+class SessionRefreshTokenMiddlewareTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.middleware = RefreshIDToken()
+        self.middleware = SessionRefresh()
         self.user = User.objects.create_user('example_username')
 
     def test_anonymous(self):
@@ -158,7 +158,7 @@ urlpatterns = list(orig_urlpatterns) + [
 def override_middleware(fun):
     classes = [
         'django.contrib.sessions.middleware.SessionMiddleware',
-        'mozilla_django_oidc.middleware.RefreshIDToken',
+        'mozilla_django_oidc.middleware.SessionRefresh',
     ]
     if DJANGO_VERSION >= (1, 10):
         return override_settings(MIDDLEWARE=classes)(fun)
@@ -221,7 +221,7 @@ class MiddlewareTestCase(TestCase):
 
     @override_settings(OIDC_EXEMPT_URLS=['mdo_fake_view'])
     def test_get_exempt_urls_setting_view_name(self):
-        middleware = RefreshIDToken()
+        middleware = SessionRefresh()
         self.assertEquals(
             sorted(list(middleware.exempt_urls)),
             [u'/authenticate/', u'/callback/', u'/logout/', u'/mdo_fake_view/']
@@ -229,7 +229,7 @@ class MiddlewareTestCase(TestCase):
 
     @override_settings(OIDC_EXEMPT_URLS=['/foo/'])
     def test_get_exempt_urls_setting_url_path(self):
-        middleware = RefreshIDToken()
+        middleware = SessionRefresh()
         self.assertEquals(
             sorted(list(middleware.exempt_urls)),
             [u'/authenticate/', u'/callback/', u'/foo/', u'/logout/']

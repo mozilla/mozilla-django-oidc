@@ -184,21 +184,22 @@ his/her corporate account, but continue to use your website.
 
 To handle this scenario, your website needs to know if the user's id token with
 the OIDC provider is still valid. You need to use the
-:py:class:`mozilla_django_oidc.middleware.RefreshIDToken` middleware.
+:py:class:`mozilla_django_oidc.middleware.SessionRefresh` middleware.
 
 To add it to your site, put it in the settings::
 
     MIDDLEWARE_CLASSES = [
         # middleware involving session and authentication must come first
         # ...
-        'mozilla_django_oidc.middleware.RefreshIDToken',
+        'mozilla_django_oidc.middleware.SessionRefresh',
         # ...
     ]
 
 
-The ``RefreshIDToken`` middleware will check to see if the user's id token has
-expired and if so, redirect to the OIDC provider's authentication endpoint
-for a silent re-auth. That will redirect back to the page the user was going to.
+The :py:class:`mozilla_django_oidc.middleware.SessionRefresh` middleware will
+check to see if the user's id token has expired and if so, redirect to the OIDC
+provider's authentication endpoint for a silent re-auth. That will redirect back
+to the page the user was going to.
 
 The length of time it takes for an id token to expire is set in
 ``settings.OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS`` which defaults to 15 minutes.

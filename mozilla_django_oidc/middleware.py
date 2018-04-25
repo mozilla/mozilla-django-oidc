@@ -35,18 +35,17 @@ else:
         pass
 
 
-class RefreshIDToken(MiddlewareMixin):
-    """Renews id_tokens after expiry seconds
+class SessionRefresh(MiddlewareMixin):
+    """Refreshes the session with the OIDC RP after expiry seconds
 
-    For users authenticated with an id_token, we need to check that it's still
-    valid after a specific amount of time and if not, force them to
-    re-authenticate silently.
+    For users authenticated with the OIDC RP, verify tokens are still valid and
+    if not, force the user to re-authenticate silently.
 
     """
 
     @cached_property
     def exempt_urls(self):
-        """Generate and return a set of url paths to exempt from RefreshIDToken
+        """Generate and return a set of url paths to exempt from SessionRefresh
 
         This takes the value of ``settings.OIDC_EXEMPT_URLS`` and appends three
         urls that mozilla-django-oidc uses. These values can be view names or
