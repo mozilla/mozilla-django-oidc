@@ -7,26 +7,20 @@ History
 ++++++++++++++++++
 
 * Add OIDC_AUTHENTICATION_CALLBACK_URL as a new configuration parameter
-<<<<<<< HEAD
 * Fail earlier when JWS algorithm does not OIDC_RP_SIGN_ALGO.
   Thanks `@anlutro`_
 * RS256 verification through ``settings.OIDC_OP_JWKS_ENDPOINT``
   Thanks `@GermanoGuerrini`_
-=======
-* Refactor MozillaOIDCAuthenticationBackend so that the algorithm and verification key can be overridden in subclasses when you need to.
->>>>>>> Processed PR feedback
+* Refactor OIDCAuthenticationBackend so that token retrieval methods be overridden in a subclass when you need to.
 
 Backwards-incompatible changes:
 
 * ``OIDC_OP_LOGOUT_URL_METHOD`` takes a ``request`` parameter now.
 * Changed name of ``RefreshIDToken`` middleware to ``SessionRefresh``.
 
-<<<<<<< HEAD
 
 .. _`@anlutro`: https://github.com/anlutro
 
-=======
->>>>>>> Processed PR feedback
 0.6.0 (2018-03-27)
 ++++++++++++++++++
 
