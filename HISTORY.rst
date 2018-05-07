@@ -7,12 +7,16 @@ History
 ++++++++++++++++++
 
 * Add OIDC_AUTHENTICATION_CALLBACK_URL as a new configuration parameter
+* Fail earlier when JWS algorithm does not OIDC_RP_SIGN_ALGO.
+  Thanks `@anlutro`_
 
 Backwards-incompatible changes:
 
 * ``OIDC_OP_LOGOUT_URL_METHOD`` takes a ``request`` parameter now.
 * Changed name of ``RefreshIDToken`` middleware to ``SessionRefresh``.
 
+
+.. _`@anlutro`: https://github.com/anlutro
 
 0.6.0 (2018-03-27)
 ++++++++++++++++++

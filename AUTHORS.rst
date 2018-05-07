@@ -21,3 +21,4 @@ Contributors
 * Olle Jonsson (`@olleolleolle <https://github.com/olleolleolle>`_)
 * `@GermanoGuerrini <https://github.com/GermanoGuerrini>`_
 * John Paulett (`@johnpaulett <https://github.com/johnpaulett>`_)
+* Andreas Lutro (`@anlutro <https://github.com/anlutro>`_)
