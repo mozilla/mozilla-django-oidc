@@ -11,7 +11,7 @@ History
   Thanks `@anlutro`_
 * RS256 verification through ``settings.OIDC_OP_JWKS_ENDPOINT``
   Thanks `@GermanoGuerrini`_
-* Refactor OIDCAuthenticationBackend so that token retrieval methods be overridden in a subclass when you need to.
+* Refactor OIDCAuthenticationBackend so that token retrieval methods can be overridden in a subclass when you need to.
 
 Backwards-incompatible changes:
 
