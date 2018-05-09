@@ -9,6 +9,7 @@ Contents:
    installation
    settings
    xhr
+   drf
    contributing
    authors
    history
