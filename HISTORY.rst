@@ -3,8 +3,8 @@
 History
 -------
 
-1.0.0 (unreleased)
-++++++++++++++++++
+1.0.0
++++++
 
 * Add OIDC_AUTHENTICATION_CALLBACK_URL as a new configuration parameter
 * Fail earlier when JWS algorithm does not OIDC_RP_SIGN_ALGO.
