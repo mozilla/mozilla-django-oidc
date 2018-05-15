@@ -8,8 +8,9 @@ from mock import patch
 
 import django
 from django.core.exceptions import SuspiciousOperation
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.sessions.backends.cache import SessionStore
 try:
     from django.urls import reverse
 except ImportError:
@@ -84,6 +85,39 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
                 mock_auth.assert_called_once_with(nonce=None,
                                                   request=request)
                 mock_login.assert_called_once_with(request, user)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/foobar')
+
+    @override_settings(LOGIN_REDIRECT_URL='/success')
+    def test_get_auth_success_next_url_logged_in_user(self):
+        """Test successful callback request to RP with custom `next` url."""
+        user = User.objects.create_user('example_username')
+        another_user = User.objects.create_user('another_user')
+
+        get_data = {
+            'code': 'example_code',
+            'state': 'example_state'
+        }
+        url = reverse('oidc_authentication_callback')
+        request = self.factory.get(url, get_data)
+        request.session = SessionStore()
+        session = request.session
+        session['oidc_state'] = 'example_state'
+        session['oidc_login_next'] = '/foobar'
+        session.save()
+        # Login another user
+        another_user.backend = ''
+        login(request, another_user)
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
+
+        with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
+            mock_auth.return_value = user
+            user.backend = ''
+            response = callback_view(request)
+
+            mock_auth.assert_called_once_with(nonce=None,
+                                              request=request)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/foobar')

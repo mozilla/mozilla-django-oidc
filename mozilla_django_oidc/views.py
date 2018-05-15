@@ -46,7 +46,9 @@ class OIDCAuthenticationCallbackView(View):
         return HttpResponseRedirect(self.failure_url)
 
     def login_success(self):
+        next_url = self.request.session.get('oidc_login_next', None)
         auth.login(self.request, self.user)
+        self.request.session['oidc_login_next'] = next_url
 
         # Figure out when this id_token will expire. This is ignored unless you're
         # using the RenewIDToken middleware.
