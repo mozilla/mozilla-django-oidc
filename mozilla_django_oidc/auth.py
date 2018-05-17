@@ -239,14 +239,13 @@ class OIDCAuthenticationBackend(ModelBackend):
         verified_id = self.verify_token(id_token, nonce=nonce)
 
         if verified_id:
+            self._write_tokens_to_session(access_token, id_token, verified_id)
             return self.get_or_create_user(access_token, id_token, verified_id)
 
         return None
 
-    def get_or_create_user(self, access_token, id_token, verified_id):
-        """Returns a User instance if 1 user is found. Creates a user if not found
-        and configured to do so. Returns nothing if multiple users are matched."""
-
+    def _write_tokens_to_session(self, access_token, id_token, verified_id):
+        """Write OIDC tokens to the session (if configured to do so)."""
         session = self.request.session
 
         if import_from_settings('OIDC_STORE_ACCESS_TOKEN', False):
@@ -255,7 +254,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         if import_from_settings('OIDC_STORE_ID_TOKEN', False):
             session['oidc_id_token'] = id_token
 
-        # get userinfo
+    def get_or_create_user(self, access_token, id_token, verified_id):
+        """Returns a User instance if 1 user is found. Creates a user if not found
+        and configured to do so. Returns nothing if multiple users are matched."""
+
         user_info = self.get_userinfo(access_token, id_token, verified_id)
 
         email = user_info.get('email')
