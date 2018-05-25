@@ -15,7 +15,9 @@ install:
   - pip install codecov tox-travis
 
 script:
-    - tox
+  # Workaround for https://github.com/pypa/virtualenv/issues/1179
+  - pip install "virtualenv<16.0"
+  - tox
 
 after_success:
   - codecov
