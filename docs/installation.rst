@@ -247,7 +247,7 @@ email address. Then we could do this:
    from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
    class MyOIDCAB(OIDCAuthenticationBackend):
-       def filter_users_by_claims(self, claim):
+       def filter_users_by_claims(self, claims):
            email = claims.get('email')
            if not email:
                return self.UserModel.objects.none()
