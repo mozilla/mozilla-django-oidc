@@ -77,22 +77,26 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def create_user(self, claims):
         """Return object for a newly created user account."""
-        # bluntly stolen from django-browserid
-        # https://github.com/mozilla/django-browserid/blob/master/django_browserid/auth.py
 
-        username_algo = import_from_settings('OIDC_USERNAME_ALGO', None)
         email = claims.get('email')
         if not email:
             return None
 
+        username = self.get_username(claims)
+
+        return self.UserModel.objects.create_user(username, email)
+
+    def get_username(self, claims):
+        """Generate username based on claims."""
+        # bluntly stolen from django-browserid
+        username_algo = import_from_settings('OIDC_USERNAME_ALGO', None)
+
         if username_algo:
             if isinstance(username_algo, six.string_types):
                 username_algo = import_string(username_algo)
-            username = username_algo(email)
-        else:
-            username = default_username_algo(email)
+            return username_algo(claims['email'])
 
-        return self.UserModel.objects.create_user(username, email)
+        return default_username_algo(claims['email'])
 
     def update_user(self, user, claims):
         """Update existing user with new claims, if necessary save, and return user"""
