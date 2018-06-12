@@ -35,14 +35,9 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 install_requirements = [
     'Django >= 1.11',
     'josepy',
-    'requests'
+    'requests',
+    'cryptography'
 ]
-# cryptography dropped supporting Python 3.2/3.3 at some point
-if sys.version_info[:2] > (2, 7) and sys.version_info[:2] < (3, 4):
-    install_requirements.append('cryptography<1.9')
-else:
-    install_requirements.append('cryptography>1.9')
-
 
 setup(
     name='mozilla-django-oidc',
@@ -59,7 +54,7 @@ setup(
     zip_safe=False,
     keywords='mozilla-django-oidc',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Framework :: Django',
         'Framework :: Django :: 1.11',
         'Framework :: Django :: 2.0',
