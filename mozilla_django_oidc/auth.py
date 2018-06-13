@@ -16,6 +16,7 @@ from django.utils.encoding import force_bytes, smart_text, smart_bytes
 from django.utils.module_loading import import_string
 from django.utils import six
 
+from josepy.b64 import b64decode
 from josepy.jwk import JWK
 from josepy.jws import JWS, Header
 
@@ -153,6 +154,19 @@ class OIDCAuthenticationBackend(ModelBackend):
             raise SuspiciousOperation('Could not find a valid JWKS.')
         return key
 
+    def get_payload_data(self, token, key):
+        """Helper method to get the payload of the JWT token."""
+        if import_from_settings('OIDC_ALLOW_UNSECURED_JWT', False):
+            header, payload_data, signature = token.split(b'.')
+            header = json.loads(smart_text(b64decode(header)))
+
+            # If config allows unsecured JWTs check the header and return the decoded payload
+            if 'alg' in header and header['alg'] == 'none':
+                return b64decode(payload_data)
+
+        # By default fallback to verify JWT signatures
+        return self._verify_jws(token, key)
+
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
         nonce = kwargs.get('nonce')
@@ -166,23 +180,22 @@ class OIDCAuthenticationBackend(ModelBackend):
         else:
             key = self.OIDC_RP_CLIENT_SECRET
 
-        # Verify the token
-        verified_token = self._verify_jws(token, key)
+        payload_data = self.get_payload_data(token, key)
 
-        # The 'verified_token' will always be a byte string since it's
+        # The 'token' will always be a byte string since it's
         # the result of base64.urlsafe_b64decode().
         # The payload is always the result of base64.urlsafe_b64decode().
         # In Python 3 and 2, that's always a byte string.
         # In Python3.6, the json.loads() function can accept a byte string
         # as it will automagically decode it to a unicode string before
         # deserializing https://bugs.python.org/issue17909
-        verified_id = json.loads(verified_token.decode('utf-8'))
-        token_nonce = verified_id.get('nonce')
+        payload = json.loads(payload_data.decode('utf-8'))
+        token_nonce = payload.get('nonce')
 
         if import_from_settings('OIDC_USE_NONCE', True) and nonce != token_nonce:
             msg = 'JWT Nonce verification failed.'
             raise SuspiciousOperation(msg)
-        return verified_id
+        return payload
 
     def get_token(self, payload):
         """Return token object as a dictionary."""
@@ -194,8 +207,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         response.raise_for_status()
         return response.json()
 
-    def get_userinfo(self, access_token, id_token, verified_id):
-        """Return user details dictionary. The id_token and verified_id are not used in
+    def get_userinfo(self, access_token, id_token, payload):
+        """Return user details dictionary. The id_token and payload are not used in
         the default implementation, but may be used when overriding this method"""
 
         user_response = requests.get(
@@ -241,12 +254,12 @@ class OIDCAuthenticationBackend(ModelBackend):
         access_token = token_info.get('access_token')
 
         # Validate the token
-        verified_id = self.verify_token(id_token, nonce=nonce)
+        payload = self.verify_token(id_token, nonce=nonce)
 
-        if verified_id:
+        if payload:
             self.store_tokens(access_token, id_token)
             try:
-                return self.get_or_create_user(access_token, id_token, verified_id)
+                return self.get_or_create_user(access_token, id_token, payload)
             except SuspiciousOperation as exc:
                 LOGGER.warning('failed to get or create user: %s', exc)
                 return None
@@ -263,11 +276,11 @@ class OIDCAuthenticationBackend(ModelBackend):
         if import_from_settings('OIDC_STORE_ID_TOKEN', False):
             session['oidc_id_token'] = id_token
 
-    def get_or_create_user(self, access_token, id_token, verified_id):
+    def get_or_create_user(self, access_token, id_token, payload):
         """Returns a User instance if 1 user is found. Creates a user if not found
         and configured to do so. Returns nothing if multiple users are matched."""
 
-        user_info = self.get_userinfo(access_token, id_token, verified_id)
+        user_info = self.get_userinfo(access_token, id_token, payload)
 
         email = user_info.get('email')
 
