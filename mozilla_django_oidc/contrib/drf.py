@@ -26,24 +26,22 @@ def get_oidc_backend():
     # allow the user to force which back backend to use. this is mostly
     # convenient if you want to use OIDC with DRF but don't want to configure
     # OIDC for the "normal" Django auth.
-    backend_setting = import_from_settings('OIDC_AUTH_BACKEND', None)
+    backend_setting = import_from_settings('OIDC_DRF_AUTH_BACKEND', None)
     if backend_setting:
         backend = import_string(backend_setting)()
         if not isinstance(backend, OIDCAuthenticationBackend):
-            msg = 'Class configured in OIDC_AUTH_BACKEND ' \
+            msg = 'Class configured in OIDC_DRF_AUTH_BACKEND ' \
                   'does not extend OIDCAuthenticationBackend!'
             raise ImproperlyConfigured(msg)
         return backend
 
     # if the backend setting is not set, look through the list of configured
     # backends for one that is an OIDCAuthenticationBackend.
-    backends = [
-        backend for backend in get_backends()
-        if isinstance(backend, OIDCAuthenticationBackend)
-    ]
+    backends = [b for b in get_backends() if isinstance(b, OIDCAuthenticationBackend)]
+
     if not backends:
         msg = 'No backends extending OIDCAuthenticationBackend found - ' \
-              'add one to AUTHENTICATION_BACKENDS or set OIDC_AUTH_BACKEND!'
+              'add one to AUTHENTICATION_BACKENDS or set OIDC_DRF_AUTH_BACKEND!'
         raise ImproperlyConfigured(msg)
     if len(backends) > 1:
         raise ImproperlyConfigured('More than one OIDCAuthenticationBackend found!')

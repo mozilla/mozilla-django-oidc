@@ -26,4 +26,4 @@ figure that out. Alternatively, you can manually set the OIDC backend to use:
 
 .. code-block:: python
 
-	OIDC_AUTH_BACKEND = 'mozilla_django_oidc.OIDCAuthenticationBackend'
+	OIDC_DRF_AUTH_BACKEND = 'mozilla_django_oidc.OIDCAuthenticationBackend'

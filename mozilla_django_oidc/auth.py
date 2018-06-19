@@ -273,7 +273,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         claims_verified = self.verify_claims(user_info)
         if not claims_verified:
-            msg = 'Claims verification for %s failed.' % email
+            msg = 'Claims verification failed'
             raise SuspiciousOperation(msg)
 
         # email based filtering
@@ -284,7 +284,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         elif len(users) > 1:
             # In the rare case that two user accounts have the same email address,
             # bail. Randomly selecting one seems really wrong.
-            msg = 'Multiple users with email address %s.' % email
+            msg = 'Multiple users returned'
             raise SuspiciousOperation(msg)
         elif import_from_settings('OIDC_CREATE_USER', True):
             user = self.create_user(user_info)
