@@ -18,8 +18,7 @@ services:
       - DJANGO_VERSION=${DJANGO_VERSION:-Django>=2.0}
     command: >-
       bash -c "cd /mozilla-django-oidc/ &&
-               python setup.py build &&
-               python setup.py install &&
+               pip install -I . &&
                cd /code &&
                pip install $$DJANGO_VERSION &&
                ./bin/run.sh"
