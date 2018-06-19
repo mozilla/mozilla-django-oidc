@@ -245,7 +245,11 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         if verified_id:
             self.store_tokens(access_token, id_token)
-            return self.get_or_create_user(access_token, id_token, verified_id)
+            try:
+                return self.get_or_create_user(access_token, id_token, verified_id)
+            except SuspiciousOperation as exc:
+                LOGGER.warning('failed to get or create user: %s', exc)
+                return None
 
         return None
 
@@ -269,8 +273,8 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         claims_verified = self.verify_claims(user_info)
         if not claims_verified:
-            LOGGER.debug('Login failed: Claims verification for %s failed.', email)
-            return None
+            msg = 'Claims verification failed'
+            raise SuspiciousOperation(msg)
 
         # email based filtering
         users = self.filter_users_by_claims(user_info)
@@ -279,9 +283,9 @@ class OIDCAuthenticationBackend(ModelBackend):
             return self.update_user(users[0], user_info)
         elif len(users) > 1:
             # In the rare case that two user accounts have the same email address,
-            # log and bail. Randomly selecting one seems really wrong.
-            LOGGER.warn('Multiple users with email address %s.', email)
-            return None
+            # bail. Randomly selecting one seems really wrong.
+            msg = 'Multiple users returned'
+            raise SuspiciousOperation(msg)
         elif import_from_settings('OIDC_CREATE_USER', True):
             user = self.create_user(user_info)
             return user

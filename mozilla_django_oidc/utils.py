@@ -1,6 +1,21 @@
+try:
+    from urllib.request import parse_http_list, parse_keqv_list
+except ImportError:
+    # python < 3
+    from urllib2 import parse_http_list, parse_keqv_list
+
 from django import VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+
+
+def parse_www_authenticate_header(header):
+    """
+    Convert a WWW-Authentication header into a dict that can be used
+    in a JSON response.
+    """
+    items = parse_http_list(header)
+    return parse_keqv_list(items)
 
 
 def import_from_settings(attr, *args):
