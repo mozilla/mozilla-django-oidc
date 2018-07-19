@@ -57,9 +57,9 @@ of ``mozilla-django-oidc``.
 
    :default: ``[]``
 
-   This is a list of url paths or Django view names. This plus the
-   mozilla-django-oidc urls are exempted from the id token renewal by the
-   ``RenewIDToken`` middleware.
+   This is a list of absolute url paths or Django view names. This plus the
+   mozilla-django-oidc urls are exempted from the session renewal by the
+   ``SessionRefresh`` middleware.
 
 .. py:attribute:: OIDC_CREATE_USER
 
