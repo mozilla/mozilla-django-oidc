@@ -12,10 +12,13 @@ try:
 except ImportError:
     # Django < 2.0.0
     from django.core.urlresolvers import reverse
+from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
+from django.utils.module_loading import import_string
 
+from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import (
     absolutify,
     import_from_settings,
@@ -74,9 +77,17 @@ class SessionRefresh(MiddlewareMixin):
         :returns: boolean
 
         """
+        # Do not attempt to refresh the session if the OIDC backend is not used
+        backend_session = request.session.get(BACKEND_SESSION_KEY)
+        is_oidc_enabled = True
+        if backend_session:
+            auth_backend = import_string(backend_session)
+            is_oidc_enabled = issubclass(auth_backend, OIDCAuthenticationBackend)
+
         return (
             request.method == 'GET' and
             is_authenticated(request.user) and
+            is_oidc_enabled and
             request.path not in self.exempt_urls
         )
 
