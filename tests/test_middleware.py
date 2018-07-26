@@ -38,6 +38,7 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
 
     def test_anonymous(self):
         request = self.factory.get('/foo')
+        request.session = {}
         request.user = AnonymousUser()
         response = self.middleware.process_request(request)
         self.assertTrue(not response)
@@ -45,12 +46,14 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
     def test_is_oidc_path(self):
         request = self.factory.get('/oidc/callback/')
         request.user = AnonymousUser()
+        request.session = {}
         response = self.middleware.process_request(request)
         self.assertTrue(not response)
 
     def test_is_POST(self):
         request = self.factory.post('/foo')
         request.user = AnonymousUser()
+        request.session = {}
         response = self.middleware.process_request(request)
         self.assertTrue(not response)
 
@@ -268,6 +271,7 @@ class MiddlewareTestCase(TestCase):
         # Set expiration to some time in the past
         session = client.session
         session['oidc_id_token_expiration'] = time.time() - 100
+        session['_auth_user_backend'] = 'mozilla_django_oidc.auth.OIDCAuthenticationBackend'
         session.save()
 
         resp = client.get('/mdo_fake_view/')
@@ -316,6 +320,7 @@ class MiddlewareTestCase(TestCase):
         # Set expiration to some time in the past
         session = client.session
         session['oidc_id_token_expiration'] = time.time() - 100
+        session['_auth_user_backend'] = 'mozilla_django_oidc.auth.OIDCAuthenticationBackend'
         session.save()
 
         # Confirm that now you're forced to authenticate again.
