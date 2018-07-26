@@ -15,6 +15,8 @@ History
   Thanks `@anlutro`_
 * Improve local docker environment setup
 * Add flag to allow using unsecured tokens
+* Allow using JWK with optional ``alg``
+  Thanks `@Algogator`_
 
 
 1.0.0 (2018-05-09)

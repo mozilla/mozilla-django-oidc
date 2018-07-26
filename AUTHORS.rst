@@ -22,3 +22,4 @@ Contributors
 * `@GermanoGuerrini <https://github.com/GermanoGuerrini>`_
 * John Paulett (`@johnpaulett <https://github.com/johnpaulett>`_)
 * Andreas Lutro (`@anlutro <https://github.com/anlutro>`_)
+* `@Algogator <https://github.com/Algogator>`_
