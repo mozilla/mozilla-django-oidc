@@ -3,8 +3,22 @@
 History
 -------
 
-1.0.0
-+++++
+1.1.0 (development)
++++++++++++++++++++
+
+* Installation doc fixes
+  Thanks `@mklan`_
+* Drop support for unsupported Django 1.8 and Python 3.3.
+* Refactor authentication backend to make it easier to extend
+  Required by DRF support feature.
+* Add DRF support
+  Thanks `@anlutro`_
+* Improve local docker environment setup
+* Add flag to allow using unsecured tokens
+
+
+1.0.0 (2018-05-09)
+++++++++++++++++++
 
 * Add OIDC_AUTHENTICATION_CALLBACK_URL as a new configuration parameter
 * Fail earlier when JWS algorithm does not OIDC_RP_SIGN_ALGO.
