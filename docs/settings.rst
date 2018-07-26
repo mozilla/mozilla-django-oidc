@@ -202,3 +202,14 @@ of ``mozilla-django-oidc``.
    .. seealso::
 
       https://docs.djangoproject.com/en/2.0/topics/http/urls/#url-namespaces
+
+.. py:attribute:: OIDC_ALLOW_UNSECURED_JWT
+
+   :default: ``False``
+
+   Controls whether the authentication backend is going to allow unsecured JWT tokens (tokens with header ``{"alg":"none"}``).
+   This needs to be set to ``True`` if OP is returning unsecured JWT tokens and RP wants to accept them.
+
+   .. seealso::
+
+      https://tools.ietf.org/html/rfc7519#section-6

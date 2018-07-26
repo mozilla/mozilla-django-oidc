@@ -1,12 +1,16 @@
 import json
 from mock import Mock, call, patch
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, hmac
+from josepy.b64 import b64encode
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils import six
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_bytes, smart_text
 
 from mozilla_django_oidc.auth import (
     default_username_algo,
@@ -74,6 +78,134 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         }
         request_mock.post.return_value = post_json_mock
         self.assertEqual(self.backend.authenticate(request=auth_request), None)
+
+    @override_settings(OIDC_ALLOW_UNSECURED_JWT=True)
+    def test_allowed_unsecured_token(self):
+        """Test payload data from unsecured token (allowed)."""
+        header = force_bytes(json.dumps({'alg': 'none'}))
+        payload = force_bytes(json.dumps({'foo': 'bar'}))
+        signature = ''
+        token = force_bytes('{}.{}.{}'.format(
+            smart_text(b64encode(header)),
+            smart_text(b64encode(payload)),
+            signature
+        ))
+
+        extracted_payload = self.backend.get_payload_data(token, None)
+        self.assertEqual(payload, extracted_payload)
+
+    @override_settings(OIDC_ALLOW_UNSECURED_JWT=False)
+    def test_disallowed_unsecured_token(self):
+        """Test payload data from unsecured token (disallowed)."""
+        header = force_bytes(json.dumps({'alg': 'none'}))
+        payload = force_bytes(json.dumps({'foo': 'bar'}))
+        signature = ''
+        token = force_bytes('{}.{}.{}'.format(
+            smart_text(b64encode(header)),
+            smart_text(b64encode(payload)),
+            signature
+        ))
+
+        with self.assertRaises(KeyError):
+            self.backend.get_payload_data(token, None)
+
+    @override_settings(OIDC_ALLOW_UNSECURED_JWT=True)
+    def test_allowed_unsecured_valid_token(self):
+        """Test payload data from valid secured token (unsecured allowed)."""
+        header = force_bytes(json.dumps({'alg': 'HS256', 'typ': 'JWT'}))
+        payload = force_bytes(json.dumps({'foo': 'bar'}))
+
+        # Compute signature
+        key = b'mysupersecuretestkey'
+        h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        h.update(force_bytes(msg))
+        signature = b64encode(h.finalize())
+
+        token = '{}.{}.{}'.format(
+            smart_text(b64encode(header)),
+            smart_text(b64encode(payload)),
+            smart_text(signature)
+        )
+        token_bytes = force_bytes(token)
+        key_text = smart_text(key)
+        output = self.backend.get_payload_data(token_bytes, key_text)
+        self.assertEqual(output, payload)
+
+    @override_settings(OIDC_ALLOW_UNSECURED_JWT=False)
+    def test_disallowed_unsecured_valid_token(self):
+        """Test payload data from valid secure token (unsecured disallowed)."""
+        header = force_bytes(json.dumps({'alg': 'HS256', 'typ': 'JWT'}))
+        payload = force_bytes(json.dumps({'foo': 'bar'}))
+
+        # Compute signature
+        key = b'mysupersecuretestkey'
+        h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        h.update(force_bytes(msg))
+        signature = b64encode(h.finalize())
+
+        token = '{}.{}.{}'.format(
+            smart_text(b64encode(header)),
+            smart_text(b64encode(payload)),
+            smart_text(signature)
+        )
+        token_bytes = force_bytes(token)
+        key_text = smart_text(key)
+        output = self.backend.get_payload_data(token_bytes, key_text)
+        self.assertEqual(output, payload)
+
+    @override_settings(OIDC_ALLOW_UNSECURED_JWT=True)
+    def test_allowed_unsecured_invalid_token(self):
+        """Test payload data from invalid secure token (unsecured allowed)."""
+        header = force_bytes(json.dumps({'alg': 'HS256', 'typ': 'JWT'}))
+        payload = force_bytes(json.dumps({'foo': 'bar'}))
+
+        # Compute signature
+        key = b'mysupersecuretestkey'
+        fake_key = b'mysupersecurefaketestkey'
+        h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        h.update(force_bytes(msg))
+        signature = b64encode(h.finalize())
+
+        token = '{}.{}.{}'.format(
+            smart_text(b64encode(header)),
+            smart_text(b64encode(payload)),
+            smart_text(signature)
+        )
+        token_bytes = force_bytes(token)
+        key_text = smart_text(fake_key)
+
+        with self.assertRaises(SuspiciousOperation) as ctx:
+            self.backend.get_payload_data(token_bytes, key_text)
+            self.assertEqual(ctx.exception.args[0], 'JWS token verification failed.')
+
+    @override_settings(OIDC_ALLOW_UNSECURED_JWT=False)
+    def test_disallowed_unsecured_invalid_token(self):
+        """Test payload data from invalid secure token (unsecured disallowed)."""
+        header = force_bytes(json.dumps({'alg': 'HS256', 'typ': 'JWT'}))
+        payload = force_bytes(json.dumps({'foo': 'bar'}))
+
+        # Compute signature
+        key = b'mysupersecuretestkey'
+        fake_key = b'mysupersecurefaketestkey'
+        h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        h.update(force_bytes(msg))
+        signature = b64encode(h.finalize())
+
+        token = '{}.{}.{}'.format(
+            smart_text(b64encode(header)),
+            smart_text(b64encode(payload)),
+            smart_text(signature)
+        )
+        token_bytes = force_bytes(token)
+        key_text = smart_text(fake_key)
+
+        with self.assertRaises(SuspiciousOperation) as ctx:
+            self.backend.get_payload_data(token_bytes, key_text)
+            self.assertEqual(ctx.exception.args[0], 'JWS token verification failed.')
 
     def test_get_user(self):
         """Test get_user method with valid user."""
