@@ -48,8 +48,7 @@ Django of your choice. Here is such an example:
 
     $ virtualenv -p /path/to/bin/python3.5 venv
     $ source venv
-    (venv) $ pip install Django==1.11.2
-    (venv) $ pip install -r tests/requirements.txt
+    (venv) $ pip install -r requirements/requirements_dev.txt
     (venv) $ DJANGO_SETTINGS_MODULE=tests.settings django-admin.py test
 
 Measuring code coverage, continuing the steps above:
