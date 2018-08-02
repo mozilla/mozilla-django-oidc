@@ -3,7 +3,7 @@
 History
 -------
 
-1.1.0 (development)
+1.1.0 (2018-08-02)
 +++++++++++++++++++
 
 * Installation doc fixes
