@@ -5,7 +5,6 @@ except ImportError:
     # Python < 3
     from urllib import urlencode
 
-import django
 from django.core.exceptions import SuspiciousOperation
 try:
     from django.urls import reverse
