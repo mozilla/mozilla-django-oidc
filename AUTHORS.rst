@@ -23,3 +23,4 @@ Contributors
 * John Paulett (`@johnpaulett <https://github.com/johnpaulett>`_)
 * Andreas Lutro (`@anlutro <https://github.com/anlutro>`_)
 * `@Algogator <https://github.com/Algogator>`_
+* Rob Hudson (`@robhudson <https://github.com/robhudson>`_)
