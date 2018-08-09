@@ -73,7 +73,15 @@ jobs:
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=rs
-          - DJANGO_VERSION=Django>=2.0.0
+          - DJANGO_VERSION=Django>=2.0.0,<2.1
+    <<: *common_steps
+  e2e_test_py3_rs_django210:
+    docker:
+      - image: mozillaparsys/oidc_e2e_setup:py3
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=rs
+          - DJANGO_VERSION=Django>=2.1.0,<2.2
     <<: *common_steps
   e2e_test_py2_hs_django111:
     docker:
@@ -97,7 +105,15 @@ jobs:
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=hs
-          - DJANGO_VERSION=Django>=2.0.0
+          - DJANGO_VERSION=Django>=2.0.0,<2.1
+    <<: *common_steps
+  e2e_test_py3_hs_django210:
+    docker:
+      - image: mozillaparsys/oidc_e2e_setup:py3
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=hs
+          - DJANGO_VERSION=Django>=2.1.0,<2.2
     <<: *common_steps
 
 workflows:
