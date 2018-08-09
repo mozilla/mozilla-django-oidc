@@ -222,10 +222,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         user_response.raise_for_status()
         return user_response.json()
 
-    def authenticate(self, **kwargs):
+    def authenticate(self, request, **kwargs):
         """Authenticates a user based on the OIDC code flow."""
 
-        self.request = kwargs.pop('request', None)
+        self.request = request
         if not self.request:
             return None
 
