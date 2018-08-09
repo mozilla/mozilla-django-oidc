@@ -24,3 +24,4 @@ Contributors
 * Andreas Lutro (`@anlutro <https://github.com/anlutro>`_)
 * `@Algogator <https://github.com/Algogator>`_
 * Rob Hudson (`@robhudson <https://github.com/robhudson>`_)
+* Garand Tyson (`@SirTyson <https://github.com/SirTyson>`_)

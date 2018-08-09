@@ -3,10 +3,13 @@
 History
 -------
 
-1.2.0 (development)
+1.1.1 (2018-08-09)
 +++++++++++++++++++
 
 * Fix `is_safe_url` on Django 2.1
+* Fix signature in `authenticate` method to be compatible with Django 2.1
+* Remove legacy code for unsupported Django < 1.11
+  Thanks `@SirTyson`_
 
 
 1.1.0 (2018-08-02)
