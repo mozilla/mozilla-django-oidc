@@ -839,6 +839,10 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
                 {
                     "alg": "RS256",
                     "kid": "foobar",
+                },
+                {
+                    "alg": "RS512",
+                    "kid": "foobar512",
                 }
             ]
         }
@@ -878,7 +882,7 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         }
         mock_requests.get.return_value = get_json_mock
 
-        header = force_bytes(json.dumps({'alg': 'HS256', 'typ': 'JWT', 'kid': 'foobar'}))
+        header = force_bytes(json.dumps({'alg': 'HS256', 'typ': 'JWT', 'kid': 'bar'}))
         payload = force_bytes(json.dumps({'foo': 'bar'}))
 
         # Compute signature
