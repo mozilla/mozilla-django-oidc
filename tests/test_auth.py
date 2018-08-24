@@ -839,6 +839,10 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
                 {
                     "alg": "RS256",
                     "kid": "foobar",
+                },
+                {
+                    "alg": "RS512",
+                    "kid": "foobar512",
                 }
             ]
         }
@@ -864,8 +868,8 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         self.assertEqual(jwk_key, get_json_mock.json.return_value['keys'][0])
 
     @patch('mozilla_django_oidc.auth.requests')
-    def test_retrieve_mismatcing_jwk(self, mock_requests):
-        """Test retrieving mismatching jwk"""
+    def test_retrieve_mismatcing_jwk_alg(self, mock_requests):
+        """Test retrieving mismatching jwk alg"""
 
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
@@ -878,7 +882,7 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         }
         mock_requests.get.return_value = get_json_mock
 
-        header = force_bytes(json.dumps({'alg': 'HS256', 'typ': 'JWT', 'kid': 'foobar'}))
+        header = force_bytes(json.dumps({'alg': 'HS256', 'typ': 'JWT', 'kid': 'bar'}))
         payload = force_bytes(json.dumps({'foo': 'bar'}))
 
         # Compute signature
@@ -898,6 +902,42 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
             self.backend.retrieve_matching_jwk(force_bytes(token))
 
         self.assertEqual(ctx.exception.args[0], 'alg values do not match.')
+
+    @patch('mozilla_django_oidc.auth.requests')
+    def test_retrieve_mismatcing_jwk_kid(self, mock_requests):
+        """Test retrieving mismatching jwk kid"""
+
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            "keys": [
+                {
+                    "alg": "HS256",
+                    "kid": "foobar",
+                }
+            ]
+        }
+        mock_requests.get.return_value = get_json_mock
+
+        header = force_bytes(json.dumps({'alg': 'HS256', 'typ': 'JWT', 'kid': 'bar'}))
+        payload = force_bytes(json.dumps({'foo': 'bar'}))
+
+        # Compute signature
+        key = b'mysupersecuretestkey'
+        h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        h.update(force_bytes(msg))
+        signature = b64encode(h.finalize())
+
+        token = '{}.{}.{}'.format(
+            smart_text(b64encode(header)),
+            smart_text(b64encode(payload)),
+            smart_text(signature)
+        )
+
+        with self.assertRaises(SuspiciousOperation) as ctx:
+            self.backend.retrieve_matching_jwk(force_bytes(token))
+
+        self.assertEqual(ctx.exception.args[0], 'Could not find a valid JWKS.')
 
     @patch('mozilla_django_oidc.auth.requests')
     def test_retrieve_jwk_optional_alg(self, mock_requests):
