@@ -3,6 +3,13 @@
 History
 -------
 
+1.1.2 (2018-08-24)
+++++++++++++++++++
+
+* Fix JWKS handling when OP returns multiple keys
+  Thanks `@JustinAzoff`_
+
+
 1.1.1 (2018-08-09)
 +++++++++++++++++++
 
