@@ -34,4 +34,5 @@ deploy:
     on:
       repo: mozilla/mozilla-django-oidc
       tags: true
+      python: '3.6'
     distributions: "sdist bdist_wheel"
