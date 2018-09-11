@@ -126,7 +126,6 @@ def get_next_url(request, redirect_field_name):
             kwargs['host'] = host
 
         is_safe = is_safe_url(**kwargs)
-        raise Exception(kwargs, is_safe)
         if is_safe:
             return next_url
     return None
