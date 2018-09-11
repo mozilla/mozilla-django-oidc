@@ -107,11 +107,13 @@ def get_next_url(request, redirect_field_name):
     if next_url:
         kwargs = {
             'url': next_url,
-            'require_https': request.is_secure()
+            'require_https': import_from_settings(
+                'OIDC_REDIRECT_REQUIRE_HTTPS', request.is_secure())
         }
 
-        host = request.get_host()
-        kwargs['allowed_hosts'] = [host]
+        hosts = list(import_from_settings('OIDC_REDIRECT_ALLOWED_HOSTS', []))
+        hosts.append(request.get_host())
+        kwargs['allowed_hosts'] = hosts
 
         is_safe = is_safe_url(**kwargs)
         if is_safe:
