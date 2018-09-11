@@ -115,11 +115,13 @@ def get_next_url(request, redirect_field_name):
 
         # NOTE(robhudson): Django 2.1 changes `host` to `allowed_hosts`.
         if django.VERSION >= (2, 1):
-            hosts = tuple(getattr(settings, 'OIDC_REDIRECT_ALLOWED_HOSTS', ())) + (request.get_host(),)
+            hosts = tuple(getattr(settings, 'OIDC_REDIRECT_ALLOWED_HOSTS', ()))
+            hosts = hosts + (request.get_host(),)
             kwargs['allowed_hosts'] = hosts
         else:
             parsed_uri = urlparse(next_url)
-            allowed_hosts = tuple(getattr(settings, 'OIDC_REDIRECT_ALLOWED_HOSTS', ())) + (request.get_host(),)
+            allowed_hosts = tuple(getattr(settings, 'OIDC_REDIRECT_ALLOWED_HOSTS', ()))
+            allowed_hosts = allowed_hosts + (request.get_host(),)
             if parsed_uri.netloc in allowed_hosts:
                 host = parsed_uri.netloc
             else:
