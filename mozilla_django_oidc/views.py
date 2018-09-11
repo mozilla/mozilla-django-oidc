@@ -1,9 +1,10 @@
 import time
 try:
-    from urllib.parse import urlencode
+    from urllib.parse import urlencode, urlparse
 except ImportError:
     # Python < 3
     from urllib import urlencode
+    from urlparse import urlparse
 
 import django
 from django.core.exceptions import SuspiciousOperation
@@ -13,6 +14,7 @@ except ImportError:
     # Django < 2.0.0
     from django.core.urlresolvers import reverse
 from django.contrib import auth
+from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
 from django.utils.http import is_safe_url
@@ -108,14 +110,20 @@ def get_next_url(request, redirect_field_name):
     if next_url:
         kwargs = {
             'url': next_url,
-            'require_https': request.is_secure()
+            'require_https': getattr(settings, 'OIDC_REDIRECT_REQUIRE_HTTPS', request.is_secure())
         }
 
         # NOTE(robhudson): Django 2.1 changes `host` to `allowed_hosts`.
-        host = request.get_host()
         if django.VERSION >= (2, 1):
-            kwargs['allowed_hosts'] = host
+            hosts = tuple(getattr(settings, 'OIDC_REDIRECT_ALLOWED_HOSTS', ())) + (request.get_host(),)
+            kwargs['allowed_hosts'] = hosts
         else:
+            parsed_uri = urlparse(next_url)
+            allowed_hosts = tuple(getattr(settings, 'OIDC_REDIRECT_ALLOWED_HOSTS', ())) + (request.get_host(),)
+            if parsed_uri.netloc in allowed_hosts:
+                host = parsed_uri.netloc
+            else:
+                host = request.get_host()
             kwargs['host'] = host
 
         is_safe = is_safe_url(**kwargs)
