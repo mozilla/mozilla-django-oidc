@@ -122,13 +122,11 @@ def get_next_url(request, redirect_field_name):
             parsed_uri = urlparse(next_url)
             allowed_hosts = tuple(getattr(settings, 'OIDC_REDIRECT_ALLOWED_HOSTS', ()))
             allowed_hosts = allowed_hosts + (request.get_host(),)
-            if parsed_uri.netloc in allowed_hosts:
-                host = parsed_uri.netloc
-            else:
-                host = request.get_host()
+            host = parsed_uri.netloc if parsed_uri.netloc in allowed_hosts else request.get_host()
             kwargs['host'] = host
 
         is_safe = is_safe_url(**kwargs)
+        raise Exception(kwargs, is_safe)
         if is_safe:
             return next_url
     return None
