@@ -1009,5 +1009,17 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         self.assertEqual(ctx.exception.args[0], 'Could not find a valid JWKS.')
 
 
+class TestVerifyClaim(TestCase):
+    @patch('mozilla_django_oidc.auth.import_from_settings')
+    def test_returns_false_if_email_not_in_claims(self, _):
+        ret = OIDCAuthenticationBackend().verify_claims({})
+        self.assertFalse(ret)
+
+    @patch('mozilla_django_oidc.auth.import_from_settings')
+    def test_returns_true_if_email_in_claims(self, _):
+        ret = OIDCAuthenticationBackend().verify_claims({'email': 'bonobo@banana.nl'})
+        self.assertTrue(ret)
+
+
 def dotted_username_algo_callback(email):
     return 'dotted_username_algo'

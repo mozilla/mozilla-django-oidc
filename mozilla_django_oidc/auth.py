@@ -74,17 +74,12 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def verify_claims(self, claims):
         """Verify the provided claims to decide if authentication should be allowed."""
-        return True
+        return 'email' in claims
 
     def create_user(self, claims):
         """Return object for a newly created user account."""
-
         email = claims.get('email')
-        if not email:
-            return None
-
         username = self.get_username(claims)
-
         return self.UserModel.objects.create_user(username, email)
 
     def get_username(self, claims):
