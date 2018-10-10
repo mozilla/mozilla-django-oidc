@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import requests
+from requests.auth import HTTPBasicAuth
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
@@ -203,9 +204,19 @@ class OIDCAuthenticationBackend(ModelBackend):
     def get_token(self, payload):
         """Return token object as a dictionary."""
 
+        auth = None
+        if import_from_settings('OIDC_TOKEN_USE_BASIC_AUTH', False):
+            # When Basic auth is defined, create the Auth Header and remove secret from payload.
+            user = payload.get('client_id')
+            pw = payload.get('client_secret')
+
+            auth = HTTPBasicAuth(user, pw)
+            del payload['client_secret']
+
         response = requests.post(
             self.OIDC_OP_TOKEN_ENDPOINT,
             data=payload,
+            auth=auth,
             verify=import_from_settings('OIDC_VERIFY_SSL', True))
         response.raise_for_status()
         return response.json()
