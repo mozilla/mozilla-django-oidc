@@ -255,6 +255,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         token_mock.assert_called_once_with('id_token', nonce=None)
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
+                                                  auth=None,
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
@@ -297,6 +298,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         token_mock.assert_called_once_with('id_token', nonce=None)
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
+                                                  auth=None,
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
@@ -341,6 +343,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         token_mock.assert_called_once_with('id_token', nonce=None)
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
+                                                  auth=None,
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
@@ -389,6 +392,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         claims_mock.assert_called_once_with(claims_response)
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
+                                                  auth=None,
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
@@ -436,12 +440,80 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         token_mock.assert_called_once_with('id_token', nonce=None)
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
+                                                  auth=None,
                                                   verify=True)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
             headers={'Authorization': 'Bearer access_granted'},
             verify=True
         )
+
+    @override_settings(OIDC_TOKEN_USE_BASIC_AUTH=True)
+    @override_settings(OIDC_STORE_ACCESS_TOKEN=True)
+    @override_settings(OIDC_STORE_ID_TOKEN=True)
+    @patch('mozilla_django_oidc.auth.requests')
+    @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
+    def test_successful_authentication_basic_auth_token(self, token_mock, request_mock):
+        """
+        Test successful authentication when using HTTP basic authentication
+        for token endpoint authentication.
+        """
+        auth_request = RequestFactory().get('/foo', {'code': 'foo',
+                                                     'state': 'bar'})
+        auth_request.session = {}
+
+        user = User.objects.create_user(username='a_username',
+                                        email='EMAIL@EXAMPLE.COM')
+        token_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'a_username',
+            'email': 'email@example.com'
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'id_token',
+            'access_token': 'access_granted'
+        }
+        request_mock.post.return_value = post_json_mock
+
+        post_data = {
+            'client_id': 'example_id',
+            'client_secret': 'client_secret',
+            'grant_type': 'authorization_code',
+            'code': 'foo',
+            'redirect_uri': 'http://testserver/callback/'
+        }
+        self.assertEqual(self.backend.authenticate(request=auth_request), user)
+        token_mock.assert_called_once_with('id_token', nonce=None)
+
+        # As the auth parameter is and object, we can't compare them directly
+        request_mock.post.assert_called_once()
+        post_params = request_mock.post.call_args
+        _kwargs = post_params[1]
+
+        self.assertEqual(post_params[0][0], 'https://server.example.com/token')
+        # Test individual params separately
+        sent_data = _kwargs['data']
+        self.assertEqual(sent_data['client_id'], post_data['client_id'])
+        self.assertTrue('client_secret' not in _kwargs['data'])
+        self.assertEqual(sent_data['grant_type'], post_data['grant_type'])
+        self.assertEqual(sent_data['code'], post_data['code'])
+        self.assertEqual(sent_data['redirect_uri'], post_data['redirect_uri'])
+
+        auth = _kwargs['auth']  # type: requests.auth.HTTPBasicAuth
+        self.assertEqual(auth.username, 'example_id')
+        self.assertEqual(auth.password, 'client_secret')
+        self.assertEqual(_kwargs['verify'], True)
+
+        request_mock.get.assert_called_once_with(
+            'https://server.example.com/user',
+            headers={'Authorization': 'Bearer access_granted'},
+            verify=True
+        )
+        self.assertEqual(auth_request.session.get('oidc_id_token'), 'id_token')
+        self.assertEqual(auth_request.session.get('oidc_access_token'), 'access_granted')
 
     def test_authenticate_no_code_no_state(self):
         """Test authenticate with wrong parameters."""
