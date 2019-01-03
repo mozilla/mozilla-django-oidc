@@ -26,4 +26,3 @@ Contributors
 * Rob Hudson (`@robhudson <https://github.com/robhudson>`_)
 * Garand Tyson (`@SirTyson <https://github.com/SirTyson>`_)
 * Justin Azoff (`@JustinAzoff <https://github.com/JustinAzoff>`_)
-* Antti Palola (`@anttipalola <https://github.com/anttipalola>`_)
