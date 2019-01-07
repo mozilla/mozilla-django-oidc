@@ -8,7 +8,7 @@ class IntegrationTest(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(IntegrationTest, self).__init__(*args, **kwargs)
 
-        self.webdriver = 'phantomjs'
+        self.webdriver = 'firefox'
         self.account = {
             'username': 'example_username',
             'password': 'example_p@ssw0rd',
@@ -17,7 +17,7 @@ class IntegrationTest(unittest.TestCase):
 
     def setUp(self):
         """Create test account in `testprovider` instance"""
-        with Browser(self.webdriver) as browser:
+        with Browser(self.webdriver, headless=True) as browser:
             browser.visit('http://testprovider:8080/account/signup')
             browser.find_by_css('#id_username').fill(self.account['username'])
             browser.find_by_css('#id_password').fill(self.account['password'])
@@ -27,7 +27,7 @@ class IntegrationTest(unittest.TestCase):
 
     def tearDown(self):
         """Remove test account from `testprovider` instance"""
-        with Browser(self.webdriver) as browser:
+        with Browser(self.webdriver, headless=True) as browser:
             self.perform_login(browser)
             browser.visit('http://testprovider:8080/account/delete')
             browser.find_by_css('.btn-danger').click()
@@ -47,7 +47,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_login(self):
         """Test logging in `testrp` using OIDC"""
-        browser = Browser(self.webdriver)
+        browser = Browser(self.webdriver, headless=True)
 
         # Check that user is not logged in
         browser.visit('http://testrp:8081')
@@ -64,7 +64,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_logout(self):
         """Test logout functionality of OIDC lib"""
-        browser = Browser(self.webdriver)
+        browser = Browser(self.webdriver, headless=True)
 
         # Check that user is not logged in
         browser.visit('http://testrp:8081')
