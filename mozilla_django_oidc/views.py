@@ -5,7 +5,6 @@ except ImportError:
     # Python < 3
     from urllib import urlencode
 
-import django
 from django.core.exceptions import SuspiciousOperation
 try:
     from django.urls import reverse
@@ -111,12 +110,8 @@ def get_next_url(request, redirect_field_name):
             'require_https': request.is_secure()
         }
 
-        # NOTE(robhudson): Django 2.1 changes `host` to `allowed_hosts`.
         host = request.get_host()
-        if django.VERSION >= (2, 1):
-            kwargs['allowed_hosts'] = host
-        else:
-            kwargs['host'] = host
+        kwargs['allowed_hosts'] = [host]
 
         is_safe = is_safe_url(**kwargs)
         if is_safe:
