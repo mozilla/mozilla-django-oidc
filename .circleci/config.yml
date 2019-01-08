@@ -130,12 +130,18 @@ workflows:
       - e2e_test_py3_rs_django111:
           requires:
             - build_lib
-      - e2e_test_py3_rs_django200:
-          requires:
-            - build_lib
       - e2e_test_py3_hs_django111:
           requires:
             - build_lib
+      - e2e_test_py3_rs_django200:
+          requires:
+            - build_lib
       - e2e_test_py3_hs_django200:
+          requires:
+            - build_lib
+      - e2e_test_py3_rs_django210:
+          requires:
+            - build_lib
+      - e2e_test_py3_hs_django210:
           requires:
             - build_lib
