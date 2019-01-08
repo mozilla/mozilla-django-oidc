@@ -6,7 +6,6 @@ except ImportError:
     # Python < 3
     from urllib import urlencode
 
-import django
 try:
     from django.urls import reverse
 except ImportError:
@@ -15,6 +14,7 @@ except ImportError:
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
 from django.utils.crypto import get_random_string
+from django.utils.deprecation import MiddlewareMixin
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 
@@ -27,15 +27,6 @@ from mozilla_django_oidc.utils import (
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-# Django 1.10 makes changes to how middleware work. In Django 1.10+, we want to
-# use the mixin so that our middleware works as is.
-if django.VERSION >= (1, 10):
-    from django.utils.deprecation import MiddlewareMixin
-else:
-    class MiddlewareMixin(object):
-        pass
 
 
 class SessionRefresh(MiddlewareMixin):
