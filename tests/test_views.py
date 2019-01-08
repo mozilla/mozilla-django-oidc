@@ -330,6 +330,28 @@ class GetNextURLTestCase(TestCase):
             next_url = views.get_next_url(req, 'next')
             self.assertEqual(next_url, None)
 
+    @override_settings(OIDC_REDIRECT_REQUIRE_HTTPS=False)
+    def test_redirect_https_not_required(self):
+        req = self.factory.get(
+            '/',
+            data={'next': 'http://testserver/foo'},
+            secure=True
+        )
+
+        next_url = views.get_next_url(req, 'next')
+        self.assertEqual(next_url, 'http://testserver/foo')
+
+    @override_settings(OIDC_REDIRECT_ALLOWED_HOSTS=['example.com', 'foo.com'])
+    def test_redirect_allowed_hosts(self):
+        req = self.factory.get(
+            '/',
+            data={'next': 'https://example.com/foo'},
+            secure=True
+        )
+
+        next_url = views.get_next_url(req, 'next')
+        self.assertEqual(next_url, 'https://example.com/foo')
+
 
 class OIDCAuthorizationRequestViewTestCase(TestCase):
     def setUp(self):
