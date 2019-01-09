@@ -3,6 +3,19 @@
 History
 -------
 
+1.2.0 (2019-01-09)
++++++++++++++++++++
+
+* Improve travis automation for PyPI releases
+* Allow basic auth for OIDC token endpoint requests
+  Thanks `@anttipalola`_
+* Replace phantomjs with firefox headless for e2e testing
+* Add default email verification claim check
+  Thanks `@kerrermanisNL`_
+* Remove compatibility code for unsupported Django versions
+* Add settings to control redirect behavior
+  Thanks `@chrisbrantley`_
+
 1.1.2 (2018-08-24)
 ++++++++++++++++++
 
