@@ -1083,14 +1083,26 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
 
 class TestVerifyClaim(TestCase):
     @patch('mozilla_django_oidc.auth.import_from_settings')
-    def test_returns_false_if_email_not_in_claims(self, _):
+    def test_returns_false_if_email_not_in_claims(self, patch_settings):
+        patch_settings.return_value = 'openid email'
         ret = OIDCAuthenticationBackend().verify_claims({})
         self.assertFalse(ret)
 
     @patch('mozilla_django_oidc.auth.import_from_settings')
-    def test_returns_true_if_email_in_claims(self, _):
+    def test_returns_true_if_email_in_claims(self, patch_settings):
+        patch_settings.return_value = 'openid email'
         ret = OIDCAuthenticationBackend().verify_claims({'email': 'email@example.com'})
         self.assertTrue(ret)
+
+    @patch('mozilla_django_oidc.auth.import_from_settings')
+    @patch('mozilla_django_oidc.auth.LOGGER')
+    def test_returns_true_custom_claims(self, patch_logger, patch_settings):
+        patch_settings.return_value = 'foo bar'
+        ret = OIDCAuthenticationBackend().verify_claims({})
+        self.assertTrue(ret)
+        msg = ('Custom OIDC_RP_SCOPES defined. '
+               'You need to override `verify_claims` for custom claims verification.')
+        patch_logger.warning.assert_called_with(msg)
 
 
 def dotted_username_algo_callback(email):
