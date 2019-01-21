@@ -75,7 +75,16 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def verify_claims(self, claims):
         """Verify the provided claims to decide if authentication should be allowed."""
-        return 'email' in claims
+
+        # Verify claims required by default configuration
+        scopes = import_from_settings('OIDC_RP_SCOPES', 'openid email')
+        if 'email' in scopes.split():
+            return 'email' in claims
+
+        LOGGER.warning('Custom OIDC_RP_SCOPES defined. '
+                       'You need to override `verify_claims` for custom claims verification.')
+
+        return True
 
     def create_user(self, claims):
         """Return object for a newly created user account."""
