@@ -3,6 +3,11 @@
 History
 -------
 
+1.2.1 (2019-01-22)
+++++++++++++++++++
+
+* Make `verify_claims` compatible with custom scope configuration.
+
 1.2.0 (2019-01-09)
 +++++++++++++++++++
 
