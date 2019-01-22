@@ -365,6 +365,8 @@ You might want to do this if you want to control user creation because your
 system requires additional process to allow people to use it.
 
 
+.. _advanced_claim_verification:
+
 Advanced user verification based on their claims
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
