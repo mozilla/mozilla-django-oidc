@@ -19,7 +19,6 @@ from josepy.jws import JWS, Header
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -159,7 +158,8 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         key = None
         for jwk in jwks['keys']:
-            if 'kid' in jwk and jwk['kid'] != smart_text(header.kid):
+            if (import_from_settings("OIDC_VERIFY_KID", True)
+                    and jwk['kid'] != smart_text(header.kid)):
                 continue
             if 'alg' in jwk and jwk['alg'] != smart_text(header.alg):
                 continue
