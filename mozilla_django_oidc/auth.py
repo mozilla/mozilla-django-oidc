@@ -19,7 +19,6 @@ from josepy.jws import JWS, Header
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -56,7 +55,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
 
         if (self.OIDC_RP_SIGN_ALGO.startswith('RS') and
-                (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
+            (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
             msg = '{} alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured.'
             raise ImproperlyConfigured(msg.format(self.OIDC_RP_SIGN_ALGO))
 
@@ -159,7 +158,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         key = None
         for jwk in jwks['keys']:
-            if jwk['kid'] != smart_text(header.kid):
+            if jwk['kid'] != smart_text(header.kid) and import_from_settings("OIDC_VERIFY_KID", True):
                 continue
             if 'alg' in jwk and jwk['alg'] != smart_text(header.alg):
                 continue
