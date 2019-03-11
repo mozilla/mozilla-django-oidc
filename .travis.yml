@@ -6,16 +6,22 @@ language: python
 
 python:
   - "2.7"
-  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
+
+# Workaround for python 3.7
+matrix:
+  include:
+    - python: "3.7"
+      dist: xenial
+      sudo: true
 
 install:
   - pip install codecov tox-travis
 
 script:
-    - tox
+  - tox
 
 after_success:
   - codecov
@@ -28,4 +34,5 @@ deploy:
     on:
       repo: mozilla/mozilla-django-oidc
       tags: true
+      python: '3.6'
     distributions: "sdist bdist_wheel"

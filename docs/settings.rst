@@ -57,9 +57,9 @@ of ``mozilla-django-oidc``.
 
    :default: ``[]``
 
-   This is a list of url paths or Django view names. This plus the
-   mozilla-django-oidc urls are exempted from the id token renewal by the
-   ``RenewIDToken`` middleware.
+   This is a list of absolute url paths or Django view names. This plus the
+   mozilla-django-oidc urls are exempted from the session renewal by the
+   ``SessionRefresh`` middleware.
 
 .. py:attribute:: OIDC_CREATE_USER
 
@@ -97,11 +97,28 @@ of ``mozilla-django-oidc``.
       When using a custom callback view, it is generally a good idea to subclass the
       default ``OIDCAuthenticationCallbackView`` and override the methods you want to change.
 
+.. py:attribute:: OIDC_AUTHENTICATE_CLASS
+
+   :default: ``mozilla_django_oidc.views.OIDCAuthenticationRequestView``
+
+   Allows you to substitute a custom class-based view to be used as OpenID Connect
+   authenticate URL.
+
+   .. note::
+
+      When using a custom authenticate view, it is generally a good idea to subclass the
+      default ``OIDCAuthenticationRequestView`` and override the methods you want to change.
+
 .. py:attribute:: OIDC_RP_SCOPES
 
    :default: ``openid email``
 
    The OpenID Connect scopes to request during login.
+
+   .. warning::
+
+      When using custom scopes consider overriding the :ref:`claim verification method <advanced_claim_verification>`
+      since the default one only works for the default ``mozilla-django-oidc`` configuration.
 
 .. py:attribute:: OIDC_STORE_ACCESS_TOKEN
 
@@ -169,3 +186,41 @@ of ``mozilla-django-oidc``.
    .. seealso::
 
       https://docs.djangoproject.com/en/1.11/ref/settings/#logout-redirect-url
+
+.. py:attribute:: OIDC_OP_LOGOUT_URL_METHOD
+
+   :default: ``''`` (will use ``LOGOUT_REDIRECT_URL``)
+
+   Function path that returns a URL to redirect the user to after
+   ``auth.logout()`` is called.
+
+   .. versionchanged:: 0.7.0
+      The function must now take a ``request`` parameter.
+
+.. py:attribute:: OIDC_AUTHENTICATION_CALLBACK_URL
+
+   :default: ``oidc_authentication_callback``
+
+   URL pattern name for ``OIDCAuthenticationCallbackView``. Will be passed to ``reverse``.
+   The pattern can also include namespace in order to resolve included urls.
+
+   .. seealso::
+
+      https://docs.djangoproject.com/en/2.0/topics/http/urls/#url-namespaces
+
+.. py:attribute:: OIDC_ALLOW_UNSECURED_JWT
+
+   :default: ``False``
+
+   Controls whether the authentication backend is going to allow unsecured JWT tokens (tokens with header ``{"alg":"none"}``).
+   This needs to be set to ``True`` if OP is returning unsecured JWT tokens and RP wants to accept them.
+
+   .. seealso::
+
+      https://tools.ietf.org/html/rfc7519#section-6
+
+.. py:attribute:: OIDC_TOKEN_USE_BASIC_AUTH
+
+   :default: False
+
+   Use HTTP Basic Authentication instead of sending the client secret in token request POST body.

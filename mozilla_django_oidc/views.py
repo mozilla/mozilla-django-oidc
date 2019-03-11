@@ -5,9 +5,12 @@ except ImportError:
     # Python < 3
     from urllib import urlencode
 
-import django
 from django.core.exceptions import SuspiciousOperation
-from django.core.urlresolvers import reverse
+try:
+    from django.urls import reverse
+except ImportError:
+    # Django < 2.0.0
+    from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.http import HttpResponseRedirect
 from django.utils.crypto import get_random_string
@@ -59,7 +62,16 @@ class OIDCAuthenticationCallbackView(View):
             # Make sure that nonce is not used twice
             del request.session['oidc_nonce']
 
-        if 'code' in request.GET and 'state' in request.GET:
+        if request.GET.get('error'):
+            # Ouch! Something important failed.
+            # Make sure the user doesn't get to continue to be logged in
+            # otherwise the refresh middleware will force the user to
+            # redirect to authorize again if the session refresh has
+            # expired.
+            if is_authenticated(request.user):
+                auth.logout(request)
+            assert not is_authenticated(request.user)
+        elif 'code' in request.GET and 'state' in request.GET:
             kwargs = {
                 'request': request,
                 'nonce': nonce,
@@ -95,11 +107,14 @@ def get_next_url(request, redirect_field_name):
     if next_url:
         kwargs = {
             'url': next_url,
-            'host': request.get_host()
+            'require_https': import_from_settings(
+                'OIDC_REDIRECT_REQUIRE_HTTPS', request.is_secure())
         }
-        # NOTE(willkg): Django 1.11+ allows us to require https, too.
-        if django.VERSION >= (1, 11):
-            kwargs['require_https'] = request.is_secure()
+
+        hosts = list(import_from_settings('OIDC_REDIRECT_ALLOWED_HOSTS', []))
+        hosts.append(request.get_host())
+        kwargs['allowed_hosts'] = hosts
+
         is_safe = is_safe_url(**kwargs)
         if is_safe:
             return next_url
@@ -121,6 +136,8 @@ class OIDCAuthenticationRequestView(View):
         """OIDC client authentication initialization HTTP endpoint"""
         state = get_random_string(import_from_settings('OIDC_STATE_SIZE', 32))
         redirect_field_name = import_from_settings('OIDC_REDIRECT_FIELD_NAME', 'next')
+        reverse_url = import_from_settings('OIDC_AUTHENTICATION_CALLBACK_URL',
+                                           'oidc_authentication_callback')
 
         params = {
             'response_type': 'code',
@@ -128,13 +145,12 @@ class OIDCAuthenticationRequestView(View):
             'client_id': self.OIDC_RP_CLIENT_ID,
             'redirect_uri': absolutify(
                 request,
-                reverse('oidc_authentication_callback')
+                reverse(reverse_url)
             ),
             'state': state,
         }
 
-        extra = import_from_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
-        params.update(extra)
+        params.update(self.get_extra_params(request))
 
         if import_from_settings('OIDC_USE_NONCE', True):
             nonce = get_random_string(import_from_settings('OIDC_NONCE_SIZE', 32))
@@ -149,6 +165,9 @@ class OIDCAuthenticationRequestView(View):
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=self.OIDC_OP_AUTH_ENDPOINT, query=query)
         return HttpResponseRedirect(redirect_url)
+
+    def get_extra_params(self, request):
+        return import_from_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
 
 
 class OIDCLogoutView(View):
@@ -170,7 +189,7 @@ class OIDCLogoutView(View):
             # from the OP.
             logout_from_op = import_from_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
             if logout_from_op:
-                logout_url = import_string(logout_from_op)()
+                logout_url = import_string(logout_from_op)(request)
 
             # Log out the Django user if they were logged in.
             auth.logout(request)

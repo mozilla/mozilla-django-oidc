@@ -10,7 +10,11 @@ import django
 from django.core.exceptions import SuspiciousOperation
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.core.urlresolvers import reverse
+try:
+    from django.urls import reverse
+except ImportError:
+    # Django < 2.0.0
+    from django.core.urlresolvers import reverse
 from django.test import RequestFactory, TestCase, override_settings
 
 from mozilla_django_oidc import views
@@ -19,8 +23,8 @@ from mozilla_django_oidc import views
 User = get_user_model()
 
 
-def my_custom_op_logout(*args, **kwargs):
-    return 'http://example.com/logged/out'
+def my_custom_op_logout(request):
+    return request.build_absolute_uri('/logged/out')
 
 
 class OIDCAuthorizationCallbackViewTestCase(TestCase):
@@ -326,6 +330,28 @@ class GetNextURLTestCase(TestCase):
             next_url = views.get_next_url(req, 'next')
             self.assertEqual(next_url, None)
 
+    @override_settings(OIDC_REDIRECT_REQUIRE_HTTPS=False)
+    def test_redirect_https_not_required(self):
+        req = self.factory.get(
+            '/',
+            data={'next': 'http://testserver/foo'},
+            secure=True
+        )
+
+        next_url = views.get_next_url(req, 'next')
+        self.assertEqual(next_url, 'http://testserver/foo')
+
+    @override_settings(OIDC_REDIRECT_ALLOWED_HOSTS=['example.com', 'foo.com'])
+    def test_redirect_allowed_hosts(self):
+        req = self.factory.get(
+            '/',
+            data={'next': 'https://example.com/foo'},
+            secure=True
+        )
+
+        next_url = views.get_next_url(req, 'next')
+        self.assertEqual(next_url, 'https://example.com/foo')
+
 
 class OIDCAuthorizationRequestViewTestCase(TestCase):
     def setUp(self):
@@ -350,6 +376,34 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'scope': ['openid email'],
             'client_id': ['example_id'],
             'redirect_uri': ['http://testserver/callback/'],
+            'state': ['examplestring'],
+            'nonce': ['examplestring']
+        }
+        self.assertDictEqual(parse_qs(o.query), expected_query)
+        self.assertEqual(o.hostname, 'server.example.com')
+        self.assertEqual(o.path, '/auth')
+
+    @override_settings(ROOT_URLCONF='tests.namespaced_urls')
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(OIDC_AUTHENTICATION_CALLBACK_URL='namespace:oidc_authentication_callback')
+    @patch('mozilla_django_oidc.views.get_random_string')
+    def test_get_namespaced(self, mock_random_string):
+        """Test initiation of a successful OIDC attempt with namespaced redirect_uri."""
+        mock_random_string.return_value = 'examplestring'
+        url = reverse('namespace:oidc_authentication_init')
+        request = self.factory.get(url)
+        request.session = dict()
+        login_view = views.OIDCAuthenticationRequestView.as_view()
+        response = login_view(request)
+        self.assertEqual(response.status_code, 302)
+
+        o = urlparse(response.url)
+        expected_query = {
+            'response_type': ['code'],
+            'scope': ['openid email'],
+            'client_id': ['example_id'],
+            'redirect_uri': ['http://testserver/namespace/callback/'],
             'state': ['examplestring'],
             'nonce': ['examplestring']
         }
@@ -384,6 +438,41 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         self.assertDictEqual(parse_qs(o.query), expected_query)
         self.assertEqual(o.hostname, 'server.example.com')
         self.assertEqual(o.path, '/auth')
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @patch('mozilla_django_oidc.views.get_random_string')
+    @patch('mozilla_django_oidc.views.OIDCAuthenticationRequestView.get_extra_params')
+    def test_get_with_overridden_extra_params(self, mock_extra_params, mock_random_string):
+        """Test overriding OIDCAuthenticationRequestView.get_extra_params()."""
+        mock_random_string.return_value = 'examplestring'
+
+        mock_extra_params.return_value = {
+            'connection': 'foo'
+        }
+
+        url = reverse('oidc_authentication_init')
+        request = self.factory.get(url)
+        request.session = dict()
+        login_view = views.OIDCAuthenticationRequestView.as_view()
+        response = login_view(request)
+        self.assertEqual(response.status_code, 302)
+
+        o = urlparse(response.url)
+        expected_query = {
+            'response_type': ['code'],
+            'scope': ['openid email'],
+            'client_id': ['example_id'],
+            'redirect_uri': ['http://testserver/callback/'],
+            'state': ['examplestring'],
+            'nonce': ['examplestring'],
+            'connection': ['foo'],
+        }
+        self.assertDictEqual(parse_qs(o.query), expected_query)
+        self.assertEqual(o.hostname, 'server.example.com')
+        self.assertEqual(o.path, '/auth')
+
+        mock_extra_params.assert_called_with(request)
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
@@ -456,4 +545,4 @@ class OIDCLogoutViewTestCase(TestCase):
             mock_logout.assert_called_once_with(request)
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, 'http://example.com/logged/out')
+        self.assertEqual(response.url, 'http://testserver/logged/out')

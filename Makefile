@@ -32,9 +32,8 @@ coverage: ## check code coverage quickly with the default Python
 	open htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/mozilla-django-oidc.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ mozilla_django_oidc
+	rm -rf docs/source
+	sphinx-apidoc -o docs/source/ mozilla_django_oidc
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 

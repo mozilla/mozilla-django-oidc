@@ -1,7 +1,11 @@
 # Install mozilla-django-oidc
 -e .
 
-bumpversion==0.5.3
-wheel==0.29.0
-ipython==5.1.0
-ipdb==0.10.1
+bumpversion
+wheel
+ipython
+ipdb
+Sphinx
+mock
+tox
+djangorestframework

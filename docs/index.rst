@@ -8,6 +8,9 @@ Contents:
 
    installation
    settings
+   xhr
+   drf
    contributing
    authors
    history
+   source/modules.rst

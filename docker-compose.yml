@@ -1,0 +1,42 @@
+# Based in the `docker-test-mozilla-django-oidc` images
+# https://github.com/mozilla-parsys/docker-test-mozilla-django-oidc
+
+version: '3'
+services:
+  testprovider:
+    stdin_open: true
+    tty: true
+    image: mozillaparsys/oidc_testprovider
+    ports:
+      - "8080:8080"
+  testrp:
+    stdin_open: true
+    tty: true
+    image: mozillaparsys/oidc_testrp:py${PYTHON_VERSION:-3}
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./:/mozilla-django-oidc
+    environment:
+      - TEST_OIDC_ALGO=${TEST_OIDC_ALGO:-hs}
+      - DJANGO_VERSION=${DJANGO_VERSION:-Django>=2.0}
+    command: >-
+      bash -c "cd /mozilla-django-oidc/ &&
+               pip install -I . &&
+               cd /code &&
+               pip install $$DJANGO_VERSION &&
+               ./bin/run.sh"
+  testrunner:
+    stdin_open: true
+    tty: true
+    image: mozillaparsys/oidc_testrunner
+    volumes:
+      - ./integration_tests:/integration_tests
+    links:
+      - testrp
+      - testprovider
+    command: >-
+      bash -c "cd /integration_tests &&
+               wait-for-it -t 60 -p 8080 -h testprovider &&
+               wait-for-it -t 60 -p 8081 -h testrp &&
+               python integration_tests.py"

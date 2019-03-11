@@ -3,13 +3,16 @@ mozilla-django-oidc
 ===================
 
 .. image:: https://badge.fury.io/py/mozilla-django-oidc.svg
-    :target: https://badge.fury.io/py/mozilla-django-oidc
+   :target: https://badge.fury.io/py/mozilla-django-oidc
 
 .. image:: https://travis-ci.org/mozilla/mozilla-django-oidc.svg?branch=master
-    :target: https://travis-ci.org/mozilla/mozilla-django-oidc
+   :target: https://travis-ci.org/mozilla/mozilla-django-oidc
 
-.. image:: https://img.shields.io/codecov/c/github/mozilla/mozilla-django-oidc.svg
+.. image:: https://codecov.io/gh/mozilla/mozilla-django-oidc/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/mozilla/mozilla-django-oidc
+
+.. image:: https://circleci.com/gh/mozilla/mozilla-django-oidc/tree/master.svg?style=svg
+   :target: https://circleci.com/gh/mozilla/mozilla-django-oidc/tree/master
 
 A lightweight authentication and access management library for integration with OpenID Connect enabled authentication services.
 
@@ -20,8 +23,8 @@ Documentation
 The full documentation is at `<https://mozilla-django-oidc.readthedocs.io>`_.
 
 
-Running Tests
--------------
+Running Unit Tests
+-------------------
 
 Use ``tox`` to run as many different versions of Python you have. If you
 don't have ``tox`` installed (and executable) already you can either
@@ -45,8 +48,7 @@ Django of your choice. Here is such an example:
 
     $ virtualenv -p /path/to/bin/python3.5 venv
     $ source venv
-    (venv) $ pip install Django==1.11.2
-    (venv) $ pip install -r tests/requirements.txt
+    (venv) $ pip install -r requirements/requirements_dev.txt
     (venv) $ DJANGO_SETTINGS_MODULE=tests.settings django-admin.py test
 
 Measuring code coverage, continuing the steps above:
@@ -58,6 +60,44 @@ Measuring code coverage, continuing the steps above:
     (venv) $ coverage report
     (venv) $ coverage html
     (venv) $ open htmlcov/index.html
+
+Local development
+-----------------
+
+The local development setup is based on Docker so you need the following installed in your system:
+
+* `docker`
+* `docker-compose`
+
+You will also need to edit your ``hosts`` file to resolve ``testrp`` and ``testprovider`` hostnames to ``127.0.0.1``.
+
+Running test services
+=====================
+
+To run the `testrp` and `testprovider` instances run the following:
+
+.. code-block:: shell
+
+   (venv) $ docker-compose up -d testprovider testrp
+
+Then visit the testing django app on: ``http://testrp:8081``.
+
+The library source code is mounted as a docker volume and source code changes are reflected directly in.
+In order to test a change you need to restart the ``testrp`` service.
+
+.. code-block:: shell
+
+   (venv) $ docker-compose stop testrp
+   (venv) $ docker-compose up -d testrp
+
+Running integration tests
+=========================
+
+Integration tests are mounted as a volume to the docker containers. Tests can be run using the following command:
+
+.. code-block:: shell
+
+   (venv) $ docker-compose run --service-ports testrunner
 
 Linting
 -------
