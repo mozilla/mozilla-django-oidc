@@ -18,7 +18,9 @@ from django.utils.deprecation import MiddlewareMixin
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 
-from mozilla_django_oidc.auth import OIDCAuthenticationBackend
+import requests
+
+from mozilla_django_oidc.auth import OIDCAuthenticationBackend, store_tokens
 from mozilla_django_oidc.utils import (
     absolutify,
     import_from_settings,
@@ -86,16 +88,24 @@ class SessionRefresh(MiddlewareMixin):
             request.path not in self.exempt_urls
         )
 
-    def process_request(self, request):
+
+    def is_expired(self, request):
         if not self.is_refreshable_url(request):
             LOGGER.debug('request is not refreshable')
-            return
+            return False
 
         expiration = request.session.get('oidc_id_token_expiration', 0)
         now = time.time()
         if expiration > now:
             # The id_token is still valid, so we don't have to do anything.
             LOGGER.debug('id token is still valid (%s > %s)', expiration, now)
+            return False
+
+        return True
+
+    def process_request(self, request):
+
+        if not self.is_expired(request):
             return
 
         LOGGER.debug('id token has expired')
@@ -143,3 +153,39 @@ class SessionRefresh(MiddlewareMixin):
             response['refresh_url'] = redirect_url
             return response
         return HttpResponseRedirect(redirect_url)
+
+
+class RefreshOIDCToken(SessionRefresh):
+    """
+    A middleware that will refresh the access token following proper OIDC protocol:
+    https://auth0.com/docs/tokens/refresh-token/current
+    """
+    def process_request(self, request):
+        if not self.is_expired(request):
+            return
+
+        token_url = import_from_settings('OIDC_OP_TOKEN_ENDPOINT')
+        client_id = import_from_settings('OIDC_RP_CLIENT_ID')
+        client_secret = import_from_settings('OIDC_RP_CLIENT_SECRET')
+        refresh_token = request.session.get('oidc_refresh_token')
+        if not refresh_token:
+            LOGGER.debug('no refresh token stored')
+            return
+
+        token_payload = {
+            'grant_type': 'refresh_token',
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'refresh_token': refresh_token,
+        }
+
+        response = requests.post(token_url,
+                                 data=token_payload,
+                                 verify=import_from_settings('OIDC_VERIFY_SSL', True))
+        response.raise_for_status()
+
+        token_info = response.json()
+        id_token = token_info.get('id_token')
+        access_token = token_info.get('access_token')
+        refresh_token = token_info.get('refresh_token')
+        store_tokens(request.session, id_token, access_token, refresh_token)
