@@ -17,6 +17,13 @@ History
 * Add Mozilla code of conduct
 * Allow overriding OIDC settings per class
 
+1.3.0 (2019-03-12)
+++++++++++++++++++
+
+* Add `RefreshOIDCToken` middleware
+* Add `settings.OIDC_STORE_REFRESH_TOKEN`
+  Thanks `@GermanoGuerrini`_
+
 1.2.1 (2019-01-22)
 ===================
 

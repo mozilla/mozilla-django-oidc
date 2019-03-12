@@ -221,6 +221,34 @@ The length of time it takes for an id token to expire is set in
 ``settings.OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS`` which defaults to 15 minutes.
 
 
+Getting a new ID token using the refresh token
+----------------------------------------------
+
+Alternatively, if the OIDC Provider supplies a refresh token during the
+authorization phase, it can be stored in the session by setting
+``settings.OIDC_STORE_REFRESH_TOKEN`` to `True`.
+It will be then used by the
+:py:class:`mozilla_django_oidc.middleware.RefreshOIDCToken` middleware.
+
+To add it to your site, put it in the settings::
+
+    MIDDLEWARE_CLASSES = [
+        # middleware involving session and authentication must come first
+        # ...
+        'mozilla_django_oidc.middleware.RefreshOIDCToken',
+        # ...
+    ]
+
+The middleware will check if the user's id token has expired with the same logic
+of :py:class:`mozilla_django_oidc.middleware.SessionRefresh` but, instead of
+re-authenticating the user, it will request the OIDC Provider for a new
+id token.
+
+.. seealso::
+
+   https://openid.net/specs/openid-connect-core-1_0.html#RefreshTokens
+
+
 Connecting OIDC user identities to Django users
 -----------------------------------------------
 
