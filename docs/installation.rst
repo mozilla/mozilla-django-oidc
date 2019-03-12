@@ -143,8 +143,8 @@ Next, edit your ``urls.py`` and add the following:
 
 .. code-block:: python
 
-   from django.urls import path, include
-   
+   from django.urls import path
+
    urlpatterns = [
        # ...
        path('oidc/', include('mozilla_django_oidc.urls')),
@@ -220,8 +220,50 @@ check to see if the user's id token has expired and if so, redirect to the OIDC
 provider's authentication endpoint for a silent re-auth. That will redirect back
 to the page the user was going to.
 
-The length of time it takes for an id token to expire is set in
-``settings.OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS`` which defaults to 15 minutes.
+The length of time it takes for a token to expire is set in
+``settings.OIDC_RENEW_TOKEN_EXPIRY_SECONDS``, which defaults to 15 minutes.
+
+
+Getting a new access token using the refresh token
+--------------------------------------------------
+
+Alternatively, if the OIDC Provider supplies a refresh token during the
+authorization phase, it can be stored in the session by setting
+``settings.OIDC_STORE_REFRESH_TOKEN`` to `True`.
+It will be then used by the
+:py:class:`mozilla_django_oidc.middleware.RefreshOIDCAccessToken` middleware.
+
+The middleware will check if the user's access token has expired with the same
+logic of :py:class:`mozilla_django_oidc.middleware.SessionRefresh` but, instead
+of taking the user through a browser-based authentication flow, it will request
+a new access token from the OP in the background.
+
+.. warning::
+
+   Using this middleware will effectively cause ID tokens to no longer be stored
+   in the request session, e.g., ``oidc_id_token`` will no longer be available
+   to Django. This is due to the fact that secure verification of the ID token
+   is currently not possible in the refresh flow due to not enough information
+   about the initial authentication being preserved in the session backend.
+
+   If you rely on ID tokens, do not use this middleware. It is only useful if
+   you are relying instead on access tokens.
+
+To add it to your site, put it in the settings::
+
+    MIDDLEWARE_CLASSES = [
+        # middleware involving session and authentication must come first
+        # ...
+        'mozilla_django_oidc.middleware.RefreshOIDCAccessToken',
+        # ...
+    ]
+
+The length of time it takes for a token to expire is set in
+``settings.OIDC_RENEW_TOKEN_EXPIRY_SECONDS``, which defaults to 15 minutes.
+
+.. seealso::
+
+   https://openid.net/specs/openid-connect-core-1_0.html#RefreshTokens
 
 
 Connecting OIDC user identities to Django users
