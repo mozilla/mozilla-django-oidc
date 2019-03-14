@@ -82,7 +82,6 @@ class SessionRefresh(MiddlewareMixin):
             request.path not in self.exempt_urls
         )
 
-
     def is_expired(self, request):
         if not self.is_refreshable_url(request):
             LOGGER.debug('request is not refreshable')
