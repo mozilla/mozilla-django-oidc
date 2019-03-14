@@ -2,6 +2,19 @@
 
 History
 -------
+0.4.2 (2017-11-13)
+++++++++++++++++++
+
+Features:
+
+* RS256 verification through ``settings.OIDC_OP_JWKS_ENDPOINT``
+
+1.3.0 (2019-03-12)
+++++++++++++++++++
+
+* Add `RefreshOIDCToken` middleware
+* Add `settings.OIDC_STORE_REFRESH_TOKEN`
+  Thanks `@GermanoGuerrini`_
 
 1.2.1 (2019-01-22)
 ++++++++++++++++++

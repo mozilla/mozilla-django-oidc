@@ -4,6 +4,7 @@ from mock import Mock, call, patch
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
 from josepy.b64 import b64encode
+import requests
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -805,49 +806,6 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(User.objects.get().first_name, 'a_username')
 
 
-class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
-    """Authentication tests with ALG RS256 and provided IdP Sign Key."""
-
-    @override_settings(OIDC_OP_TOKEN_ENDPOINT='https://server.example.com/token')
-    @override_settings(OIDC_OP_USER_ENDPOINT='https://server.example.com/user')
-    @override_settings(OIDC_RP_CLIENT_ID='example_id')
-    @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
-    @override_settings(OIDC_RP_SIGN_ALGO='RS256')
-    @override_settings(OIDC_RP_IDP_SIGN_KEY='sign_key')
-    def setUp(self):
-        self.backend = OIDCAuthenticationBackend()
-
-    @override_settings(OIDC_USE_NONCE=False)
-    @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend._verify_jws')
-    @patch('mozilla_django_oidc.auth.requests')
-    def test_jwt_verify_sign_key(self, request_mock, jws_mock):
-        """Test jwt verification signature."""
-        auth_request = RequestFactory().get('/foo', {'code': 'foo',
-                                                     'state': 'bar'})
-        auth_request.session = {}
-
-        jws_mock.return_value = json.dumps({
-            'aud': 'audience'
-        }).encode('utf-8')
-        get_json_mock = Mock()
-        get_json_mock.json.return_value = {
-            'nickname': 'username',
-            'email': 'email@example.com'
-        }
-        request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
-        post_json_mock.json.return_value = {
-            'id_token': 'token',
-            'access_token': 'access_token'
-        }
-        request_mock.post.return_value = post_json_mock
-        self.backend.authenticate(request=auth_request)
-        calls = [
-            call(force_bytes('token'), 'sign_key')
-        ]
-        jws_mock.assert_has_calls(calls)
-
-
 class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
     """Authentication tests with ALG RS256 and IpD JWKS Endpoint."""
 
@@ -1103,6 +1061,49 @@ class TestVerifyClaim(TestCase):
         msg = ('Custom OIDC_RP_SCOPES defined. '
                'You need to override `verify_claims` for custom claims verification.')
         patch_logger.warning.assert_called_with(msg)
+
+
+class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
+    """Authentication tests with ALG RS256 and provided IdP Sign Key."""
+
+    @override_settings(OIDC_OP_TOKEN_ENDPOINT='https://server.example.com/token')
+    @override_settings(OIDC_OP_USER_ENDPOINT='https://server.example.com/user')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
+    @override_settings(OIDC_RP_SIGN_ALGO='RS256')
+    @override_settings(OIDC_RP_IDP_SIGN_KEY='sign_key')
+    def setUp(self):
+        self.backend = OIDCAuthenticationBackend()
+
+    @override_settings(OIDC_USE_NONCE=False)
+    @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend._verify_jws')
+    @patch('mozilla_django_oidc.auth.requests')
+    def test_jwt_verify_sign_key(self, request_mock, jws_mock):
+        """Test jwt verification signature."""
+        auth_request = RequestFactory().get('/foo', {'code': 'foo',
+                                                     'state': 'bar'})
+        auth_request.session = {}
+
+        jws_mock.return_value = json.dumps({
+            'aud': 'audience'
+        }).encode('utf-8')
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'username',
+            'email': 'email@example.com'
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'token',
+            'access_token': 'access_token'
+        }
+        request_mock.post.return_value = post_json_mock
+        self.backend.authenticate(request=auth_request)
+        calls = [
+            call(force_bytes('token'), 'sign_key')
+        ]
+        jws_mock.assert_has_calls(calls)
 
 
 def dotted_username_algo_callback(email):
