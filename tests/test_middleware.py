@@ -148,7 +148,7 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
         self.assertEquals(expected_query, parse_qs(qs))
 
 
-class RefreshOIDCTokenMiddlewareTestCase(TestCase):
+class RefreshOIDCTokenTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.middleware = RefreshOIDCToken()
