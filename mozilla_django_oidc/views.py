@@ -25,21 +25,30 @@ from mozilla_django_oidc.utils import (
 )
 
 
+DEFAULT_INTERVAL_SECONDS = 60 * 15
+
+
 class OIDCAuthenticationCallbackView(View):
     """OIDC client authentication callback HTTP endpoint"""
+
+    def __init__(self):
+        self.LOGIN_REDIRECT_URL_FAILURE = import_from_settings('LOGIN_REDIRECT_URL_FAILURE', '/')
+        self.LOGIN_REDIRECT_URL = import_from_settings('LOGIN_REDIRECT_URL', '/')
+        self.EXPIRATION_INTERVAL = import_from_settings('OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS',
+                                                        DEFAULT_INTERVAL_SECONDS)
 
     http_method_names = ['get']
 
     @property
     def failure_url(self):
-        return import_from_settings('LOGIN_REDIRECT_URL_FAILURE', '/')
+        return self.LOGIN_REDIRECT_URL_FAILURE
 
     @property
     def success_url(self):
         # Pull the next url from the session or settings--we don't need to
         # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get('oidc_login_next', None)
-        return next_url or import_from_settings('LOGIN_REDIRECT_URL', '/')
+        return next_url or self.LOGIN_REDIRECT_URL
 
     def login_failure(self):
         return HttpResponseRedirect(self.failure_url)
@@ -49,8 +58,7 @@ class OIDCAuthenticationCallbackView(View):
 
         # Figure out when this id_token will expire. This is ignored unless you're
         # using the RenewIDToken middleware.
-        expiration_interval = import_from_settings('OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS', 60 * 15)
-        self.request.session['oidc_id_token_expiration'] = time.time() + expiration_interval
+        self.request.session['oidc_id_token_expiration'] = time.time() + self.EXPIRATION_INTERVAL
 
         return HttpResponseRedirect(self.success_url)
 
@@ -91,7 +99,7 @@ class OIDCAuthenticationCallbackView(View):
         return self.login_failure()
 
 
-def get_next_url(request, redirect_field_name):
+def get_next_url(request, redirect_field_name, allowed_hosts):
     """Retrieves next url from request
 
     Note: This verifies that the url is safe before returning it. If the url
@@ -111,7 +119,7 @@ def get_next_url(request, redirect_field_name):
                 'OIDC_REDIRECT_REQUIRE_HTTPS', request.is_secure())
         }
 
-        hosts = list(import_from_settings('OIDC_REDIRECT_ALLOWED_HOSTS', []))
+        hosts = list(allowed_hosts)
         hosts.append(request.get_host())
         kwargs['allowed_hosts'] = hosts
 
@@ -131,6 +139,10 @@ class OIDCAuthenticationRequestView(View):
 
         self.OIDC_OP_AUTH_ENDPOINT = import_from_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
         self.OIDC_RP_CLIENT_ID = import_from_settings('OIDC_RP_CLIENT_ID')
+        self.OIDC_REDIRECT_ALLOWED_HOSTS = import_from_settings('OIDC_REDIRECT_ALLOWED_HOSTS', [])
+        self.OIDC_AUTH_REQUEST_EXTRA_PARAMS = import_from_settings(
+            'OIDC_AUTH_REQUEST_EXTRA_PARAMS', {}
+        )
 
     def get(self, request):
         """OIDC client authentication initialization HTTP endpoint"""
@@ -160,14 +172,16 @@ class OIDCAuthenticationRequestView(View):
             request.session['oidc_nonce'] = nonce
 
         request.session['oidc_state'] = state
-        request.session['oidc_login_next'] = get_next_url(request, redirect_field_name)
+        request.session['oidc_login_next'] = get_next_url(request,
+                                                          redirect_field_name,
+                                                          self.OIDC_REDIRECT_ALLOWED_HOSTS)
 
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=self.OIDC_OP_AUTH_ENDPOINT, query=query)
         return HttpResponseRedirect(redirect_url)
 
     def get_extra_params(self, request):
-        return import_from_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
+        return self.OIDC_AUTH_REQUEST_EXTRA_PARAMS
 
 
 class OIDCLogoutView(View):
@@ -175,10 +189,15 @@ class OIDCLogoutView(View):
 
     http_method_names = ['get', 'post']
 
+    def __init__(self, *args, **kwargs):
+        """Initialize settings."""
+        self.LOGOUT_REDIRECT_URL = import_from_settings('LOGOUT_REDIRECT_URL', '/')
+        self.OIDC_OP_LOGOUT_URL_METHOD = import_from_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
+
     @property
     def redirect_url(self):
         """Return the logout url defined in settings."""
-        return import_from_settings('LOGOUT_REDIRECT_URL', '/')
+        return self.LOGOUT_REDIRECT_URL
 
     def post(self, request):
         """Log out the user."""
@@ -187,7 +206,7 @@ class OIDCLogoutView(View):
         if is_authenticated(request.user):
             # Check if a method exists to build the URL to log out the user
             # from the OP.
-            logout_from_op = import_from_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
+            logout_from_op = self.OIDC_OP_LOGOUT_URL_METHOD
             if logout_from_op:
                 logout_url = import_string(logout_from_op)(request)
 
