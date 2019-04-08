@@ -502,7 +502,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(sent_data['code'], post_data['code'])
         self.assertEqual(sent_data['redirect_uri'], post_data['redirect_uri'])
 
-        auth = _kwargs['auth']  # type: requests.auth.HTTPBasicAuth
+        auth = _kwargs['auth']  # requests.auth.HTTPBasicAuth
         self.assertEqual(auth.username, 'example_id')
         self.assertEqual(auth.password, 'client_secret')
         self.assertEqual(_kwargs['verify'], True)

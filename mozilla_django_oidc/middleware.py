@@ -37,6 +37,10 @@ class SessionRefresh(MiddlewareMixin):
 
     """
 
+    @staticmethod
+    def get_settings(attr, *args):
+        return import_from_settings(attr, *args)
+
     @cached_property
     def exempt_urls(self):
         """Generate and return a set of url paths to exempt from SessionRefresh
@@ -48,7 +52,7 @@ class SessionRefresh(MiddlewareMixin):
         :returns: list of url paths (for example "/oidc/callback/")
 
         """
-        exempt_urls = list(import_from_settings('OIDC_EXEMPT_URLS', []))
+        exempt_urls = list(self.get_settings('OIDC_EXEMPT_URLS', []))
         exempt_urls.extend([
             'oidc_authentication_init',
             'oidc_authentication_callback',
@@ -96,9 +100,9 @@ class SessionRefresh(MiddlewareMixin):
 
         LOGGER.debug('id token has expired')
         # The id_token has expired, so we have to re-authenticate silently.
-        auth_url = import_from_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
-        client_id = import_from_settings('OIDC_RP_CLIENT_ID')
-        state = get_random_string(import_from_settings('OIDC_STATE_SIZE', 32))
+        auth_url = self.get_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
+        client_id = self.get_settings('OIDC_RP_CLIENT_ID')
+        state = get_random_string(self.get_settings('OIDC_STATE_SIZE', 32))
 
         # Build the parameters as if we were doing a real auth handoff, except
         # we also include prompt=none.
@@ -110,12 +114,12 @@ class SessionRefresh(MiddlewareMixin):
                 reverse('oidc_authentication_callback')
             ),
             'state': state,
-            'scope': import_from_settings('OIDC_RP_SCOPES', 'openid email'),
+            'scope': self.get_settings('OIDC_RP_SCOPES', 'openid email'),
             'prompt': 'none',
         }
 
-        if import_from_settings('OIDC_USE_NONCE', True):
-            nonce = get_random_string(import_from_settings('OIDC_NONCE_SIZE', 32))
+        if self.get_settings('OIDC_USE_NONCE', True):
+            nonce = get_random_string(self.get_settings('OIDC_NONCE_SIZE', 32))
             params.update({
                 'nonce': nonce
             })
