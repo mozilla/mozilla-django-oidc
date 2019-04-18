@@ -3,6 +3,12 @@
 History
 -------
 
+1.2.2 (2019-04-18)
+*******************
+
+* Add Mozilla code of conduct
+* Allow overriding OIDC settings per class
+
 1.2.1 (2019-01-22)
 ++++++++++++++++++
 
