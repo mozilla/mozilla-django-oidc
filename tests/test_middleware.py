@@ -152,9 +152,13 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='foo')
     @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
     @patch('mozilla_django_oidc.middleware.get_op_metadata')
-    def test_auth_endpoint_retrieved_correctly_from_metadata_on_expiration(self, get_op_metadata_patch):
-        """Test that on token refresh if metadata endpoint is given then auth endpoint is retrieved correctly"""
-        get_op_metadata_patch.return_value = {OPMetadataKey.AUTHORIZATION_ENDPOINT.value: 'auth_endpoint'}
+    def test_auth_endpoint_from_metadata_on_expiration(self, get_op_metadata_patch):
+        """
+        Test that on token refresh if metadata endpoint is given then auth endpoint
+        is retrieved correctly
+        """
+        get_op_metadata_patch.return_value\
+            = {OPMetadataKey.AUTHORIZATION_ENDPOINT.value: 'auth_endpoint'}
         request = self.factory.get('/foo')
         request.user = self.user
         request.session = {}

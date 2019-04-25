@@ -53,8 +53,8 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def __init__(self, *args, **kwargs):
         """Initialize settings."""
-        # If 'OIDC_REQUEST_METADATA' is set to True in settings then relevant openid endpoints are fetched from the
-        # metadata endpoint of the provider.
+        # If 'OIDC_REQUEST_METADATA' is set to True in settings then relevant openid endpoints
+        # are fetched from the metadata endpoint of the provider.
         if self.get_settings("OIDC_REQUEST_METADATA", False):
             op_metadata = get_op_metadata(self.get_settings("OIDC_OP_METADATA_ENDPOINT"))
             try:
@@ -74,8 +74,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
 
-        if (self.OIDC_RP_SIGN_ALGO.startswith('RS') and
-            (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
+        if (self.OIDC_RP_SIGN_ALGO.startswith('RS')
+                and (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
             msg = '{} alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured.'
             raise ImproperlyConfigured(msg.format(self.OIDC_RP_SIGN_ALGO))
 

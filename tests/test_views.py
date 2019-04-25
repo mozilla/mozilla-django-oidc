@@ -508,7 +508,8 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @patch('mozilla_django_oidc.views.get_op_metadata')
     def test_get_with_metadata_endpoint(self, get_op_metadata_patch):
         """Test that endpoint from metadata is extracted successfully"""
-        get_op_metadata_patch.return_value = {OPMetadataKey.AUTHORIZATION_ENDPOINT.value: 'auth_endpoint'}
+        get_op_metadata_patch.return_value \
+            = {OPMetadataKey.AUTHORIZATION_ENDPOINT.value: 'auth_endpoint'}
         request = self.factory.get(reverse('oidc_authentication_init'))
         request.session = dict()
         login_view = views.OIDCAuthenticationRequestView.as_view()
