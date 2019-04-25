@@ -16,7 +16,7 @@ from mozilla_django_oidc.auth import (
     default_username_algo,
     OIDCAuthenticationBackend,
 )
-
+from mozilla_django_oidc.constants import OPMetadataKey
 
 User = get_user_model()
 
@@ -783,6 +783,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         def update_user(user, claims):
             user.first_name = claims['nickname']
             user.save()
+
         update_user_mock.side_effect = update_user
 
         jws_mock.return_value = json.dumps({
@@ -803,6 +804,37 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(self.backend.authenticate(request=auth_request), None)
 
         self.assertEqual(User.objects.get().first_name, 'a_username')
+
+    @override_settings(OIDC_REQUEST_METADATA=True)
+    @override_settings(OIDC_OP_METADATA_ENDPOINT='metadata_endpoint')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
+    @patch('mozilla_django_oidc.auth.get_op_metadata')
+    def test_backend_initialization_with_metadata_endpoint(self, get_op_metadata_patch):
+        """Test that backend is initialized properly from metadata endpoint"""
+        get_op_metadata_patch.return_value = {OPMetadataKey.TOKEN_ENDPOINT.value: 'token_endpoint',
+                                              OPMetadataKey.USER_INFO_ENDPOINT.value: 'user_info_endpoint',
+                                              OPMetadataKey.JWKS_ENDPOINT.value: 'jwks_endpoint'
+                                              }
+        test_backend = OIDCAuthenticationBackend()
+
+        self.assertEqual(test_backend.OIDC_OP_TOKEN_ENDPOINT, 'token_endpoint')
+        self.assertEqual(test_backend.OIDC_OP_USER_ENDPOINT, 'user_info_endpoint')
+        self.assertEqual(test_backend.OIDC_OP_JWKS_ENDPOINT, 'jwks_endpoint')
+        get_op_metadata_patch.assert_called_once_with('metadata_endpoint')
+
+    @override_settings(OIDC_REQUEST_METADATA=True)
+    @override_settings(OIDC_OP_METADATA_ENDPOINT='metadata_endpoint')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
+    @patch('mozilla_django_oidc.auth.get_op_metadata')
+    def test_backend_initialization_with_metadata_endpoint_faulty_deta(self, get_op_metadata_patch):
+        """Test that exception is thrown if metadata is not standard"""
+        get_op_metadata_patch.return_value = dict()  # empty metadata dictionary
+
+        with self.assertRaises(SuspiciousOperation) as context:
+            OIDCAuthenticationBackend()
+        self.assertEqual(str(context.exception), "Metadata json is not in standard format")
 
 
 class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
@@ -1084,20 +1116,20 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
 class TestVerifyClaim(TestCase):
     @patch('mozilla_django_oidc.auth.import_from_settings')
     def test_returns_false_if_email_not_in_claims(self, patch_settings):
-        patch_settings.return_value = 'openid email'
+        patch_settings.side_effect = lambda setting, *args: 'openid email' if setting == 'OIDC_RP_SCOPES' else ''
         ret = OIDCAuthenticationBackend().verify_claims({})
         self.assertFalse(ret)
 
     @patch('mozilla_django_oidc.auth.import_from_settings')
     def test_returns_true_if_email_in_claims(self, patch_settings):
-        patch_settings.return_value = 'openid email'
+        patch_settings.side_effect = lambda setting, *args: 'openid email' if setting == 'OIDC_RP_SCOPES' else ''
         ret = OIDCAuthenticationBackend().verify_claims({'email': 'email@example.com'})
         self.assertTrue(ret)
 
     @patch('mozilla_django_oidc.auth.import_from_settings')
     @patch('mozilla_django_oidc.auth.LOGGER')
     def test_returns_true_custom_claims(self, patch_logger, patch_settings):
-        patch_settings.return_value = 'foo bar'
+        patch_settings.side_effect = lambda setting, *args: 'foo bar' if setting == 'OIDC_RP_SCOPES' else ''
         ret = OIDCAuthenticationBackend().verify_claims({})
         self.assertTrue(ret)
         msg = ('Custom OIDC_RP_SCOPES defined. '

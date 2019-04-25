@@ -1,6 +1,8 @@
 import json
 import time
 
+from mozilla_django_oidc.constants import OPMetadataKey
+
 try:
     from urllib.parse import parse_qs
 except ImportError:
@@ -23,9 +25,7 @@ from django.test.client import ClientHandler
 from mozilla_django_oidc.middleware import SessionRefresh
 from mozilla_django_oidc.urls import urlpatterns as orig_urlpatterns
 
-
 User = get_user_model()
-
 
 DJANGO_VERSION = tuple(django.VERSION[0:2])
 
@@ -147,6 +147,25 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
         }
         self.assertEquals(expected_query, parse_qs(qs))
 
+    @override_settings(OIDC_REQUEST_METADATA=True)
+    @override_settings(OIDC_OP_METADATA_ENDPOINT='metadata_endpoint')
+    @override_settings(OIDC_RP_CLIENT_ID='foo')
+    @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
+    @patch('mozilla_django_oidc.middleware.get_op_metadata')
+    def test_auth_endpoint_retrieved_correctly_from_metadata_on_expiration(self, get_op_metadata_patch):
+        """Test that on token refresh if metadata endpoint is given then auth endpoint is retrieved correctly"""
+        get_op_metadata_patch.return_value = {OPMetadataKey.AUTHORIZATION_ENDPOINT.value: 'auth_endpoint'}
+        request = self.factory.get('/foo')
+        request.user = self.user
+        request.session = {}
+
+        response = self.middleware.process_request(request)
+
+        self.assertEquals(response.status_code, 302)
+        url, qs = response.url.split('?')
+        self.assertEquals(url, 'auth_endpoint')
+        get_op_metadata_patch.assert_called_once_with('metadata_endpoint')
+
 
 # This adds a "home page" we can test against.
 def fakeview(req):
@@ -170,6 +189,7 @@ def override_middleware(fun):
 
 class UserifiedClientHandler(ClientHandler):
     """Enhances ClientHandler to "work" with users properly"""
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         super(UserifiedClientHandler, self).__init__(*args, **kwargs)
@@ -181,6 +201,7 @@ class UserifiedClientHandler(ClientHandler):
 
 class ClientWithUser(Client):
     """Enhances Client to "work" with users properly"""
+
     def __init__(self, enforce_csrf_checks=False, **defaults):
         # Start off with the AnonymousUser
         self.user = AnonymousUser()
@@ -217,6 +238,7 @@ class ClientWithUser(Client):
 @override_middleware
 class MiddlewareTestCase(TestCase):
     """These tests test the middleware as part of the request/response cycle"""
+
     def setUp(self):
         self.factory = RequestFactory()
         self.user = User.objects.create_user(username='example_username', password='password')

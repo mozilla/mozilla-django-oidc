@@ -1,8 +1,9 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
+from mock import patch, Mock
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings
+from mozilla_django_oidc.utils import absolutify, import_from_settings, get_op_metadata
 
 
 class SettingImportTestCase(TestCase):
@@ -47,3 +48,17 @@ class AbsolutifyTestCase(TestCase):
         ).get('/', SERVER_PORT=443)
         url = absolutify(req, 'evil.com/foo/bar')
         self.assertEqual(url, 'https://testserver/evil.com/foo/bar')
+
+
+class GetOPMetadataTestCase(TestCase):
+
+    @override_settings(OIDC_VERIFY_SSL=True)
+    @patch('mozilla_django_oidc.utils.requests')
+    def test_get_op_metadata(self, requests_patch):
+        """Testing that get_op_metadata is getting an url and giving a json"""
+        test_json_mock = Mock()
+        test_json_mock.json.return_value = {'test_key': 'test_value'}
+        requests_patch.get.return_value = test_json_mock
+
+        self.assertEqual(get_op_metadata('test_endpoint'), {'test_key': 'test_value'})
+        requests_patch.get.assert_called_once_with(url='test_endpoint', verify=True)
