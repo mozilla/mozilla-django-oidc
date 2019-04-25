@@ -58,6 +58,7 @@ def is_authenticated(user):
 
 
 def get_op_metadata(op_metadata_endpoint):
+    """Return metadata from the metadata endpoint of the openid provider"""
     op_metadata = requests.get(
         url=op_metadata_endpoint,
         verify=import_from_settings('OIDC_VERIFY_SSL', True)

@@ -137,6 +137,8 @@ class OIDCAuthenticationRequestView(View):
     def __init__(self, *args, **kwargs):
         super(OIDCAuthenticationRequestView, self).__init__(*args, **kwargs)
 
+        # If 'OIDC_REQUEST_METADATA' is set to True in settings then relevant openid endpoints are fetched from the
+        # metadata endpoint of the provider.
         if self.get_settings("OIDC_REQUEST_METADATA", False):
             op_metadata = get_op_metadata(self.get_settings("OIDC_OP_METADATA_ENDPOINT"))
             try:

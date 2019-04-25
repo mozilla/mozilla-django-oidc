@@ -105,6 +105,8 @@ class SessionRefresh(MiddlewareMixin):
         LOGGER.debug('id token has expired')
         # The id_token has expired, so we have to re-authenticate silently.
 
+        # If 'OIDC_REQUEST_METADATA' is set to True in settings then relevant openid endpoints are fetched from the
+        # metadata endpoint of the provider.
         if self.get_settings("OIDC_REQUEST_METADATA", False):
             op_metadata = get_op_metadata(self.get_settings("OIDC_OP_METADATA_ENDPOINT"))
             try:
