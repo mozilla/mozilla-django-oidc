@@ -1,4 +1,7 @@
 import time
+
+from mozilla_django_oidc.constants import OPMetadataKey
+
 try:
     from urllib.parse import urlencode
 except ImportError:
@@ -6,6 +9,7 @@ except ImportError:
     from urllib import urlencode
 
 from django.core.exceptions import SuspiciousOperation
+
 try:
     from django.urls import reverse
 except ImportError:
@@ -21,8 +25,8 @@ from django.views.generic import View
 from mozilla_django_oidc.utils import (
     absolutify,
     import_from_settings,
-    is_authenticated
-)
+    is_authenticated,
+    get_op_metadata)
 
 
 class OIDCAuthenticationCallbackView(View):
@@ -133,7 +137,17 @@ class OIDCAuthenticationRequestView(View):
     def __init__(self, *args, **kwargs):
         super(OIDCAuthenticationRequestView, self).__init__(*args, **kwargs)
 
-        self.OIDC_OP_AUTH_ENDPOINT = self.get_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
+        if self.get_settings("OIDC_REQUEST_METADATA", False):
+            op_metadata = get_op_metadata(self.get_settings("OIDC_OP_METADATA_ENDPOINT"))
+            try:
+                self.OIDC_OP_AUTH_ENDPOINT = op_metadata[OPMetadataKey.AUTHORIZATION_ENDPOINT.value]
+
+            except KeyError as e:
+                raise SuspiciousOperation("Metadata json is not in standard format") from e
+
+        else:
+            self.OIDC_OP_AUTH_ENDPOINT = self.get_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
+
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
 
     @staticmethod

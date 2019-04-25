@@ -1,9 +1,10 @@
+import requests
+
 try:
     from urllib.request import parse_http_list, parse_keqv_list
 except ImportError:
     # python < 3
     from urllib2 import parse_http_list, parse_keqv_list
-
 from django import VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -54,3 +55,12 @@ def is_authenticated(user):
     if _less_than_django_1_10:
         return user.is_authenticated()
     return user.is_authenticated
+
+
+def get_op_metadata(op_metadata_endpoint):
+    op_metadata = requests.get(
+        url=op_metadata_endpoint,
+        verify=import_from_settings('OIDC_VERIFY_SSL', True)
+    )
+    op_metadata.raise_for_status()
+    return op_metadata.json()

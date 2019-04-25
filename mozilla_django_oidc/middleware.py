@@ -1,5 +1,10 @@
 import logging
 import time
+
+from django.core.exceptions import SuspiciousOperation
+
+from mozilla_django_oidc.constants import OPMetadataKey
+
 try:
     from urllib.parse import urlencode
 except ImportError:
@@ -22,9 +27,8 @@ from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import (
     absolutify,
     import_from_settings,
-    is_authenticated
-)
-
+    is_authenticated,
+    get_op_metadata)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -100,7 +104,17 @@ class SessionRefresh(MiddlewareMixin):
 
         LOGGER.debug('id token has expired')
         # The id_token has expired, so we have to re-authenticate silently.
-        auth_url = self.get_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
+
+        if self.get_settings("OIDC_REQUEST_METADATA", False):
+            op_metadata = get_op_metadata(self.get_settings("OIDC_OP_METADATA_ENDPOINT"))
+            try:
+                auth_url = op_metadata[OPMetadataKey.AUTHORIZATION_ENDPOINT.value]
+
+            except KeyError as e:
+                raise SuspiciousOperation("Metadata json is not in standard format") from e
+        else:
+            auth_url = self.get_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
+
         client_id = self.get_settings('OIDC_RP_CLIENT_ID')
         state = get_random_string(self.get_settings('OIDC_STATE_SIZE', 32))
 

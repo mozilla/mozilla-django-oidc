@@ -8,6 +8,9 @@ from requests.auth import HTTPBasicAuth
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
+
+from mozilla_django_oidc.constants import OPMetadataKey
+
 try:
     from django.urls import reverse
 except ImportError:
@@ -21,8 +24,7 @@ from josepy.b64 import b64decode
 from josepy.jwk import JWK
 from josepy.jws import JWS, Header
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings
-
+from mozilla_django_oidc.utils import absolutify, import_from_settings, get_op_metadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,16 +53,27 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def __init__(self, *args, **kwargs):
         """Initialize settings."""
-        self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings('OIDC_OP_TOKEN_ENDPOINT')
-        self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
-        self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
+        if self.get_settings("OIDC_REQUEST_METADATA", False):
+            op_metadata = get_op_metadata(self.get_settings("OIDC_OP_METADATA_ENDPOINT"))
+            try:
+                self.OIDC_OP_TOKEN_ENDPOINT = op_metadata[OPMetadataKey.TOKEN_ENDPOINT.value]
+                self.OIDC_OP_USER_ENDPOINT = op_metadata[OPMetadataKey.USER_INFO_ENDPOINT.value]
+                self.OIDC_OP_JWKS_ENDPOINT = op_metadata[OPMetadataKey.JWKS_ENDPOINT.value]
+
+            except KeyError as e:
+                raise SuspiciousOperation("Metadata json is not in standard format") from e
+        else:
+            self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings('OIDC_OP_TOKEN_ENDPOINT')
+            self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
+            self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
+
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_RP_CLIENT_SECRET = self.get_settings('OIDC_RP_CLIENT_SECRET')
         self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
 
         if (self.OIDC_RP_SIGN_ALGO.startswith('RS') and
-                (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
+            (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
             msg = '{} alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured.'
             raise ImproperlyConfigured(msg.format(self.OIDC_RP_SIGN_ALGO))
 
