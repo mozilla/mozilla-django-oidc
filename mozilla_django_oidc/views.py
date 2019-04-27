@@ -145,8 +145,8 @@ class OIDCAuthenticationRequestView(View):
                 self.OIDC_OP_AUTH_ENDPOINT \
                     = op_metadata[OPMetadataKey.AUTHORIZATION_ENDPOINT.value]
 
-            except KeyError as e:
-                raise SuspiciousOperation("Metadata json is not in standard format") from e
+            except KeyError:
+                raise SuspiciousOperation("Metadata json is not in standard format")
 
         else:
             self.OIDC_OP_AUTH_ENDPOINT = self.get_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')

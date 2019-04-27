@@ -62,8 +62,8 @@ class OIDCAuthenticationBackend(ModelBackend):
                 self.OIDC_OP_USER_ENDPOINT = op_metadata[OPMetadataKey.USER_INFO_ENDPOINT.value]
                 self.OIDC_OP_JWKS_ENDPOINT = op_metadata[OPMetadataKey.JWKS_ENDPOINT.value]
 
-            except KeyError as e:
-                raise SuspiciousOperation("Metadata json is not in standard format") from e
+            except KeyError:
+                raise SuspiciousOperation("Metadata json is not in standard format")
         else:
             self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings('OIDC_OP_TOKEN_ENDPOINT')
             self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
