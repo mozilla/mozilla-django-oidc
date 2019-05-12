@@ -8,3 +8,8 @@ class OPMetadataKey(Enum):
     TOKEN_ENDPOINT = 'token_endpoint'
     USER_INFO_ENDPOINT = 'userinfo_endpoint'
     JWKS_ENDPOINT = 'jwks_uri'
+
+
+class OIDCCacheKey(Enum):
+    """Keys for cache used in OIDC."""
+    OP_METADATA = 'op_metadata'

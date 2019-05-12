@@ -2,14 +2,12 @@ import base64
 import hashlib
 import json
 import logging
-import requests
-from requests.auth import HTTPBasicAuth
 
+import requests
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
-
-from mozilla_django_oidc.constants import OPMetadataKey
+from requests.auth import HTTPBasicAuth
 
 try:
     from django.urls import reverse
@@ -24,7 +22,7 @@ from josepy.b64 import b64decode
 from josepy.jwk import JWK
 from josepy.jws import JWS, Header
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings, get_op_metadata
+from mozilla_django_oidc.utils import absolutify, import_from_settings, get_from_op_metadata, is_obtainable_from_op_metadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,29 +51,16 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def __init__(self, *args, **kwargs):
         """Initialize settings."""
-        # If 'OIDC_REQUEST_METADATA' is set to True in settings then relevant openid endpoints
-        # are fetched from the metadata endpoint of the provider.
-        if self.get_settings("OIDC_REQUEST_METADATA", False):
-            op_metadata = get_op_metadata(self.get_settings("OIDC_OP_METADATA_ENDPOINT"))
-            try:
-                self.OIDC_OP_TOKEN_ENDPOINT = op_metadata[OPMetadataKey.TOKEN_ENDPOINT.value]
-                self.OIDC_OP_USER_ENDPOINT = op_metadata[OPMetadataKey.USER_INFO_ENDPOINT.value]
-                self.OIDC_OP_JWKS_ENDPOINT = op_metadata[OPMetadataKey.JWKS_ENDPOINT.value]
-
-            except KeyError:
-                raise SuspiciousOperation("Metadata json is not in standard format")
-        else:
-            self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings('OIDC_OP_TOKEN_ENDPOINT')
-            self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
-            self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
-
+        self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings('OIDC_OP_TOKEN_ENDPOINT')
+        self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
+        self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_RP_CLIENT_SECRET = self.get_settings('OIDC_RP_CLIENT_SECRET')
         self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
 
         if (self.OIDC_RP_SIGN_ALGO.startswith('RS')
-                and (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
+            and (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
             msg = '{} alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured.'
             raise ImproperlyConfigured(msg.format(self.OIDC_RP_SIGN_ALGO))
 
@@ -83,6 +68,10 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     @staticmethod
     def get_settings(attr, *args):
+        # If the requested setting can be extracted from the OpenID provider's metadata and the use of it is allowed.
+        if is_obtainable_from_op_metadata(attr) and import_from_settings("OIDC_REQ_METADATA", False):
+            return get_from_op_metadata(attr)
+
         return import_from_settings(attr, *args)
 
     def filter_users_by_claims(self, claims):

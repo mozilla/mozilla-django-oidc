@@ -1,4 +1,7 @@
 import requests
+from django.core.cache import caches
+
+from mozilla_django_oidc.constants import OPMetadataKey, OIDCCacheKey
 
 try:
     from urllib.request import parse_http_list, parse_keqv_list
@@ -41,6 +44,9 @@ def absolutify(request, path):
 
 # Computed once, reused in every request
 _less_than_django_1_10 = VERSION < (1, 10)
+# Settings which can be extracted from OpenID provider's metadata.
+_op_metadata_settings = ['OIDC_OP_TOKEN_ENDPOINT', 'OIDC_OP_USER_ENDPOINT', 'OIDC_OP_JWKS_ENDPOINT',
+                         'OIDC_OP_AUTHORIZATION_ENDPOINT']
 
 
 def is_authenticated(user):
@@ -58,10 +64,45 @@ def is_authenticated(user):
 
 
 def get_op_metadata(op_metadata_endpoint):
-    """Return metadata from the metadata endpoint of the openid provider"""
+    """Return metadata from the metadata endpoint of the OpenID provider"""
     op_metadata = requests.get(
         url=op_metadata_endpoint,
         verify=import_from_settings('OIDC_VERIFY_SSL', True)
     )
     op_metadata.raise_for_status()
     return op_metadata.json()
+
+
+def is_obtainable_from_op_metadata(attr):
+    """Check if the setting can be obtained from OpenID provider's metadata"""
+    return attr in _op_metadata_settings
+
+
+def extract_settings_from_op_metadata(op_metadata, attr):
+    """Extract the setting from the OpenId provider's metadata."""
+    if attr == 'OIDC_OP_TOKEN_ENDPOINT':
+        return op_metadata[OPMetadataKey.TOKEN_ENDPOINT.value]
+    elif attr == 'OIDC_OP_USER_ENDPOINT':
+        return op_metadata[OPMetadataKey.USER_INFO_ENDPOINT.value]
+    elif attr == 'OIDC_OP_JWKS_ENDPOINT':
+        return op_metadata[OPMetadataKey.JWKS_ENDPOINT.value]
+    elif attr == 'OIDC_OP_AUTHORIZATION_ENDPOINT':
+        return op_metadata[OPMetadataKey.AUTHORIZATION_ENDPOINT.value]
+
+    raise AttributeError("Attribute: {} is not found in the OpenID provider's metadata".format(attr))
+
+
+def get_from_op_metadata(attr):
+    """Get settings from OpenId provider's metadata and cache it if not already."""
+    # By default the 'default' cache is used to cache the metadata.
+    cache = caches[import_from_settings("OIDC_REQ_METADATA_CACHE", "default")]
+    cached_metadata = cache.get(OIDCCacheKey.OP_METADATA.value)
+
+    # Pickling may be not be same for different versions of django.
+    if cached_metadata and cached_metadata._django_version == VERSION:
+        return extract_settings_from_op_metadata(cached_metadata, attr)
+
+    op_metadata = get_op_metadata(import_from_settings("OIDC_OP_METADATA_ENDPOINT"))
+    # Cache the results.
+    cache.set(OIDCCacheKey.OP_METADATA.value, op_metadata)
+    return extract_settings_from_op_metadata(op_metadata, attr)
