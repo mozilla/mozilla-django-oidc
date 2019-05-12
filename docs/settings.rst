@@ -224,3 +224,25 @@ of ``mozilla-django-oidc``.
    :default: False
 
    Use HTTP Basic Authentication instead of sending the client secret in token request POST body.
+
+.. py:attribute:: OIDC_OP_METADATA_ENDPOINT
+
+   :default: No default
+
+   URL of your OpenID Connect provider metadata endpoint. It will be used to configure other endpoints if  ``OIDC_REQ_METADATA`` option is set to ``True``.
+
+.. py:attribute:: OIDC_REQ_METADATA
+
+   :default: ``False``
+
+   Use OpenID Connect provider metadata endpoint to configure other endpoints.
+
+.. py:attribute:: OIDC_REQ_METADATA_CACHE
+
+   :default: ``default``
+
+   Django cache for caching metadata. By default Django's ``LocMemCache`` is used.
+
+   .. seealso::
+
+      https://docs.djangoproject.com/en/2.2/topics/cache/#local-memory-caching

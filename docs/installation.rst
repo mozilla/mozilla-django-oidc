@@ -265,6 +265,46 @@ Then you'd use the Python dotted path to that class in the
 ``mozilla_django_oidc.auth.OIDCAuthenticationBackend``.
 
 
+Automatically configuring OpenID endpoints using metadata URL
+-------------------------------------------------------------
+
+As part of the OpenID standard, we can get a provider's configuration by concatenating the string
+``/.well-known/openid-configuration`` to their location. For example, if you hit the URL
+``https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration`` on your browser
+you can see the following JSON by Microsoft:
+
+.. code-block:: python
+
+   {
+   "authorization_endpoint":"https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+   "token_endpoint":"https://login.microsoftonline.com/common/oauth2/v2.0/token",
+   "token_endpoint_auth_methods_supported":...,
+   "jwks_uri":"https://login.microsoftonline.com/common/discovery/v2.0/keys",
+   "response_modes_supported":...,
+   ...
+
+Many details are omitted here for brevity, but as you can see that information such as
+``authorization_endpoint`` is available in this JSON.
+
+In mozilla-django-oidc you can use this feature by adding ``OIDC_REQ_METADATA`` to ``True`` and
+``OIDC_OP_METADATA_ENDPOINT`` to ``<provider location>/.well-known/openid-configuration`` in
+``settings.py`` . By default, metadata is cached using Django's
+:py:class:`django.core.cache.backends.locmem.LocMemCache` and can be configured. For example if
+you want to use file based cache add the following in your ``settings.py``.
+
+.. code-block:: python
+
+  CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '...',
+    }
+}
+
+Read more about caching in Django at ``https://docs.djangoproject.com/en/2.2/topics/cache/``.
+If you want to use cache name other than ``default`` then configure it using ``OIDC_REQ_METADATA_CACHE``.
+
+
 Creating Django users
 ---------------------
 
