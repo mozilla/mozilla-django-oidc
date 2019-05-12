@@ -1,17 +1,14 @@
-from mozilla_django_oidc.constants import OPMetadataKey
-
 try:
     from urllib.parse import parse_qs, urlparse
 except ImportError:
     # Python < 3
     from urlparse import parse_qs, urlparse
 
-from mock import patch
-
 import django
-from django.core.exceptions import SuspiciousOperation
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import SuspiciousOperation
+from mock import patch
 
 try:
     from django.urls import reverse
@@ -502,14 +499,18 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         self.assertTrue('oidc_login_next' in request.session)
         self.assertTrue(request.session['oidc_login_next'] is None)
 
-    @override_settings(OIDC_REQUEST_METADATA=True)
+    @override_settings(OIDC_REQ_METADATA=True)
     @override_settings(OIDC_OP_METADATA_ENDPOINT='metadata_endpoint')
     @override_settings(OIDC_RP_CLIENT_ID="client_id")
-    @patch('mozilla_django_oidc.views.get_op_metadata')
-    def test_get_with_metadata_endpoint(self, get_op_metadata_patch):
+    @patch('mozilla_django_oidc.views.get_from_op_metadata')
+    def test_get_with_metadata_endpoint(self, get_from_op_metadata_patch):
         """Test that endpoint from metadata is extracted successfully"""
-        get_op_metadata_patch.return_value \
-            = {OPMetadataKey.AUTHORIZATION_ENDPOINT.value: 'auth_endpoint'}
+
+        def side_effect(attr):
+            if attr == 'OIDC_OP_AUTHORIZATION_ENDPOINT':
+                return 'auth_endpoint'
+
+        get_from_op_metadata_patch.side_effect = side_effect
         request = self.factory.get(reverse('oidc_authentication_init'))
         request.session = dict()
         login_view = views.OIDCAuthenticationRequestView.as_view()
@@ -517,22 +518,6 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         o = urlparse(response.url)
 
         self.assertEqual(o.path, 'auth_endpoint')
-        get_op_metadata_patch.assert_called_once_with('metadata_endpoint')
-
-    @override_settings(OIDC_REQUEST_METADATA=True)
-    @override_settings(OIDC_OP_METADATA_ENDPOINT='metadata_endpoint')
-    @override_settings(OIDC_RP_CLIENT_ID="client_id")
-    @patch('mozilla_django_oidc.views.get_op_metadata')
-    def test_get_with_metadata_endpoint_invalid_format(self, get_op_metadata_patch):
-        """Test that exception is raised if metadata document is not in expected format"""
-        get_op_metadata_patch.return_value = dict()  # empty metadata dictionary
-        request = self.factory.get(reverse('oidc_authentication_init'))
-        request.session = dict()
-        login_view = views.OIDCAuthenticationRequestView.as_view()
-
-        with self.assertRaises(SuspiciousOperation) as context:
-            login_view(request)
-        self.assertEqual(str(context.exception), "Metadata json is not in standard format")
 
 
 class OIDCLogoutViewTestCase(TestCase):

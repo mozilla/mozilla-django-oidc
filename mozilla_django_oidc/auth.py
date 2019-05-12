@@ -22,7 +22,8 @@ from josepy.b64 import b64decode
 from josepy.jwk import JWK
 from josepy.jws import JWS, Header
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings, get_from_op_metadata, is_obtainable_from_op_metadata
+from mozilla_django_oidc.utils import absolutify, import_from_settings, get_from_op_metadata, \
+    is_obtainable_from_op_metadata
 
 LOGGER = logging.getLogger(__name__)
 
@@ -59,8 +60,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
 
-        if (self.OIDC_RP_SIGN_ALGO.startswith('RS')
-            and (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
+        if (self.OIDC_RP_SIGN_ALGO.startswith('RS') and
+                (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
             msg = '{} alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured.'
             raise ImproperlyConfigured(msg.format(self.OIDC_RP_SIGN_ALGO))
 
@@ -68,8 +69,10 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     @staticmethod
     def get_settings(attr, *args):
-        # If the requested setting can be extracted from the OpenID provider's metadata and the use of it is allowed.
-        if is_obtainable_from_op_metadata(attr) and import_from_settings("OIDC_REQ_METADATA", False):
+        # If the requested setting can be extracted from the OpenID provider's metadata
+        # and the use of it is allowed.
+        if is_obtainable_from_op_metadata(attr) and \
+                import_from_settings("OIDC_REQ_METADATA", False):
             return get_from_op_metadata(attr)
 
         return import_from_settings(attr, *args)

@@ -1,22 +1,20 @@
 import json
-from mock import Mock, call, patch
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
-from josepy.b64 import b64encode
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils import six
 from django.utils.encoding import force_bytes, smart_text
+from josepy.b64 import b64encode
+from mock import Mock, call, patch
 
 from mozilla_django_oidc.auth import (
     default_username_algo,
     OIDCAuthenticationBackend,
 )
-from mozilla_django_oidc.constants import OPMetadataKey
 
 User = get_user_model()
 
@@ -805,36 +803,28 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         self.assertEqual(User.objects.get().first_name, 'a_username')
 
-    @override_settings(OIDC_REQUEST_METADATA=True)
+    @override_settings(OIDC_REQ_METADATA=True)
     @override_settings(OIDC_OP_METADATA_ENDPOINT='metadata_endpoint')
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
     @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
-    @patch('mozilla_django_oidc.auth.get_op_metadata')
-    def test_backend_init_with_metadata_endpoint(self, get_op_metadata_patch):
+    @patch('mozilla_django_oidc.auth.get_from_op_metadata')
+    def test_backend_init_with_metadata_endpoint(self, get_from_op_metadata_patch):
         """Test that backend is initialized properly from metadata endpoint"""
-        get_op_metadata_patch.return_value \
-            = {OPMetadataKey.TOKEN_ENDPOINT.value: 'token_endpoint',
-               OPMetadataKey.USER_INFO_ENDPOINT.value: 'user_info_endpoint',
-               OPMetadataKey.JWKS_ENDPOINT.value: 'jwks_endpoint'}
+
+        def side_effect(attr):
+            if attr == 'OIDC_OP_TOKEN_ENDPOINT':
+                return 'token_endpoint'
+            elif attr == 'OIDC_OP_USER_ENDPOINT':
+                return 'user_info_endpoint'
+            elif attr == 'OIDC_OP_JWKS_ENDPOINT':
+                return 'jwks_endpoint'
+
+        get_from_op_metadata_patch.side_effect = side_effect
         test_backend = OIDCAuthenticationBackend()
 
         self.assertEqual(test_backend.OIDC_OP_TOKEN_ENDPOINT, 'token_endpoint')
         self.assertEqual(test_backend.OIDC_OP_USER_ENDPOINT, 'user_info_endpoint')
         self.assertEqual(test_backend.OIDC_OP_JWKS_ENDPOINT, 'jwks_endpoint')
-        get_op_metadata_patch.assert_called_once_with('metadata_endpoint')
-
-    @override_settings(OIDC_REQUEST_METADATA=True)
-    @override_settings(OIDC_OP_METADATA_ENDPOINT='metadata_endpoint')
-    @override_settings(OIDC_RP_CLIENT_ID='example_id')
-    @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
-    @patch('mozilla_django_oidc.auth.get_op_metadata')
-    def test_backend_init_with_metadata_endpoint_faulty_deta(self, get_op_metadata_patch):
-        """Test that exception is thrown if metadata is not standard"""
-        get_op_metadata_patch.return_value = dict()  # empty metadata dictionary
-
-        with self.assertRaises(SuspiciousOperation) as context:
-            OIDCAuthenticationBackend()
-        self.assertEqual(str(context.exception), "Metadata json is not in standard format")
 
 
 class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):

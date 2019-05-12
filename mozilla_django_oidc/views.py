@@ -140,8 +140,10 @@ class OIDCAuthenticationRequestView(View):
 
     @staticmethod
     def get_settings(attr, *args):
-        # If the requested setting can be extracted from the OpenID provider's metadata and the use of it is allowed.
-        if is_obtainable_from_op_metadata(attr) and import_from_settings("OIDC_REQ_METADATA", False):
+        # If the requested setting can be extracted from the OpenID provider's metadata
+        # and the use of it is allowed.
+        if is_obtainable_from_op_metadata(attr) and \
+                import_from_settings("OIDC_REQ_METADATA", False):
             return get_from_op_metadata(attr)
 
         return import_from_settings(attr, *args)
