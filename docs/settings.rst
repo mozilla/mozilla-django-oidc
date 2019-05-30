@@ -81,6 +81,14 @@ of ``mozilla-django-oidc``.
    mozilla-django-oidc urls are exempted from the session renewal by the
    ``SessionRefresh`` middleware.
 
+.. py:attribute:: OIDC_EXEMPT_URL_PREFIXES
+
+   :default: ``[]``
+
+   This is a list of absolute url path prefixes, such a ``['/foo/']``.
+   A request that starts with one of these prefixes is exempt from the session
+   renewal by the ``SessionRefresh`` middleware.
+
 .. py:attribute:: OIDC_CREATE_USER
 
    :default: ``True``

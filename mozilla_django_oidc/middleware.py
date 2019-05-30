@@ -73,12 +73,14 @@ class SessionRefresh(MiddlewareMixin):
         if backend_session:
             auth_backend = import_string(backend_session)
             is_oidc_enabled = issubclass(auth_backend, OIDCAuthenticationBackend)
+        exempt_prefixes = list(self.get_settings('OIDC_EXEMPT_URL_PREFIXES', []))
 
         return (
             request.method == 'GET' and
             request.user.is_authenticated and
             is_oidc_enabled and
-            request.path not in self.exempt_urls
+            request.path not in self.exempt_urls and
+            not any(request.path.startswith(prefix) for prefix in exempt_prefixes)
         )
 
     def process_request(self, request):

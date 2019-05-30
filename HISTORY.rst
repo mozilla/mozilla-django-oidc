@@ -3,6 +3,15 @@
 History
 -------
 
+1.2.4 (Unreleased)
+===================
+
+* Add ``OIDC_EXEMPT_URL_PREFIXES``, a list of absolute URL path prefixes which
+  are exempt from session refreshes in ``SessionMiddleware``.
+  Thanks `@jwhitlock`_
+
+.. _`@jwhitlock`: https://github.com/jwhitlock
+
 1.2.3 (2020-01-02)
 ===================
 

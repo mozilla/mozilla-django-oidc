@@ -239,6 +239,37 @@ class MiddlewareTestCase(TestCase):
             [u'/authenticate/', u'/callback/', u'/foo/', u'/logout/']
         )
 
+    def test_is_refreshable_url(self):
+        request = self.factory.get('/mdo_fake_view/')
+        request.user = self.user
+        request.session = dict()
+        middleware = SessionRefresh()
+        assert middleware.is_refreshable_url(request)
+
+    @override_settings(OIDC_EXEMPT_URLS=['mdo_fake_view'])
+    def test_is_not_refreshable_url_exempt_view_name(self):
+        request = self.factory.get('/mdo_fake_view/')
+        request.user = self.user
+        request.session = dict()
+        middleware = SessionRefresh()
+        assert not middleware.is_refreshable_url(request)
+
+    @override_settings(OIDC_EXEMPT_URLS=['/mdo_fake_view/'])
+    def test_is_not_refreshable_url_exempt_path(self):
+        request = self.factory.get('/mdo_fake_view/')
+        request.user = self.user
+        request.session = dict()
+        middleware = SessionRefresh()
+        assert not middleware.is_refreshable_url(request)
+
+    @override_settings(OIDC_EXEMPT_URL_PREFIXES=['/mdo_fake_view/'])
+    def test_is_not_refreshable_url_exempt_prefix(self):
+        request = self.factory.get('/mdo_fake_view/subview')
+        request.user = self.user
+        request.session = dict()
+        middleware = SessionRefresh()
+        assert not middleware.is_refreshable_url(request)
+
     def test_anonymous(self):
         client = ClientWithUser()
         resp = client.get('/mdo_fake_view/')
