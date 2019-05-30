@@ -49,7 +49,7 @@ class SessionRefresh(MiddlewareMixin):
         urls that mozilla-django-oidc uses. These values can be view names or
         absolute url paths.
 
-        :returns: list of url paths (for example "/oidc/callback/")
+        :returns: set of url paths (for example "/oidc/callback/")
 
         """
         exempt_urls = list(self.get_settings('OIDC_EXEMPT_URLS', []))
@@ -62,6 +62,23 @@ class SessionRefresh(MiddlewareMixin):
         return set([
             url if url.startswith('/') else reverse(url)
             for url in exempt_urls
+            if not url.endswith('*')
+        ])
+
+    @cached_property
+    def exempt_prefixes(self):
+        """Generate a set of url prefixes to exempt from SessionRefresh
+
+        This takes the value of ``settings.OIDC_EXEMPT_URLS`` and looks for
+        absolute URLs that end in a "*", to signify an absolute url prefix.
+
+        :returns: set of url prefixes (for example "/api/")
+
+        """
+        exempt_urls = list(self.get_settings('OIDC_EXEMPT_URLS', []))
+        return set([
+            url[:-1] for url in exempt_urls
+            if url.startswith('/') and url.endswith('*')
         ])
 
     def is_refreshable_url(self, request):
@@ -83,7 +100,9 @@ class SessionRefresh(MiddlewareMixin):
             request.method == 'GET' and
             is_authenticated(request.user) and
             is_oidc_enabled and
-            request.path not in self.exempt_urls
+            request.path not in self.exempt_urls and
+            not any(request.path.startswith(prefix)
+                    for prefix in self.exempt_prefixes)
         )
 
     def process_request(self, request):

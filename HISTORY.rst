@@ -3,8 +3,16 @@
 History
 -------
 
+1.2.3 (Unreleased)
+++++++++++++++++++
+* Expand ``OIDC_EXEMPT_URLS`` to take an absolute URL ending in ``*``,
+  to specify path prefixes which are exempt from session refreshes in
+  ``SessionMiddleware``. Thanks `@jwhitlock`_
+
+.. _`@jwhitlock`: https://github.com/jwhitlock
+
 1.2.2 (2019-04-18)
-*******************
+++++++++++++++++++
 
 * Add Mozilla code of conduct
 * Allow overriding OIDC settings per class

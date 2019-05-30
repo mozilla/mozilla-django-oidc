@@ -238,6 +238,60 @@ class MiddlewareTestCase(TestCase):
             [u'/authenticate/', u'/callback/', u'/foo/', u'/logout/']
         )
 
+    @override_settings(OIDC_EXEMPT_URLS=['/foo/*'])
+    def test_get_exempt_urls_setting_url_prefix(self):
+        middleware = SessionRefresh()
+        self.assertEquals(
+            sorted(list(middleware.exempt_urls)),
+            [u'/authenticate/', u'/callback/', u'/logout/']
+        )
+
+    @override_settings(OIDC_EXEMPT_URLS=['mdo_fake_view'])
+    def test_get_exempt_prefixes_setting_view_name(self):
+        middleware = SessionRefresh()
+        self.assertEquals(list(middleware.exempt_prefixes), [])
+
+    @override_settings(OIDC_EXEMPT_URLS=['/foo/'])
+    def test_get_exempt_prefixes_setting_url_path(self):
+        middleware = SessionRefresh()
+        self.assertEquals(list(middleware.exempt_prefixes), [])
+
+    @override_settings(OIDC_EXEMPT_URLS=['/foo/*'])
+    def test_get_exempt_prefixes_setting_url_prefix(self):
+        middleware = SessionRefresh()
+        self.assertEquals(list(middleware.exempt_prefixes), ['/foo/'])
+
+    def test_is_refreshable_url(self):
+        request = self.factory.get('/mdo_fake_view/')
+        request.user = self.user
+        request.session = dict()
+        middleware = SessionRefresh()
+        assert middleware.is_refreshable_url(request)
+
+    @override_settings(OIDC_EXEMPT_URLS=['mdo_fake_view'])
+    def test_is_not_refreshable_url_exempt_view_name(self):
+        request = self.factory.get('/mdo_fake_view/')
+        request.user = self.user
+        request.session = dict()
+        middleware = SessionRefresh()
+        assert not middleware.is_refreshable_url(request)
+
+    @override_settings(OIDC_EXEMPT_URLS=['/mdo_fake_view/'])
+    def test_is_not_refreshable_url_exempt_path(self):
+        request = self.factory.get('/mdo_fake_view/')
+        request.user = self.user
+        request.session = dict()
+        middleware = SessionRefresh()
+        assert not middleware.is_refreshable_url(request)
+
+    @override_settings(OIDC_EXEMPT_URLS=['/mdo_fake_view/*'])
+    def test_is_not_refreshable_url_exempt_prefix(self):
+        request = self.factory.get('/mdo_fake_view/subview')
+        request.user = self.user
+        request.session = dict()
+        middleware = SessionRefresh()
+        assert not middleware.is_refreshable_url(request)
+
     def test_anonymous(self):
         client = ClientWithUser()
         resp = client.get('/mdo_fake_view/')
