@@ -8,6 +8,11 @@ History
 
 * Fix JWKS handling when the same `kid` value is used across JWKs with
   different `alg` specified
+* Support regex patterns in ``OIDC_EXEMPT_URLS``, to allow exempting session refreshes in
+  ``SessionMiddleware`` for URLs matching the pattern
+  Thanks `@jwhitlock`_
+
+.. _`@jwhitlock`: https://github.com/jwhitlock
 
 1.2.3 (2020-01-02)
 ===================
