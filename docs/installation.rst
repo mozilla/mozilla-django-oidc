@@ -149,11 +149,11 @@ Next, edit your ``urls.py`` and add the following:
    )
 
 
-Add login link to templates
----------------------------
+Enable login and logout functionality in templates
+--------------------------------------------------
 
-Then you need to add the login link to your templates. The view name is
-``oidc_authentication_init``.
+Then you need to add the login link and the logout form to your templates.
+The views are ``oidc_authentication_init``, ``oidc_logout``.
 
 Django templates example:
 
@@ -163,6 +163,9 @@ Django templates example:
      <body>
        {% if user.is_authenticated %}
          <p>Current user: {{ user.email }}</p>
+         <form action="{% url 'oidc_logout' %}" method="post">
+           <input type="submit" value="logout">
+         </form>
        {% else %}
          <a href="{% url 'oidc_authentication_init' %}">Login</a>
        {% endif %}
@@ -178,6 +181,9 @@ Jinja2 templates example:
      <body>
        {% if user.is_authenticated() %}
          <p>Current user: {{ user.email }}</p>
+         <form action="{% url('oidc_logout') %}" method="post">
+           <input type="submit" value="logout">
+         </form>
        {% else %}
          <a href="{{ url('oidc_authentication_init') }}">Login</a>
        {% endif %}
