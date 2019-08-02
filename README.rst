@@ -23,6 +23,18 @@ Documentation
 The full documentation is at `<https://mozilla-django-oidc.readthedocs.io>`_.
 
 
+Design principles
+-----------------
+
+* Keep it as minimal/lightweight as possible
+* Store as less authn/authz artifacts as possible
+* Allow custom functionality by overriding the authentication backend
+* Mainly support OIDC authorization code flow
+* Allow shipping Mozilla-centric authn/authz features
+* Test against all supported Python/Django version
+* E2E tested and audited by `Mozilla InfoSec <https://infosec.mozilla.org/>`_
+
+
 Running Unit Tests
 -------------------
 
