@@ -159,37 +159,29 @@ Django templates example:
 
 .. code-block:: html+django
 
-   <html>
-     <body>
-       {% if user.is_authenticated %}
-         <p>Current user: {{ user.email }}</p>
-         <form action="{% url 'oidc_logout' %}" method="post">
-           <input type="submit" value="logout">
-         </form>
-       {% else %}
-         <a href="{% url 'oidc_authentication_init' %}">Login</a>
-       {% endif %}
-     </body>
-   </html>
-
+   {% if user.is_authenticated %}
+     <p>Current user: {{ user.email }}</p>
+     <form action="{% url 'oidc_logout' %}" method="post">
+       {% csrf_token %}
+       <input type="submit" value="logout">
+     </form>
+   {% else %}
+     <a href="{% url 'oidc_authentication_init' %}">Login</a>
+   {% endif %}
 
 Jinja2 templates example:
 
 .. code-block:: html+jinja
 
-   <html>
-     <body>
-       {% if user.is_authenticated() %}
-         <p>Current user: {{ user.email }}</p>
-         <form action="{% url('oidc_logout') %}" method="post">
-           <input type="submit" value="logout">
-         </form>
-       {% else %}
-         <a href="{{ url('oidc_authentication_init') }}">Login</a>
-       {% endif %}
-     </body>
-   </html>
-
+   {% if request.user.is_authenticated() %}
+     <p>Current user: {{ request.user.email }}</p>
+     <form action="{{ url('oidc_logout') }}" method="post">
+       {{ csrf_input }}
+       <input type="submit" value="logout">
+     </form>
+   {% else %}
+     <a href="{{ url('oidc_authentication_init') }}">Login</a>
+   {% endif %}
 
 Additional optional configuration
 =================================
