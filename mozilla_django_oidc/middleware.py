@@ -6,11 +6,7 @@ except ImportError:
     # Python < 3
     from urllib import urlencode
 
-try:
-    from django.urls import reverse
-except ImportError:
-    # Django < 2.0.0
-    from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
 from django.utils.crypto import get_random_string

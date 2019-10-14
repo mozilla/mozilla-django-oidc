@@ -10,11 +10,7 @@ import django
 from django.core.exceptions import SuspiciousOperation
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-try:
-    from django.urls import reverse
-except ImportError:
-    # Django < 2.0.0
-    from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import RequestFactory, TestCase, override_settings
 
 from mozilla_django_oidc import views
