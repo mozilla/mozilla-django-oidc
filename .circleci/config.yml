@@ -115,6 +115,14 @@ jobs:
           - TEST_OIDC_ALGO=hs
           - DJANGO_VERSION=Django>=2.1.0,<2.2
     <<: *common_steps
+  e2e_test_py3_hs_django220:
+    docker:
+      - image: mozillaparsys/oidc_e2e_setup:py3
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=hs
+          - DJANGO_VERSION=Django>=2.2.0,<3.0
+    <<: *common_steps
 
 workflows:
   version: 2
@@ -145,3 +153,6 @@ workflows:
       - e2e_test_py3_hs_django210:
           requires:
             - build_lib
+      - e2e_test_py3_hs_django220:
+        requires:
+          - build_lib
