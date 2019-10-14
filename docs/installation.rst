@@ -288,15 +288,15 @@ dotted path to the function you want to use.
 The function takes in an email address as a text (Python 2 unicode or Python 3
 string) and returns a text (Python 2 unicode or Python 3 string).
 
-Here's an example function for Python 3 and Django 1.11 that doesn't convert
-the email address at all:
+Here's an example function for Python 3 that doesn't convert the email address
+at all:
 
 .. code-block:: python
 
    import unicodedata
 
    def generate_username(email):
-       # Using Python 3 and Django 1.11, usernames can contain alphanumeric
+       # Using Python 3 and Django 1.11+, usernames can contain alphanumeric
        # (ascii and unicode), _, @, +, . and - characters. So we normalize
        # it and slice at 150 characters.
        return unicodedata.normalize('NFKC', email)[:150]
