@@ -14,11 +14,7 @@ from django.utils.http import is_safe_url
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
-from mozilla_django_oidc.utils import (
-    absolutify,
-    import_from_settings,
-    is_authenticated
-)
+from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 
 class OIDCAuthenticationCallbackView(View):
@@ -68,9 +64,9 @@ class OIDCAuthenticationCallbackView(View):
             # otherwise the refresh middleware will force the user to
             # redirect to authorize again if the session refresh has
             # expired.
-            if is_authenticated(request.user):
+            if request.user.is_authenticated:
                 auth.logout(request)
-            assert not is_authenticated(request.user)
+            assert not request.user.is_authenticated
         elif 'code' in request.GET and 'state' in request.GET:
             kwargs = {
                 'request': request,
@@ -192,7 +188,7 @@ class OIDCLogoutView(View):
         """Log out the user."""
         logout_url = self.redirect_url
 
-        if is_authenticated(request.user):
+        if request.user.is_authenticated:
             # Check if a method exists to build the URL to log out the user
             # from the OP.
             logout_from_op = self.get_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
