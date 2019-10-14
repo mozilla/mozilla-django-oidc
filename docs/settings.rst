@@ -169,7 +169,7 @@ of ``mozilla-django-oidc``.
 
    .. seealso::
 
-      https://docs.djangoproject.com/en/1.11/ref/settings/#login-redirect-url
+      https://docs.djangoproject.com/en/stable/ref/settings/#login-redirect-url
 
 .. py:attribute:: LOGIN_REDIRECT_URL_FAILURE
 
@@ -185,7 +185,7 @@ of ``mozilla-django-oidc``.
 
    .. seealso::
 
-      https://docs.djangoproject.com/en/1.11/ref/settings/#logout-redirect-url
+      https://docs.djangoproject.com/en/stable/ref/settings/#logout-redirect-url
 
 .. py:attribute:: OIDC_OP_LOGOUT_URL_METHOD
 
@@ -206,7 +206,7 @@ of ``mozilla-django-oidc``.
 
    .. seealso::
 
-      https://docs.djangoproject.com/en/2.0/topics/http/urls/#url-namespaces
+      https://docs.djangoproject.com/en/stable/topics/http/urls/#url-namespaces
 
 .. py:attribute:: OIDC_ALLOW_UNSECURED_JWT
 
