@@ -2,6 +2,7 @@ import base64
 import hashlib
 import json
 import logging
+import time
 import requests
 from requests.auth import HTTPBasicAuth
 
@@ -56,6 +57,16 @@ def store_tokens(session, access_token, id_token, refresh_token):
 
     if import_from_settings('OIDC_STORE_REFRESH_TOKEN', False):
         session['oidc_refresh_token'] = refresh_token
+
+
+def store_expiration_times(session):
+    expiration_interval = import_from_settings(
+        'OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS',
+        60 * 15,
+    )
+    session['oidc_id_token_expiration'] = (
+        time.time() + expiration_interval
+    )
 
 
 class OIDCAuthenticationBackend(ModelBackend):

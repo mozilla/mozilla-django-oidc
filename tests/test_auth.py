@@ -4,7 +4,6 @@ from mock import Mock, call, patch
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
 from josepy.b64 import b64encode
-import requests
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
