@@ -8,11 +8,7 @@ from requests.auth import HTTPBasicAuth
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
-try:
-    from django.urls import reverse
-except ImportError:
-    # Django < 2.0.0
-    from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_text, smart_bytes
 from django.utils.module_loading import import_string
 from django.utils import six
