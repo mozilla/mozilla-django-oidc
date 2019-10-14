@@ -179,7 +179,7 @@ of ``mozilla-django-oidc``.
 
 .. py:attribute:: LOGOUT_REDIRECT_URL
 
-   :default: ``/`` (Django <= 1.9) ``None`` (Django 1.10+)
+   :default: ``None``
 
    After the logout view has logged the user out, it redirects to this url path.
 
