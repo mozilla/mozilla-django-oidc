@@ -173,7 +173,7 @@ Jinja2 templates example:
 
 .. code-block:: html+jinja
 
-   {% if request.user.is_authenticated() %}
+   {% if request.user.is_authenticated %}
      <p>Current user: {{ request.user.email }}</p>
      <form action="{{ url('oidc_logout') }}" method="post">
        {{ csrf_input }}
