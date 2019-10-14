@@ -9,7 +9,6 @@ except ImportError:
 
 from mock import patch
 
-import django
 from django.conf.urls import url
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_logged_out
@@ -25,9 +24,6 @@ from mozilla_django_oidc.urls import urlpatterns as orig_urlpatterns
 
 
 User = get_user_model()
-
-
-DJANGO_VERSION = tuple(django.VERSION[0:2])
 
 
 class SessionRefreshTokenMiddlewareTestCase(TestCase):
@@ -163,9 +159,7 @@ def override_middleware(fun):
         'django.contrib.sessions.middleware.SessionMiddleware',
         'mozilla_django_oidc.middleware.SessionRefresh',
     ]
-    if DJANGO_VERSION >= (1, 10):
-        return override_settings(MIDDLEWARE=classes)(fun)
-    return override_settings(MIDDLEWARE_CLASSES=classes)(fun)
+    return override_settings(MIDDLEWARE=classes)(fun)
 
 
 class UserifiedClientHandler(ClientHandler):
@@ -338,13 +332,7 @@ class MiddlewareTestCase(TestCase):
             'error_description': 'Multifactor authentication required',
         })
         self.assertEqual(resp.status_code, 302)
-        # Note, in versions of Django <=1.8, this 'resp.url' will be
-        # an absolute URL, so we need to make this split to make sure the
-        # test suite works in old and new versions of Django.
-        if 'http://testserver' in resp.url:
-            self.assertEquals(resp.url, 'http://testserver/')
-        else:
-            self.assertEquals(resp.url, '/')
+        self.assertEquals(resp.url, '/')
 
         # Since the user in 'client' doesn't change, we have to use other
         # queues to assert that the user got logged out properly.

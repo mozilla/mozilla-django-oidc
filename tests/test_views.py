@@ -6,7 +6,6 @@ except ImportError:
 
 from mock import patch
 
-import django
 from django.core.exceptions import SuspiciousOperation
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -314,17 +313,15 @@ class GetNextURLTestCase(TestCase):
         next_url = views.get_next_url(req, 'next')
         self.assertEqual(next_url, 'https://testserver/foo')
 
-        # For Django 1.11+, if the request is for HTTPS and the next url is
-        # HTTP, then that fails.
-        if django.VERSION >= (1, 11):
-            req = self.factory.get(
-                '/',
-                data={'next': 'http://testserver/foo'},
-                secure=True,
-            )
-            self.assertEquals(req.is_secure(), True)
-            next_url = views.get_next_url(req, 'next')
-            self.assertEqual(next_url, None)
+        # If the request is for HTTPS and the next url is HTTP, then that fails.
+        req = self.factory.get(
+            '/',
+            data={'next': 'http://testserver/foo'},
+            secure=True,
+        )
+        self.assertEquals(req.is_secure(), True)
+        next_url = views.get_next_url(req, 'next')
+        self.assertEqual(next_url, None)
 
     @override_settings(OIDC_REDIRECT_REQUIRE_HTTPS=False)
     def test_redirect_https_not_required(self):
