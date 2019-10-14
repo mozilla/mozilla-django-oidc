@@ -106,7 +106,7 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 2.6, 2.7, and 3.3, and for PyPy. Check
+3. The pull request should work for Python 2.7, and 3.4+, and for PyPy. Check
    `<https://travis-ci.org/mozilla/mozilla-django-oidc/pull_requests>`_
    and make sure that the tests pass for all supported Python versions.
 
@@ -120,7 +120,7 @@ We use tox to run tests::
 
 To run a specific environment, use the ``-e`` argument::
 
-    $ tox -e py27-django18
+    $ tox -e py27-django111
 
 
 You can also run the tests in a virtual environment without tox::

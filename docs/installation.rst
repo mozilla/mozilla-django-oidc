@@ -304,9 +304,6 @@ the email address at all:
 
 .. seealso::
 
-   Django 1.8 username:
-       https://docs.djangoproject.com/en/1.8/ref/contrib/auth/#django.contrib.auth.models.User.username
-
    Django 1.11 username:
        https://docs.djangoproject.com/en/1.11/ref/contrib/auth/#django.contrib.auth.models.User.username
 
