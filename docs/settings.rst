@@ -148,6 +148,12 @@ of ``mozilla-django-oidc``.
    Controls whether the OpenID Connect client stores the OIDC ``refresh_token`` in the user session.
    The session key used to store the data is ``oidc_refresh_token``.
 
+.. py:attribute:: OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS
+
+   :default: ``0``
+
+   Life time of ``refresh token`` in seconds. ``refresh token`` will not expire if this setting is ``0``.
+
 .. py:attribute:: OIDC_AUTH_REQUEST_EXTRA_PARAMS
 
    :default: `{}`

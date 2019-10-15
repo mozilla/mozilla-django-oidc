@@ -1,13 +1,14 @@
 import logging
 import time
 import requests
+
 try:
     from urllib.parse import urlencode
 except ImportError:
     # Python < 3
     from urllib import urlencode
 
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.urls import reverse
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
@@ -174,6 +175,10 @@ class RefreshOIDCToken(SessionRefresh):
         client_id = import_from_settings('OIDC_RP_CLIENT_ID')
         client_secret = import_from_settings('OIDC_RP_CLIENT_SECRET')
         refresh_token = request.session.get('oidc_refresh_token')
+
+        if self._is_refresh_token_expired(request):
+            raise PermissionDenied('Refresh token expired')
+
         if not refresh_token:
             LOGGER.debug('no refresh token stored')
             raise ImproperlyConfigured('Refresh token missing.')
@@ -199,3 +204,27 @@ class RefreshOIDCToken(SessionRefresh):
 
         store_expiration_times(request.session)
         store_tokens(request.session, id_token, access_token, refresh_token)
+
+    @staticmethod
+    def _is_refresh_token_expired(request):
+        refresh_toke_expire_time = import_from_settings(
+            'OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS', 0,
+        )
+        if not refresh_toke_expire_time:
+            return False
+
+        refresh_token_expire = (
+            request.session.get('oidc_id_token_expiration', 0)
+            - import_from_settings('OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS')
+            + refresh_toke_expire_time
+        )
+        now = time.time()
+        if refresh_token_expire > now:
+            # The refresh_token is still valid, we don't have to do anything.
+            LOGGER.debug(
+                'refresh token is still valid (%s > %s)',
+                refresh_token_expire, now,
+            )
+            return False
+
+        return True
