@@ -431,7 +431,7 @@ class RefreshOIDCTokenMiddlewareTestCase(TestCase):
         self.assertEquals(refresh_token, 'new_refresh_token')
 
     @patch('mozilla_django_oidc.middleware.get_random_string')
-    def test_refresh_token_renew_token_expiration_time(
+    def test_id_token_expiration_time(
         self, mock_random_string,
     ):
         mock_random_string.return_value = 'examplestring'
@@ -477,6 +477,47 @@ class RefreshOIDCTokenMiddlewareTestCase(TestCase):
             client.session['oidc_refresh_token'],
             'new_refresh_token',
         )
+
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS=240)
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_is_called_before_refresh_expiration(self, mock_random_string):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+        resp = self._refresh_page(
+            client,
+            'new_refresh_token',
+            elapsed=time.time() + 239,
+            post=True,
+        )
+        self.assertEquals(resp.status_code, 200)
+        self.assertEquals(
+            client.session['oidc_refresh_token'],
+            'new_refresh_token',
+        )
+
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS=240)
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_is_not_called_after_refresh_expiration(
+        self, mock_random_string,
+    ):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+
+        elapsed = time.time() + 240
+        with patch(
+            'mozilla_django_oidc.middleware.time.time'
+        ) as time_func, patch(
+            'mozilla_django_oidc.middleware.requests'
+        ) as request_mock:
+            time_func.return_value = elapsed
+            resp = client.get('/mdo_fake_view/')
+
+            assert not request_mock.called
+            self.assertEquals(resp.status_code, 403)
 
     def _refresh_page(self, client, refersh_token, elapsed, post=False):
         with patch(
