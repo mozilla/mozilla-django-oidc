@@ -154,6 +154,13 @@ of ``mozilla-django-oidc``.
 
    Life time of ``refresh token`` in seconds. ``refresh token`` will not expire if this setting is ``0``.
 
+.. py:attribute:: OIDC_RENEW_REFRESH_TOKEN
+
+   :default: ``False``
+
+   Controls whether OIDC client get a new refresh token when ``refresh token`` expires.
+   Note: ``refresh tokens`` will not refresh during ``POST`` request.
+
 .. py:attribute:: OIDC_AUTH_REQUEST_EXTRA_PARAMS
 
    :default: `{}`

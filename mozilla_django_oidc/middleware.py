@@ -177,7 +177,13 @@ class RefreshOIDCToken(SessionRefresh):
         refresh_token = request.session.get('oidc_refresh_token')
 
         if self._is_refresh_token_expired(request):
-            raise PermissionDenied('Refresh token expired')
+            renew_refresh_token = import_from_settings(
+                'OIDC_RENEW_REFRESH_TOKEN', False,
+            )
+            if renew_refresh_token and request.method.upper() == 'GET':
+                return super(RefreshOIDCToken, self).process_request(request)
+            else:
+                raise PermissionDenied('Refresh token expired')
 
         if not refresh_token:
             LOGGER.debug('no refresh token stored')
