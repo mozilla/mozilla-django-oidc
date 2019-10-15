@@ -505,6 +505,70 @@ class RefreshOIDCTokenMiddlewareTestCase(TestCase):
             assert not request_mock.called
             self.assertEquals(resp.status_code, 403)
 
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS=240)
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN=True)
+    @override_settings(
+        OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize',
+    )
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_the_refresh_token_using_redirect(
+        self, mock_random_string,
+    ):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+
+        elapsed = time.time() + 240
+        with patch(
+            'mozilla_django_oidc.middleware.time.time'
+        ) as time_func, patch(
+            'mozilla_django_oidc.middleware.requests'
+        ) as request_mock:
+            time_func.return_value = elapsed
+            resp = client.get('/mdo_fake_view/')
+
+            assert not request_mock.called
+
+            url, qs = resp.url.split('?')
+            self.assertEquals(url, 'http://example.com/authorize')
+            expected_query = {
+                'response_type': ['code'],
+                'redirect_uri': ['http://testserver/callback/'],
+                'client_id': ['foo'],
+                'nonce': ['examplestring'],
+                'prompt': ['none'],
+                'scope': ['openid email'],
+                'state': ['examplestring'],
+            }
+            self.assertEquals(expected_query, parse_qs(qs))
+
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS=240)
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN=True)
+    @override_settings(
+        OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize',
+    )
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_the_refresh_token_using_redirect_error_on_post(
+        self, mock_random_string,
+    ):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+
+        elapsed = time.time() + 240
+        with patch(
+            'mozilla_django_oidc.middleware.time.time'
+        ) as time_func, patch(
+            'mozilla_django_oidc.middleware.requests'
+        ) as request_mock:
+            time_func.return_value = elapsed
+            resp = client.post('/mdo_fake_view/')
+
+            assert not request_mock.called
+            self.assertEquals(resp.status_code, 403)
+
     def _refresh_page(self, client, refersh_token, elapsed, post=False):
         with patch(
             'mozilla_django_oidc.middleware.time.time'
