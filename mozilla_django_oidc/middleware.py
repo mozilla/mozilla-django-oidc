@@ -1,5 +1,8 @@
 import logging
 import time
+
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+
 try:
     from urllib.parse import urlencode
 except ImportError:
@@ -18,7 +21,10 @@ from django.utils.deprecation import MiddlewareMixin
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 
-from mozilla_django_oidc.auth import OIDCAuthenticationBackend
+import requests
+
+from mozilla_django_oidc.auth import OIDCAuthenticationBackend, store_tokens, \
+    store_expiration_times
 from mozilla_django_oidc.utils import (
     absolutify,
     import_from_settings,
@@ -64,10 +70,11 @@ class SessionRefresh(MiddlewareMixin):
             for url in exempt_urls
         ])
 
-    def is_refreshable_url(self, request):
+    def is_refreshable_url(self, request, get_only):
         """Takes a request and returns whether it triggers a refresh examination
 
         :arg HttpRequest request:
+        :arg bool get_only:
 
         :returns: boolean
 
@@ -80,22 +87,28 @@ class SessionRefresh(MiddlewareMixin):
             is_oidc_enabled = issubclass(auth_backend, OIDCAuthenticationBackend)
 
         return (
-            request.method == 'GET' and
+            (not get_only or request.method == 'GET') and
             is_authenticated(request.user) and
             is_oidc_enabled and
             request.path not in self.exempt_urls
         )
 
-    def process_request(self, request):
-        if not self.is_refreshable_url(request):
-            LOGGER.debug('request is not refreshable')
-            return
-
+    def is_expired(self, request):
         expiration = request.session.get('oidc_id_token_expiration', 0)
         now = time.time()
         if expiration > now:
             # The id_token is still valid, so we don't have to do anything.
             LOGGER.debug('id token is still valid (%s > %s)', expiration, now)
+            return False
+
+        return True
+
+    def process_request(self, request):
+        if not self.is_refreshable_url(request, get_only=True):
+            LOGGER.debug('request is not refreshable')
+            return
+
+        if not self.is_expired(request):
             return
 
         LOGGER.debug('id token has expired')
@@ -143,3 +156,81 @@ class SessionRefresh(MiddlewareMixin):
             response['refresh_url'] = redirect_url
             return response
         return HttpResponseRedirect(redirect_url)
+
+
+class RefreshOIDCToken(SessionRefresh):
+    """
+    A middleware that will refresh the access token following proper OIDC protocol:
+    https://auth0.com/docs/tokens/refresh-token/current
+    """
+    def process_request(self, request):
+        if not self.is_refreshable_url(request, get_only=False):
+            LOGGER.debug('request is not refreshable')
+            return
+
+        if not self.is_expired(request):
+            return
+
+        token_url = import_from_settings('OIDC_OP_TOKEN_ENDPOINT')
+        client_id = import_from_settings('OIDC_RP_CLIENT_ID')
+        client_secret = import_from_settings('OIDC_RP_CLIENT_SECRET')
+        refresh_token = request.session.get('oidc_refresh_token')
+
+        if self._is_refresh_token_expired(request):
+            renew_refresh_token = import_from_settings(
+                'OIDC_RENEW_REFRESH_TOKEN', False,
+            )
+            if renew_refresh_token and request.method.upper() == 'GET':
+                return super(RefreshOIDCToken, self).process_request(request)
+            else:
+                raise PermissionDenied('Refresh token expired')
+
+        if not refresh_token:
+            LOGGER.debug('no refresh token stored')
+            raise ImproperlyConfigured('Refresh token missing.')
+
+        token_payload = {
+            'grant_type': 'refresh_token',
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'refresh_token': refresh_token,
+        }
+
+        response = requests.post(
+            token_url,
+            data=token_payload,
+            verify=import_from_settings('OIDC_VERIFY_SSL', True),
+        )
+        response.raise_for_status()
+
+        token_info = response.json()
+        id_token = token_info.get('id_token')
+        access_token = token_info.get('access_token')
+        refresh_token = token_info.get('refresh_token')
+
+        store_expiration_times(request.session)
+        store_tokens(request.session, id_token, access_token, refresh_token)
+
+    @staticmethod
+    def _is_refresh_token_expired(request):
+        refresh_toke_expire_time = import_from_settings(
+            'OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS', 0,
+        )
+        if not refresh_toke_expire_time:
+            return False
+
+        refresh_token_expire = (
+            request.session.get('oidc_id_token_expiration', 0)
+            - import_from_settings('OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS')
+            + refresh_toke_expire_time
+        )
+        now = time.time()
+        if refresh_token_expire > now:
+            # The refresh_token is still valid, we don't have to do anything.
+            LOGGER.debug(
+                'refresh token is still valid (%s > %s)',
+                refresh_token_expire, now,
+            )
+            return False
+
+        return True

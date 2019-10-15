@@ -59,7 +59,7 @@ of ``mozilla-django-oidc``.
 
    This is a list of absolute url paths or Django view names. This plus the
    mozilla-django-oidc urls are exempted from the session renewal by the
-   ``SessionRefresh`` middleware.
+   ``SessionRefresh`` or ``RefreshOIDCToken`` middleware.
 
 .. py:attribute:: OIDC_CREATE_USER
 
@@ -140,6 +140,26 @@ of ``mozilla-django-oidc``.
 
    Controls whether the OpenID Connect client stores the OIDC ``id_token`` in the user session.
    The session key used to store the data is ``oidc_id_token``.
+
+.. py:attribute:: OIDC_STORE_REFRESH_TOKEN
+
+   :default: ``False``
+
+   Controls whether the OpenID Connect client stores the OIDC ``refresh_token`` in the user session.
+   The session key used to store the data is ``oidc_refresh_token``.
+
+.. py:attribute:: OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS
+
+   :default: ``0``
+
+   Life time of ``refresh token`` in seconds. ``refresh token`` will not expire if this setting is ``0``.
+
+.. py:attribute:: OIDC_RENEW_REFRESH_TOKEN
+
+   :default: ``False``
+
+   Controls whether OIDC client get a new refresh token when ``refresh token`` expires.
+   Note: ``refresh tokens`` will not refresh during ``POST`` request.
 
 .. py:attribute:: OIDC_AUTH_REQUEST_EXTRA_PARAMS
 

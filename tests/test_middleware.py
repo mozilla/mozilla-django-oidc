@@ -1,13 +1,17 @@
 import json
 import time
 
+from django.core.exceptions import ImproperlyConfigured
+
+from mozilla_django_oidc.utils import import_from_settings
+
 try:
     from urllib.parse import parse_qs
 except ImportError:
     # Python < 3
     from urlparse import parse_qs
 
-from mock import patch
+from mock import Mock, patch
 
 import django
 from django.conf.urls import url
@@ -20,7 +24,7 @@ from django.http import HttpResponse
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.test.client import ClientHandler
 
-from mozilla_django_oidc.middleware import SessionRefresh
+from mozilla_django_oidc.middleware import SessionRefresh, RefreshOIDCToken
 from mozilla_django_oidc.urls import urlpatterns as orig_urlpatterns
 
 
@@ -148,6 +152,42 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
         self.assertEquals(expected_query, parse_qs(qs))
 
 
+class RefreshOIDCTokenTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.middleware = RefreshOIDCToken()
+        self.user = User.objects.create_user('example_username')
+
+    def test_anonymous(self):
+        request = self.factory.get('/foo')
+        request.session = {}
+        request.user = AnonymousUser()
+        response = self.middleware.process_request(request)
+        self.assertTrue(not response)
+
+    def test_is_oidc_path(self):
+        request = self.factory.get('/oidc/callback/')
+        request.user = AnonymousUser()
+        request.session = {}
+        response = self.middleware.process_request(request)
+        self.assertTrue(not response)
+
+    @override_settings(OIDC_OP_TOKEN_ENDPOINT='https://server.example.com/token')
+    @override_settings(OIDC_RP_CLIENT_ID='foo')
+    @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
+    @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_no_refresh_token_expiration_forces_renewal(self, mock_random_string):
+        mock_random_string.return_value = 'examplestring'
+
+        request = self.factory.get('/foo')
+        request.user = self.user
+        request.session = {}
+
+        with self.assertRaises(ImproperlyConfigured):
+            _ = self.middleware.process_request(request)
+
+
 # This adds a "home page" we can test against.
 def fakeview(req):
     return HttpResponse('Win!')
@@ -158,14 +198,16 @@ urlpatterns = list(orig_urlpatterns) + [
 ]
 
 
-def override_middleware(fun):
-    classes = [
-        'django.contrib.sessions.middleware.SessionMiddleware',
-        'mozilla_django_oidc.middleware.SessionRefresh',
-    ]
-    if DJANGO_VERSION >= (1, 10):
-        return override_settings(MIDDLEWARE=classes)(fun)
-    return override_settings(MIDDLEWARE_CLASSES=classes)(fun)
+def override_middleware(middleware):
+    def wrap(fun):
+        classes = [
+            'django.contrib.sessions.middleware.SessionMiddleware',
+            middleware,
+        ]
+        if DJANGO_VERSION >= (1, 10):
+            return override_settings(MIDDLEWARE=classes)(fun)
+        return override_settings(MIDDLEWARE_CLASSES=classes)(fun)
+    return wrap
 
 
 class UserifiedClientHandler(ClientHandler):
@@ -214,8 +256,8 @@ class ClientWithUser(Client):
 
 
 @override_settings(ROOT_URLCONF='tests.test_middleware')
-@override_middleware
-class MiddlewareTestCase(TestCase):
+@override_middleware('mozilla_django_oidc.middleware.SessionRefresh')
+class SessionRefreshMiddlewareTestCase(TestCase):
     """These tests test the middleware as part of the request/response cycle"""
     def setUp(self):
         self.factory = RequestFactory()
@@ -356,3 +398,233 @@ class MiddlewareTestCase(TestCase):
 
         # The signal we registered should have fired for this user.
         self.assertEquals(client.user, logged_out_users[0])
+
+
+@override_settings(ROOT_URLCONF='tests.test_middleware')
+@override_middleware('mozilla_django_oidc.middleware.RefreshOIDCToken')
+@override_settings(OIDC_OP_TOKEN_ENDPOINT='https://server.example.com/token')
+@override_settings(OIDC_RP_CLIENT_ID='foo')
+@override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
+@override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
+@override_settings(OIDC_STORE_REFRESH_TOKEN=True)
+class RefreshOIDCTokenMiddlewareTestCase(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='example_username', password='password')
+        cache.clear()
+
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_token_forces_renewal(self, mock_random_string):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+
+        # Confirm that the session value has been refreshed.
+        resp = self._refresh_page(
+            client,
+            'new_refresh_token',
+            elapsed=time.time() + 121,
+        )
+        self.assertEquals(resp.status_code, 200)
+        refresh_token = client.session['oidc_refresh_token']
+        self.assertEquals(refresh_token, 'new_refresh_token')
+
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_id_token_expiration_time(
+        self, mock_random_string,
+    ):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+
+        # refresh the token after expiry
+        _ = self._refresh_page(
+            client,
+            'new_refresh_token',
+            elapsed=time.time() + 121,
+        )
+
+        # refresh the page without refreshing the token
+        resp = self._refresh_page(
+            client,
+            'new_refresh_token2',
+            elapsed=time.time() + 130,
+        )
+        self.assertEquals(resp.status_code, 200)
+
+        # refresh token should not be updated
+        self.assertEquals(
+            client.session['oidc_refresh_token'],
+            'new_refresh_token',
+        )
+
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_token_forces_renewal_on_post(self, mock_random_string):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+        resp = self._refresh_page(
+            client,
+            'new_refresh_token',
+            elapsed=time.time() + 121,
+            post=True,
+        )
+        self.assertEquals(resp.status_code, 200)
+        self.assertEquals(
+            client.session['oidc_refresh_token'],
+            'new_refresh_token',
+        )
+
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS=240)
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_is_called_before_refresh_expiration(self, mock_random_string):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+        resp = self._refresh_page(
+            client,
+            'new_refresh_token',
+            elapsed=time.time() + 239,
+            post=True,
+        )
+        self.assertEquals(resp.status_code, 200)
+        self.assertEquals(
+            client.session['oidc_refresh_token'],
+            'new_refresh_token',
+        )
+
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS=240)
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_is_not_called_after_refresh_expiration(
+        self, mock_random_string,
+    ):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+
+        elapsed = time.time() + 240
+        with patch(
+            'mozilla_django_oidc.middleware.time.time'
+        ) as time_func, patch(
+            'mozilla_django_oidc.middleware.requests'
+        ) as request_mock:
+            time_func.return_value = elapsed
+            resp = client.get('/mdo_fake_view/')
+
+            assert not request_mock.called
+            self.assertEquals(resp.status_code, 403)
+
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS=240)
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN=True)
+    @override_settings(
+        OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize',
+    )
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_the_refresh_token_using_redirect(
+        self, mock_random_string,
+    ):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+
+        elapsed = time.time() + 240
+        with patch(
+            'mozilla_django_oidc.middleware.time.time'
+        ) as time_func, patch(
+            'mozilla_django_oidc.middleware.requests'
+        ) as request_mock:
+            time_func.return_value = elapsed
+            resp = client.get('/mdo_fake_view/')
+
+            assert not request_mock.called
+
+            url, qs = resp.url.split('?')
+            self.assertEquals(url, 'http://example.com/authorize')
+            expected_query = {
+                'response_type': ['code'],
+                'redirect_uri': ['http://testserver/callback/'],
+                'client_id': ['foo'],
+                'nonce': ['examplestring'],
+                'prompt': ['none'],
+                'scope': ['openid email'],
+                'state': ['examplestring'],
+            }
+            self.assertEquals(expected_query, parse_qs(qs))
+
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN_EXPIRY_SECONDS=240)
+    @override_settings(OIDC_RENEW_REFRESH_TOKEN=True)
+    @override_settings(
+        OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize',
+    )
+    @patch('mozilla_django_oidc.middleware.get_random_string')
+    def test_refresh_the_refresh_token_using_redirect_error_on_post(
+        self, mock_random_string,
+    ):
+        mock_random_string.return_value = 'examplestring'
+
+        # initial login
+        client = self._login()
+
+        elapsed = time.time() + 240
+        with patch(
+            'mozilla_django_oidc.middleware.time.time'
+        ) as time_func, patch(
+            'mozilla_django_oidc.middleware.requests'
+        ) as request_mock:
+            time_func.return_value = elapsed
+            resp = client.post('/mdo_fake_view/')
+
+            assert not request_mock.called
+            self.assertEquals(resp.status_code, 403)
+
+    def _refresh_page(self, client, refersh_token, elapsed, post=False):
+        with patch(
+            'mozilla_django_oidc.middleware.time.time'
+        ) as time_func, patch(
+            'mozilla_django_oidc.middleware.requests'
+        ) as request_mock:
+            post_json_mock = Mock()
+            post_json_mock.json.return_value = {
+                'id_token': 'id_token',
+                'accesss_token': 'access_token',
+                'refresh_token': refersh_token,
+            }
+            request_mock.post.return_value = post_json_mock
+
+            time_func.return_value = elapsed
+
+            req_func = client.post if post else client.get
+            resp = req_func('/mdo_fake_view/')
+
+        return resp
+
+    def _login(self):
+        client = ClientWithUser()
+        # First confirm that the home page is a public page.
+        resp = client.get('/')
+        # At least security doesn't kick you out.
+        self.assertEquals(resp.status_code, 404)
+        # Also check that this page doesn't force you to redirect
+        # to authenticate.
+        resp = client.get('/mdo_fake_view/')
+        self.assertEquals(resp.status_code, 200)
+        client.login(username=self.user.username, password='password')
+        # Set expiration to some time in the past
+        session = client.session
+
+        session['oidc_id_token_expiration'] = (
+            time.time()
+            + import_from_settings('OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS')
+        )
+        session['oidc_refresh_token'] = 'examplerefreshtoken'
+        session['_auth_user_backend'] = \
+            'mozilla_django_oidc.auth.OIDCAuthenticationBackend'
+        session.save()
+
+        return client
