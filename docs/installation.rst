@@ -212,7 +212,7 @@ the OIDC provider is still valid. You need to use the
 
 To add it to your site, put it in the settings::
 
-    MIDDLEWARE_CLASSES = [
+    MIDDLEWARE = [
         # middleware involving session and authentication must come first
         # ...
         'mozilla_django_oidc.middleware.SessionRefresh',
