@@ -13,6 +13,7 @@ Add this to your settings:
     REST_FRAMEWORK = {
         'DEFAULT_AUTHENTICATION_CLASSES': [
             'mozilla_django_oidc.contrib.drf.OIDCAuthentication',
+            'rest_framework.authentication.SessionAuthentication',
             # other authentication classes, if needed
         ],
     }
