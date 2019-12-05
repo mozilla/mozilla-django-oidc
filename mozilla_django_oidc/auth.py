@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import requests
+import six
 from requests.auth import HTTPBasicAuth
 
 from django.contrib.auth import get_user_model
@@ -11,7 +12,6 @@ from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_text, smart_bytes
 from django.utils.module_loading import import_string
-from django.utils import six
 
 from josepy.b64 import b64decode
 from josepy.jwk import JWK

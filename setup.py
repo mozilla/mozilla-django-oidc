@@ -36,7 +36,8 @@ install_requirements = [
     'Django >= 1.11',
     'josepy',
     'requests',
-    'cryptography'
+    'cryptography',
+    'six',
 ]
 
 setup(
