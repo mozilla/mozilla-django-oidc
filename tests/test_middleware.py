@@ -68,12 +68,12 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
         request.user = self.user
 
         response = self.middleware.process_request(request)
-        self.assertEquals(response.status_code, 403)
+        self.assertEqual(response.status_code, 403)
         # The URL to go to is available both as a header and as a key
         # in the JSON response.
         self.assertTrue(response['refresh_url'])
         url, qs = response['refresh_url'].split('?')
-        self.assertEquals(url, 'http://example.com/authorize')
+        self.assertEqual(url, 'http://example.com/authorize')
         expected_query = {
             'response_type': ['code'],
             'redirect_uri': ['http://testserver/callback/'],
@@ -83,9 +83,9 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
             'scope': ['openid email'],
             'state': ['examplestring'],
         }
-        self.assertEquals(expected_query, parse_qs(qs))
+        self.assertEqual(expected_query, parse_qs(qs))
         json_payload = json.loads(response.content.decode('utf-8'))
-        self.assertEquals(json_payload['refresh_url'], response['refresh_url'])
+        self.assertEqual(json_payload['refresh_url'], response['refresh_url'])
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize')
     @override_settings(OIDC_RP_CLIENT_ID='foo')
@@ -100,9 +100,9 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
 
         response = self.middleware.process_request(request)
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         url, qs = response.url.split('?')
-        self.assertEquals(url, 'http://example.com/authorize')
+        self.assertEqual(url, 'http://example.com/authorize')
         expected_query = {
             'response_type': ['code'],
             'redirect_uri': ['http://testserver/callback/'],
@@ -112,7 +112,7 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
             'scope': ['openid email'],
             'state': ['examplestring'],
         }
-        self.assertEquals(expected_query, parse_qs(qs))
+        self.assertEqual(expected_query, parse_qs(qs))
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize')
     @override_settings(OIDC_RP_CLIENT_ID='foo')
@@ -129,9 +129,9 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
 
         response = self.middleware.process_request(request)
 
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
         url, qs = response.url.split('?')
-        self.assertEquals(url, 'http://example.com/authorize')
+        self.assertEqual(url, 'http://example.com/authorize')
         expected_query = {
             'response_type': ['code'],
             'redirect_uri': ['http://testserver/callback/'],
@@ -141,7 +141,7 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
             'scope': ['openid email'],
             'state': ['examplestring'],
         }
-        self.assertEquals(expected_query, parse_qs(qs))
+        self.assertEqual(expected_query, parse_qs(qs))
 
 
 # This adds a "home page" we can test against.
@@ -219,7 +219,7 @@ class MiddlewareTestCase(TestCase):
     @override_settings(OIDC_EXEMPT_URLS=['mdo_fake_view'])
     def test_get_exempt_urls_setting_view_name(self):
         middleware = SessionRefresh()
-        self.assertEquals(
+        self.assertEqual(
             sorted(list(middleware.exempt_urls)),
             [u'/authenticate/', u'/callback/', u'/logout/', u'/mdo_fake_view/']
         )
@@ -227,7 +227,7 @@ class MiddlewareTestCase(TestCase):
     @override_settings(OIDC_EXEMPT_URLS=['/foo/'])
     def test_get_exempt_urls_setting_url_path(self):
         middleware = SessionRefresh()
-        self.assertEquals(
+        self.assertEqual(
             sorted(list(middleware.exempt_urls)),
             [u'/authenticate/', u'/callback/', u'/foo/', u'/logout/']
         )
@@ -272,7 +272,7 @@ class MiddlewareTestCase(TestCase):
         self.assertEqual(resp.status_code, 302)
 
         url, qs = resp.url.split('?')
-        self.assertEquals(url, 'http://example.com/authorize')
+        self.assertEqual(url, 'http://example.com/authorize')
         expected_query = {
             'response_type': ['code'],
             'redirect_uri': ['http://testserver/callback/'],
@@ -282,7 +282,7 @@ class MiddlewareTestCase(TestCase):
             'scope': ['openid email'],
             'state': ['examplestring'],
         }
-        self.assertEquals(expected_query, parse_qs(qs))
+        self.assertEqual(expected_query, parse_qs(qs))
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='http://example.com/authorize')
     @override_settings(OIDC_RP_CLIENT_ID='foo')
@@ -304,11 +304,11 @@ class MiddlewareTestCase(TestCase):
         # First confirm that the home page is a public page.
         resp = client.get('/')
         # At least security doesn't kick you out.
-        self.assertEquals(resp.status_code, 404)
+        self.assertEqual(resp.status_code, 404)
         # Also check that this page doesn't force you to redirect
         # to authenticate.
         resp = client.get('/mdo_fake_view/')
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         client.login(username=self.user.username, password='password')
 
         # Set expiration to some time in the past
@@ -319,7 +319,7 @@ class MiddlewareTestCase(TestCase):
 
         # Confirm that now you're forced to authenticate again.
         resp = client.get('/mdo_fake_view/')
-        self.assertEquals(resp.status_code, 302)
+        self.assertEqual(resp.status_code, 302)
         self.assertTrue(
             'http://example.com/authorize' in resp.url and
             'prompt=none' in resp.url
@@ -332,7 +332,7 @@ class MiddlewareTestCase(TestCase):
             'error_description': 'Multifactor authentication required',
         })
         self.assertEqual(resp.status_code, 302)
-        self.assertEquals(resp.url, '/')
+        self.assertEqual(resp.url, '/')
 
         # Since the user in 'client' doesn't change, we have to use other
         # queues to assert that the user got logged out properly.
@@ -343,4 +343,4 @@ class MiddlewareTestCase(TestCase):
         self.assertTrue(not client.session.items())
 
         # The signal we registered should have fired for this user.
-        self.assertEquals(client.user, logged_out_users[0])
+        self.assertEqual(client.user, logged_out_users[0])

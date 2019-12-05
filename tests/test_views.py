@@ -309,7 +309,7 @@ class GetNextURLTestCase(TestCase):
             data={'next': 'https://testserver/foo'},
             secure=True,
         )
-        self.assertEquals(req.is_secure(), True)
+        self.assertEqual(req.is_secure(), True)
         next_url = views.get_next_url(req, 'next')
         self.assertEqual(next_url, 'https://testserver/foo')
 
@@ -319,7 +319,7 @@ class GetNextURLTestCase(TestCase):
             data={'next': 'http://testserver/foo'},
             secure=True,
         )
-        self.assertEquals(req.is_secure(), True)
+        self.assertEqual(req.is_secure(), True)
         next_url = views.get_next_url(req, 'next')
         self.assertEqual(next_url, None)
 
