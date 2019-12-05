@@ -434,8 +434,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.backend.authenticate(request=auth_request)
         self.assertEqual(User.objects.all().count(), 1)
         user = User.objects.all()[0]
-        self.assertEquals(user.email, 'email@example.com')
-        self.assertEquals(user.username, 'username_algo')
+        self.assertEqual(user.email, 'email@example.com')
+        self.assertEqual(user.username, 'username_algo')
 
         token_mock.assert_called_once_with('id_token', nonce=None)
         request_mock.post.assert_called_once_with('https://server.example.com/token',
