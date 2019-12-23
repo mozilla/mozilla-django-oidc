@@ -6,20 +6,20 @@ services:
   testprovider:
     stdin_open: true
     tty: true
-    image: mozillaparsys/oidc_testprovider
+    image: mozilla/oidc-testprovider:oidc_testprovider-latest
     ports:
       - "8080:8080"
   testrp:
     stdin_open: true
     tty: true
-    image: mozillaparsys/oidc_testrp:py${PYTHON_VERSION:-3}
+    image: mozilla/oidc-testprovider:oidc_testrp_py${PYTHON_VERSION:-3}-latest
     ports:
       - "8081:8081"
     volumes:
       - ./:/mozilla-django-oidc
     environment:
       - TEST_OIDC_ALGO=${TEST_OIDC_ALGO:-hs}
-      - DJANGO_VERSION=${DJANGO_VERSION:-Django>=2.0}
+      - DJANGO_VERSION=${DJANGO_VERSION:-Django>=2.2}
     command: >-
       bash -c "cd /mozilla-django-oidc/ &&
                pip install -I . &&
@@ -29,7 +29,7 @@ services:
   testrunner:
     stdin_open: true
     tty: true
-    image: mozillaparsys/oidc_testrunner
+    image: mozilla/oidc-testprovider:oidc_testrunner-latest
     volumes:
       - ./integration_tests:/integration_tests
     links:
