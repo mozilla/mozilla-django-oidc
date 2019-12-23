@@ -53,7 +53,7 @@ jobs:
             - mozilla-django-oidc-dev.tar.gz
   e2e_test_py2_rs_django111:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py2
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py2-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=rs
@@ -61,7 +61,7 @@ jobs:
     <<: *common_steps
   e2e_test_py3_rs_django111:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py3
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=rs
@@ -69,7 +69,7 @@ jobs:
     <<: *common_steps
   e2e_test_py3_rs_django200:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py3
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=rs
@@ -77,7 +77,7 @@ jobs:
     <<: *common_steps
   e2e_test_py3_rs_django210:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py3
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=rs
@@ -85,7 +85,7 @@ jobs:
     <<: *common_steps
   e2e_test_py2_hs_django111:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py2
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py2-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=hs
@@ -93,7 +93,7 @@ jobs:
     <<: *common_steps
   e2e_test_py3_hs_django111:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py3
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=hs
@@ -101,7 +101,7 @@ jobs:
     <<: *common_steps
   e2e_test_py3_hs_django200:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py3
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=hs
@@ -109,7 +109,7 @@ jobs:
     <<: *common_steps
   e2e_test_py3_hs_django210:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py3
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=hs
@@ -117,7 +117,7 @@ jobs:
     <<: *common_steps
   e2e_test_py3_hs_django220:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py3
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=hs
@@ -125,7 +125,7 @@ jobs:
     <<: *common_steps
   e2e_test_py3_hs_django300:
     docker:
-      - image: mozillaparsys/oidc_e2e_setup:py3
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=hs
