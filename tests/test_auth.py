@@ -1,4 +1,6 @@
 import json
+import six
+
 from mock import Mock, call, patch
 
 from cryptography.hazmat.backends import default_backend
@@ -9,7 +11,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 from django.test import RequestFactory, TestCase, override_settings
-from django.utils import six
 from django.utils.encoding import force_bytes, smart_text
 
 from mozilla_django_oidc.auth import (
