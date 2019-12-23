@@ -111,7 +111,8 @@ class SessionRefresh(MiddlewareMixin):
             'client_id': client_id,
             'redirect_uri': absolutify(
                 request,
-                reverse('oidc_authentication_callback')
+                reverse(self.get_settings('OIDC_AUTHENTICATION_CALLBACK_URL',
+                                          'oidc_authentication_callback'))
             ),
             'state': state,
             'scope': self.get_settings('OIDC_RP_SCOPES', 'openid email'),
