@@ -162,8 +162,8 @@ workflows:
           requires:
             - build_lib
       - e2e_test_py3_hs_django220:
-        requires:
-          - build_lib
+          requires:
+            - build_lib
       - e2e_test_py3_hs_django300:
-        requires:
-          - build_lib
+          requires:
+            - build_lib
