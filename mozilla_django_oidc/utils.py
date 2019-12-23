@@ -1,3 +1,5 @@
+import warnings
+
 try:
     from urllib.request import parse_http_list, parse_keqv_list
 except ImportError:
@@ -35,3 +37,17 @@ def import_from_settings(attr, *args):
 def absolutify(request, path):
     """Return the absolute URL of a path."""
     return request.build_absolute_uri(path)
+
+
+def is_authenticated(user):
+    """return True if the user is authenticated.
+    This is necessary because in Django 1.10 the `user.is_authenticated`
+    stopped being a method and is now a property.
+    Actually `user.is_authenticated()` actually works, thanks to a backwards
+    compat trick in Django. But in Django 2.0 it will cease to work
+    as a callable method.
+    """
+
+    msg = '`is_authenticated()` is going to be removed in mozilla-django-oidc v 2.x'
+    warnings.warn(msg, DeprecationWarning)
+    return user.is_authenticated
