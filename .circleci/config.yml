@@ -13,18 +13,18 @@ common_steps: &common_steps
         command: echo 127.0.0.1 testprovider | tee -a /etc/hosts
     - run:
         name: Install latest lib build
-        command: pip install /tmp/workspace/mozilla-django-oidc-dev.tar.gz
+        command: . /testrp_env/bin/activate && pip install /tmp/workspace/mozilla-django-oidc-dev.tar.gz
     - run:
         name: Override django version
-        command: pip install $DJANGO_VERSION
+        command: . /testrp_env/bin/activate && pip install $DJANGO_VERSION
     - run:
         name: Run testprovider service
-        command: ./bin/run.sh
+        command: . /testprovider_env/bin/activate && ./bin/run.sh
         background: True
         working_directory: /testprovider
     - run:
         name: Run testrp service
-        command: ./bin/run.sh
+        command:  . /testrp_env/bin/activate && ./bin/run.sh
         background: True
         working_directory: /testrp
     - run:
@@ -35,7 +35,7 @@ common_steps: &common_steps
         command: wait-for-it -p 8081 -h localhost -t 60
     - run:
         name: Run integration tests
-        command: python integration_tests.py
+        command: . /testrp_env/bin/activate && python integration_tests.py
         working_directory: ~/project/integration_tests
 
 jobs:
