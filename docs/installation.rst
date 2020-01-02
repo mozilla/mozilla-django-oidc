@@ -124,7 +124,7 @@ documentation for the appropriate values.
 
    You can find more info about `cookie-based sessions`_ in Django's documentation.
 
-.. _cookie-based sessions: https://docs.djangoproject.com/en/1.11/topics/http/sessions/#using-cookie-based-sessions
+.. _cookie-based sessions: https://docs.djangoproject.com/en/stable/topics/http/sessions/#using-cookie-based-sessions
 
 
 These values relate to your site.
@@ -288,15 +288,15 @@ dotted path to the function you want to use.
 The function takes in an email address as a text (Python 2 unicode or Python 3
 string) and returns a text (Python 2 unicode or Python 3 string).
 
-Here's an example function for Python 3 and Django 1.11 that doesn't convert
-the email address at all:
+Here's an example function for Python 3 that doesn't convert the email address
+at all:
 
 .. code-block:: python
 
    import unicodedata
 
    def generate_username(email):
-       # Using Python 3 and Django 1.11, usernames can contain alphanumeric
+       # Using Python 3 and Django 1.11+, usernames can contain alphanumeric
        # (ascii and unicode), _, @, +, . and - characters. So we normalize
        # it and slice at 150 characters.
        return unicodedata.normalize('NFKC', email)[:150]
@@ -304,14 +304,8 @@ the email address at all:
 
 .. seealso::
 
-   Django 1.8 username:
-       https://docs.djangoproject.com/en/1.8/ref/contrib/auth/#django.contrib.auth.models.User.username
-
-   Django 1.11 username:
-       https://docs.djangoproject.com/en/1.11/ref/contrib/auth/#django.contrib.auth.models.User.username
-
-   Django 2.0 username:
-       https://docs.djangoproject.com/en/2.0/ref/contrib/auth/#django.contrib.auth.models.User.username
+   Django username:
+       https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User.username
 
 
 Changing how Django users are created

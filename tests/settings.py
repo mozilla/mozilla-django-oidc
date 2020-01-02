@@ -1,6 +1,3 @@
-import django
-
-
 SECRET_KEY = 'can you keep a secret?'
 
 DEBUG = True
@@ -32,9 +29,6 @@ INSTALLED_APPS = [
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
-if tuple(django.VERSION[0:2]) >= (1, 10):
-    MIDDLEWARE = []
-else:
-    MIDDLEWARE_CLASSES = []
+MIDDLEWARE = []
 
 OIDC_USERNAME_ALGO = None

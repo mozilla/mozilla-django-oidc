@@ -6,11 +6,7 @@ except ImportError:
     # Python < 3
     from urllib import urlencode
 
-try:
-    from django.urls import reverse
-except ImportError:
-    # Django < 2.0.0
-    from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
 from django.utils.crypto import get_random_string
@@ -19,11 +15,7 @@ from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
-from mozilla_django_oidc.utils import (
-    absolutify,
-    import_from_settings,
-    is_authenticated
-)
+from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 
 LOGGER = logging.getLogger(__name__)
@@ -81,7 +73,7 @@ class SessionRefresh(MiddlewareMixin):
 
         return (
             request.method == 'GET' and
-            is_authenticated(request.user) and
+            request.user.is_authenticated and
             is_oidc_enabled and
             request.path not in self.exempt_urls
         )
