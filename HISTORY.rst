@@ -3,6 +3,14 @@
 History
 -------
 
+1.2.3 (2020-01-02)
+*******************
+
+* Add support for Django 3.x
+  Thanks `@jaap3`
+* Use new E2E testing images from mozilla namespace
+* Remove support for EOL'ed Django versions
+
 1.2.2 (2019-04-18)
 *******************
 
