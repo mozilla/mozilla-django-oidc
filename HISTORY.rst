@@ -1,13 +1,13 @@
 .. :changelog:
 
 History
--------
+=======
 
 1.2.3 (2020-01-02)
 *******************
 
 * Add support for Django 3.x
-  Thanks `@jaap3`
+  Thanks `@jaap3 <https://github.com/jaap3>`_
 * Use new E2E testing images from mozilla namespace
 * Remove support for EOL'ed Django versions
 
@@ -27,19 +27,19 @@ History
 
 * Improve travis automation for PyPI releases
 * Allow basic auth for OIDC token endpoint requests
-  Thanks `@anttipalola`_
+  Thanks `@anttipalola <https://github.com/anttipalola>`_
 * Replace phantomjs with firefox headless for e2e testing
 * Add default email verification claim check
-  Thanks `@kerrermanisNL`_
+  Thanks `@kerrermanisNL <https://github.com/kerrermanisNL>`_
 * Remove compatibility code for unsupported Django versions
 * Add settings to control redirect behavior
-  Thanks `@chrisbrantley`_
+  Thanks `@chrisbrantley <https://github.com/chrisbrantley>`_
 
 1.1.2 (2018-08-24)
 ++++++++++++++++++
 
 * Fix JWKS handling when OP returns multiple keys
-  Thanks `@JustinAzoff`_
+  Thanks `@JustinAzoff <https://github.com/JustinAzoff>`_
 
 
 1.1.1 (2018-08-09)
@@ -48,23 +48,23 @@ History
 * Fix `is_safe_url` on Django 2.1
 * Fix signature in `authenticate` method to be compatible with Django 2.1
 * Remove legacy code for unsupported Django < 1.11
-  Thanks `@SirTyson`_
+  Thanks `@SirTyson <https://github.com/SirTyson>`_
 
 
 1.1.0 (2018-08-02)
 +++++++++++++++++++
 
 * Installation doc fixes
-  Thanks `@mklan`_
+  Thanks `@mklan <https://github.com/mklan>`_
 * Drop support for unsupported Django 1.8 and Python 3.3.
 * Refactor authentication backend to make it easier to extend
   Required by DRF support feature.
 * Add DRF support
-  Thanks `@anlutro`_
+  Thanks `@anlutro <https://github.com/anlutro>`_
 * Improve local docker environment setup
 * Add flag to allow using unsecured tokens
 * Allow using JWK with optional ``alg``
-  Thanks `@Algogator`_
+  Thanks `@Algogator <https://github.com/Algogator>`_
 
 
 1.0.0 (2018-05-09)
@@ -72,9 +72,9 @@ History
 
 * Add OIDC_AUTHENTICATION_CALLBACK_URL as a new configuration parameter
 * Fail earlier when JWS algorithm does not OIDC_RP_SIGN_ALGO.
-  Thanks `@anlutro`_
+  Thanks `@anlutro <https://github.com/anlutro>`_
 * RS256 verification through ``settings.OIDC_OP_JWKS_ENDPOINT``
-  Thanks `@GermanoGuerrini`_
+  Thanks `@GermanoGuerrini <https://github.com/GermanoGuerrini>`_
 * Refactor OIDCAuthenticationBackend so that token retrieval methods can be overridden in a subclass when you need to.
 
 Backwards-incompatible changes:
@@ -131,14 +131,14 @@ Backwards-incompatible changes:
 Features:
 
 * Implement RS256 verification
-  Thanks `@puiterwijk`_
+  Thanks `@puiterwijk <https://github.com/puiterwijk>`_
 
 Bugs:
 
 * Use ``settings.OIDC_VERIFY_SSL`` also when validating the token.
-  Thanks `@GermanoGuerrini`_
+  Thanks `@GermanoGuerrini <https://github.com/GermanoGuerrini>`_
 * Make OpenID Connect scope configurable.
-  Thanks `@puiterwijk`_
+  Thanks `@puiterwijk <https://github.com/puiterwijk>`_
 * Add path host injection unit-test (#171)
 * Revisit OIDC_STORE_{ACCESS,ID}_TOKEN config entries
 * Allow configuration of additional auth parameters
