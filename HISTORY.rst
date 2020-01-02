@@ -1,10 +1,10 @@
 .. :changelog:
 
 History
-=======
+-------
 
 1.2.3 (2020-01-02)
-*******************
+===================
 
 * Add support for Django 3.x
   Thanks `@jaap3 <https://github.com/jaap3>`_
@@ -12,18 +12,18 @@ History
 * Remove support for EOL'ed Django versions
 
 1.2.2 (2019-04-18)
-*******************
+===================
 
 * Add Mozilla code of conduct
 * Allow overriding OIDC settings per class
 
 1.2.1 (2019-01-22)
-++++++++++++++++++
+===================
 
 * Make `verify_claims` compatible with custom scope configuration.
 
 1.2.0 (2019-01-09)
-+++++++++++++++++++
+==================
 
 * Improve travis automation for PyPI releases
 * Allow basic auth for OIDC token endpoint requests
@@ -36,14 +36,14 @@ History
   Thanks `@chrisbrantley <https://github.com/chrisbrantley>`_
 
 1.1.2 (2018-08-24)
-++++++++++++++++++
+===================
 
 * Fix JWKS handling when OP returns multiple keys
   Thanks `@JustinAzoff <https://github.com/JustinAzoff>`_
 
 
 1.1.1 (2018-08-09)
-+++++++++++++++++++
+===================
 
 * Fix `is_safe_url` on Django 2.1
 * Fix signature in `authenticate` method to be compatible with Django 2.1
@@ -52,7 +52,7 @@ History
 
 
 1.1.0 (2018-08-02)
-+++++++++++++++++++
+===================
 
 * Installation doc fixes
   Thanks `@mklan <https://github.com/mklan>`_
@@ -68,7 +68,7 @@ History
 
 
 1.0.0 (2018-05-09)
-++++++++++++++++++
+===================
 
 * Add OIDC_AUTHENTICATION_CALLBACK_URL as a new configuration parameter
 * Fail earlier when JWS algorithm does not OIDC_RP_SIGN_ALGO.
@@ -86,14 +86,14 @@ Backwards-incompatible changes:
 .. _`@anlutro`: https://github.com/anlutro
 
 0.6.0 (2018-03-27)
-++++++++++++++++++
+===================
 
 * Add e2e tests and automation
 * Add caching for exempt URLs
 * Fix logout when session refresh fails
 
 0.5.0 (2018-01-10)
-++++++++++++++++++
+===================
 
 * Add Django 2.0 support
 * Fix tox configuration
@@ -103,18 +103,18 @@ Backwards-incompatible changes:
 * Drop Django 1.10 support
 
 0.4.2 (2017-11-29)
-++++++++++++++++++
+===================
 
 * Fix OIDC_USERNAME_ALGO to actually load dotted import path of callback.
 * Add verify_claims method for advanced authentication checks
 
 0.4.1 (2017-10-25)
-++++++++++++++++++
+===================
 
 * Send bytes to josepy. Fixes python3 support.
 
 0.4.0 (2017-10-24)
-++++++++++++++++++
+===================
 
 Security issues:
 
@@ -126,7 +126,7 @@ Backwards-incompatible changes:
 
 
 0.3.2 (2017-10-03)
-++++++++++++++++++
+===================
 
 Features:
 
@@ -148,14 +148,14 @@ Bugs:
 .. _`@puiterwijk`: https://github.com/puiterwijk
 
 0.3.1 (2017-06-15)
-++++++++++++++++++
+===================
 
 Security issues:
 
 * **Medium**: Sanitize next url for authentication view
 
 0.3.0 (2017-06-13)
-++++++++++++++++++
+===================
 
 Security issues:
 
@@ -172,7 +172,7 @@ Bugs:
 * Test suite maintenance (#108, #109, #142)
 
 0.2.0 (2017-06-07)
-++++++++++++++++++
+===================
 
 Backwards-incompatible changes:
 
@@ -205,6 +205,6 @@ Bugs:
 * fix is_authenticated usage for Django 1.10+ (#125)
 
 0.1.0 (2016-10-12)
-++++++++++++++++++
+===================
 
 * First release on PyPI.
