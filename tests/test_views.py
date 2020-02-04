@@ -1,3 +1,5 @@
+import time
+
 try:
     from urllib.parse import parse_qs, urlparse
 except ImportError:
@@ -10,7 +12,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
-from django.test import RequestFactory, TestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings, Client
 
 from mozilla_django_oidc import views
 
@@ -37,8 +39,10 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         }
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
-        request.session = {
-            'oidc_state': 'example_state'
+        client = Client()
+        request.session = client.session
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
@@ -65,10 +69,12 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         }
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
-        request.session = {
-            'oidc_state': 'example_state',
-            'oidc_login_next': '/foobar'
+        client = Client()
+        request.session = client.session
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
         }
+        request.session['oidc_login_next'] = '/foobar'
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -93,8 +99,10 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
-        request.session = {
-            'oidc_state': 'example_state'
+        client = Client()
+        request.session = client.session
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
@@ -122,8 +130,10 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
-        request.session = {
-            'oidc_state': 'example_state'
+        client = Client()
+        request.session = client.session
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
@@ -191,14 +201,14 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
         request.session = {
-            'oidc_state': 'tampered_state'
+            'oidc_states': {'tampered_state': None}
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with self.assertRaises(SuspiciousOperation) as context:
             callback_view(request)
 
-        expected_error_message = 'Session `oidc_state` does not match the OIDC callback state'
+        expected_error_message = 'OIDC callback state not found in session `oidc_states`!'
         self.assertEqual(context.exception.args, (expected_error_message,))
 
     @override_settings(LOGIN_REDIRECT_URL='/success')
@@ -212,10 +222,12 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         }
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
-        request.session = {
-            'oidc_state': 'example_state',
-            'oidc_nonce': 'example_nonce'
+        client = Client()
+        request.session = client.session
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': 'example_nonce', 'added_on': time.time()},
         }
+        request.session['oidc_nonce'] = 'example_nonce'
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -229,7 +241,27 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/success')
-        self.assertTrue('oidc_nonce' not in request.session)
+        self.assertTrue('example_state' not in request.session['oidc_states'])
+
+    def test_multiple_login_sessions(self):
+        """Test if states/nonces of other login sessions remain in the 'oidc_states' dictionary."""
+        get_data = {
+            'code': 'example_code',
+            'state': 'example_state'
+        }
+        url = reverse('oidc_authentication_callback')
+        request = self.factory.get(url, get_data)
+        client = Client()
+        request.session = client.session
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
+            'example_state2': {'nonce': None, 'added_on': time.time()},
+        }
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
+        callback_view(request)
+
+        self.assertFalse('example_state' in request.session['oidc_states'])
+        self.assertTrue('example_state2' in request.session['oidc_states'])
 
 
 class GetNextURLTestCase(TestCase):
@@ -353,9 +385,11 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
     @patch('mozilla_django_oidc.views.get_random_string')
-    def test_get(self, mock_random_string):
+    @patch('mozilla_django_oidc.utils.get_random_string')
+    def test_get(self, mock_utils_random, mock_views_random):
         """Test initiation of a successful OIDC attempt."""
-        mock_random_string.return_value = 'examplestring'
+        mock_views_random.return_value = 'examplestring'
+        mock_utils_random.return_value = 'examplenonce'
         url = reverse('oidc_authentication_init')
         request = self.factory.get(url)
         request.session = dict()
@@ -370,7 +404,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'client_id': ['example_id'],
             'redirect_uri': ['http://testserver/callback/'],
             'state': ['examplestring'],
-            'nonce': ['examplestring']
+            'nonce': ['examplenonce']
         }
         self.assertDictEqual(parse_qs(o.query), expected_query)
         self.assertEqual(o.hostname, 'server.example.com')
@@ -381,9 +415,11 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
     @override_settings(OIDC_AUTHENTICATION_CALLBACK_URL='namespace:oidc_authentication_callback')
     @patch('mozilla_django_oidc.views.get_random_string')
-    def test_get_namespaced(self, mock_random_string):
+    @patch('mozilla_django_oidc.utils.get_random_string')
+    def test_get_namespaced(self, mock_utils_random, mock_views_random):
         """Test initiation of a successful OIDC attempt with namespaced redirect_uri."""
-        mock_random_string.return_value = 'examplestring'
+        mock_views_random.return_value = 'examplestring'
+        mock_utils_random.return_value = 'examplenonce'
         url = reverse('namespace:oidc_authentication_init')
         request = self.factory.get(url)
         request.session = dict()
@@ -398,7 +434,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'client_id': ['example_id'],
             'redirect_uri': ['http://testserver/namespace/callback/'],
             'state': ['examplestring'],
-            'nonce': ['examplestring']
+            'nonce': ['examplenonce']
         }
         self.assertDictEqual(parse_qs(o.query), expected_query)
         self.assertEqual(o.hostname, 'server.example.com')
@@ -408,9 +444,11 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
     @override_settings(OIDC_AUTH_REQUEST_EXTRA_PARAMS={'audience': 'some-api.example.com'})
     @patch('mozilla_django_oidc.views.get_random_string')
-    def test_get_with_audience(self, mock_random_string):
+    @patch('mozilla_django_oidc.utils.get_random_string')
+    def test_get_with_audience(self, mock_utils_random, mock_views_random):
         """Test initiation of a successful OIDC attempt."""
-        mock_random_string.return_value = 'examplestring'
+        mock_views_random.return_value = 'examplestring'
+        mock_utils_random.return_value = 'examplenonce'
         url = reverse('oidc_authentication_init')
         request = self.factory.get(url)
         request.session = dict()
@@ -425,7 +463,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'client_id': ['example_id'],
             'redirect_uri': ['http://testserver/callback/'],
             'state': ['examplestring'],
-            'nonce': ['examplestring'],
+            'nonce': ['examplenonce'],
             'audience': ['some-api.example.com'],
         }
         self.assertDictEqual(parse_qs(o.query), expected_query)
@@ -435,10 +473,13 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
     @patch('mozilla_django_oidc.views.get_random_string')
+    @patch('mozilla_django_oidc.utils.get_random_string')
     @patch('mozilla_django_oidc.views.OIDCAuthenticationRequestView.get_extra_params')
-    def test_get_with_overridden_extra_params(self, mock_extra_params, mock_random_string):
+    def test_get_with_overridden_extra_params(self, mock_extra_params, mock_utils_random,
+                                              mock_views_random):
         """Test overriding OIDCAuthenticationRequestView.get_extra_params()."""
-        mock_random_string.return_value = 'examplestring'
+        mock_views_random.return_value = 'examplestring'
+        mock_utils_random.return_value = 'examplenonce'
 
         mock_extra_params.return_value = {
             'connection': 'foo'
@@ -458,7 +499,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'client_id': ['example_id'],
             'redirect_uri': ['http://testserver/callback/'],
             'state': ['examplestring'],
-            'nonce': ['examplestring'],
+            'nonce': ['examplenonce'],
             'connection': ['foo'],
         }
         self.assertDictEqual(parse_qs(o.query), expected_query)
