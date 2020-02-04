@@ -57,8 +57,10 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='foo')
     @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
     @patch('mozilla_django_oidc.middleware.get_random_string')
-    def test_is_ajax(self, mock_random_string):
-        mock_random_string.return_value = 'examplestring'
+    @patch('mozilla_django_oidc.utils.get_random_string')
+    def test_is_ajax(self, mock_utils_random, mock_middleware_random):
+        mock_middleware_random.return_value = 'examplestring'
+        mock_utils_random.return_value = 'examplenonce'
 
         request = self.factory.get(
             '/foo',
@@ -78,7 +80,7 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
             'response_type': ['code'],
             'redirect_uri': ['http://testserver/callback/'],
             'client_id': ['foo'],
-            'nonce': ['examplestring'],
+            'nonce': ['examplenonce'],
             'prompt': ['none'],
             'scope': ['openid email'],
             'state': ['examplestring'],
@@ -91,8 +93,11 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='foo')
     @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
     @patch('mozilla_django_oidc.middleware.get_random_string')
-    def test_no_oidc_token_expiration_forces_renewal(self, mock_random_string):
-        mock_random_string.return_value = 'examplestring'
+    @patch('mozilla_django_oidc.utils.get_random_string')
+    def test_no_oidc_token_expiration_forces_renewal(self, mock_utils_random,
+                                                     mock_middleware_random):
+        mock_middleware_random.return_value = 'examplestring'
+        mock_utils_random.return_value = 'examplenonce'
 
         request = self.factory.get('/foo')
         request.user = self.user
@@ -107,7 +112,7 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
             'response_type': ['code'],
             'redirect_uri': ['http://testserver/callback/'],
             'client_id': ['foo'],
-            'nonce': ['examplestring'],
+            'nonce': ['examplenonce'],
             'prompt': ['none'],
             'scope': ['openid email'],
             'state': ['examplestring'],
@@ -118,8 +123,10 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='foo')
     @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
     @patch('mozilla_django_oidc.middleware.get_random_string')
-    def test_expired_token_forces_renewal(self, mock_random_string):
-        mock_random_string.return_value = 'examplestring'
+    @patch('mozilla_django_oidc.utils.get_random_string')
+    def test_expired_token_forces_renewal(self, mock_utils_random, mock_middleware_random):
+        mock_middleware_random.return_value = 'examplestring'
+        mock_utils_random.return_value = 'examplenonce'
 
         request = self.factory.get('/foo')
         request.user = self.user
@@ -136,7 +143,7 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
             'response_type': ['code'],
             'redirect_uri': ['http://testserver/callback/'],
             'client_id': ['foo'],
-            'nonce': ['examplestring'],
+            'nonce': ['examplenonce'],
             'prompt': ['none'],
             'scope': ['openid email'],
             'state': ['examplestring'],
@@ -256,8 +263,10 @@ class MiddlewareTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='foo')
     @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
     @patch('mozilla_django_oidc.middleware.get_random_string')
-    def test_expired_token_redirects_to_sso(self, mock_random_string):
-        mock_random_string.return_value = 'examplestring'
+    @patch('mozilla_django_oidc.utils.get_random_string')
+    def test_expired_token_redirects_to_sso(self, mock_utils_random, mock_middleware_random):
+        mock_middleware_random.return_value = 'examplestring'
+        mock_utils_random.return_value = 'examplenonce'
 
         client = ClientWithUser()
         client.login(username=self.user.username, password='password')
@@ -277,7 +286,7 @@ class MiddlewareTestCase(TestCase):
             'response_type': ['code'],
             'redirect_uri': ['http://testserver/callback/'],
             'client_id': ['foo'],
-            'nonce': ['examplestring'],
+            'nonce': ['examplenonce'],
             'prompt': ['none'],
             'scope': ['openid email'],
             'state': ['examplestring'],

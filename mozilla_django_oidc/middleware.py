@@ -15,8 +15,8 @@ from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
-from mozilla_django_oidc.utils import absolutify, import_from_settings
-
+from mozilla_django_oidc.utils import absolutify, import_from_settings,\
+    add_state_and_nonce_to_session
 
 LOGGER = logging.getLogger(__name__)
 
@@ -111,14 +111,8 @@ class SessionRefresh(MiddlewareMixin):
             'prompt': 'none',
         }
 
-        if self.get_settings('OIDC_USE_NONCE', True):
-            nonce = get_random_string(self.get_settings('OIDC_NONCE_SIZE', 32))
-            params.update({
-                'nonce': nonce
-            })
-            request.session['oidc_nonce'] = nonce
+        add_state_and_nonce_to_session(request, state, params)
 
-        request.session['oidc_state'] = state
         request.session['oidc_login_next'] = request.get_full_path()
 
         query = urlencode(params)

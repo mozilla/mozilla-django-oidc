@@ -8,6 +8,7 @@ except ImportError:
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.crypto import get_random_string
 
 
 def parse_www_authenticate_header(header):
@@ -51,3 +52,26 @@ def is_authenticated(user):
     msg = '`is_authenticated()` is going to be removed in mozilla-django-oidc v 2.x'
     warnings.warn(msg, DeprecationWarning)
     return user.is_authenticated
+
+
+def add_state_and_nonce_to_session(request, state, params):
+    nonce = None
+    if import_from_settings('OIDC_USE_NONCE', True):
+        nonce = get_random_string(import_from_settings('OIDC_NONCE_SIZE', 32))
+        params.update({
+            'nonce': nonce
+        })
+
+    # Store Nonce with the state parameter in the session "oidc_states" dictionary.
+    # The dictionary can store multiple state/nonce combinations to allow parallel
+    # authentication flows which would otherwise overwrite state/nonce values!
+
+    # Initialize 'oidc_states' dictionary. Make sure the dictionary does not get
+    # too big by resetting the dictionary if there are more than 20 entries
+    # (unlikely to reach so many parallel login sessions at the same time).
+    if 'oidc_states' not in request.session or \
+            not isinstance(request.session['oidc_states'], dict) or \
+            len(request.session['oidc_states']) > 20:
+        request.session['oidc_states'] = {}
+
+    request.session['oidc_states'][state] = nonce
