@@ -1,10 +1,11 @@
+from unittest import TestCase
+
 from django.test.client import Client
-from django.test.testcases import SimpleTestCase
 
 from mozilla_django_oidc.test import OIDCClient
 
 
-class TestOIDCClient(SimpleTestCase):
+class TestOIDCClient(TestCase):
     def test_inherits_from_django_test_client(self):
         self.assertIsInstance(OIDCClient(), Client)
 
