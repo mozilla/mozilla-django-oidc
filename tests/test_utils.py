@@ -3,7 +3,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 
-from mozilla_django_oidc.utils import absolutify, add_state_and_nonce_to_session, import_from_settings
+from mozilla_django_oidc.utils import absolutify, add_state_and_nonce_to_session, \
+    import_from_settings
 
 
 class SettingImportTestCase(TestCase):
