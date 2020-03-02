@@ -1,3 +1,5 @@
+from datetime import datetime
+import logging
 import warnings
 
 try:
@@ -9,6 +11,9 @@ except ImportError:
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.crypto import get_random_string
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def parse_www_authenticate_header(header):
@@ -62,16 +67,32 @@ def add_state_and_nonce_to_session(request, state, params):
             'nonce': nonce
         })
 
-    # Store Nonce with the state parameter in the session "oidc_states" dictionary.
-    # The dictionary can store multiple state/nonce combinations to allow parallel
-    # authentication flows which would otherwise overwrite state/nonce values!
-
-    # Initialize 'oidc_states' dictionary. Make sure the dictionary does not get
-    # too big by resetting the dictionary if there are more than 20 entries
-    # (unlikely to reach so many parallel login sessions at the same time).
+    # Store Nonce with the State parameter in the session "oidc_states" dictionary.
+    # The dictionary can store multiple State/Nonce combinations to allow parallel
+    # authentication flows which would otherwise overwrite State/Nonce values!
+    # The "oidc_states" dictionary uses the state as key and as value a dictionary with "nonce" and "added_on".
+    # "added_on" contains the time when the state was added to the session. With this value, the oldest element
+    # can be found and deleted from the session.
     if 'oidc_states' not in request.session or \
-            not isinstance(request.session['oidc_states'], dict) or \
-            len(request.session['oidc_states']) > 20:
+            not isinstance(request.session['oidc_states'], dict):
         request.session['oidc_states'] = {}
 
-    request.session['oidc_states'][state] = nonce
+    # Make sure that the State/Nonce dictionary in the session does not get too big.
+    # If the number of State/Nonce combinations reaches a certain threshold, remove the oldest state by finding out
+    # which element has the oldest "add_on" time.
+    limit = import_from_settings('OIDC_MAX_OIDC_STATES', 50)
+    if len(request.session['oidc_states']) >= limit:
+        LOGGER.warning('User has more than {} "oidc_states" in his session, deleting the oldest one!'.format(limit))
+        oldest_state = None
+        oldest_added_on = datetime.now().timestamp()  # use float because datetime is not JSON serializable
+        for item_state, item in request.session['oidc_states'].items():
+            if item['added_on'] < oldest_added_on:
+                oldest_state = item_state
+                oldest_added_on = item['added_on']
+        if oldest_state:
+            del request.session['oidc_states'][oldest_state]
+
+    request.session['oidc_states'][state] = {
+        'nonce': nonce,
+        'added_on': datetime.now().timestamp(),  # use float because datetime is not JSON serializable
+    }
