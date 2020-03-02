@@ -70,7 +70,7 @@ class OIDCAuthenticationCallbackView(View):
                 return self.login_failure()
 
             # State and Nonce are stored in the session "oidc_states" dictionary.
-            # State is the key, Nonce the value.
+            # State is the key, the value is a dictionary with the Nonce in the "nonce" field.
             state = request.GET.get('state')
             if state not in request.session['oidc_states']:
                 msg = 'OIDC callback state not found in session `oidc_states`!'
@@ -78,7 +78,7 @@ class OIDCAuthenticationCallbackView(View):
 
             # Get the nonce from the dictionary for further processing and delete the entry to
             # prevent replay attacks.
-            nonce = request.session['oidc_states'][state]
+            nonce = request.session['oidc_states'][state]['nonce']
             del request.session['oidc_states'][state]
 
             kwargs = {

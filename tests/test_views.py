@@ -1,3 +1,5 @@
+from datetime import datetime
+
 try:
     from urllib.parse import parse_qs, urlparse
 except ImportError:
@@ -38,7 +40,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
         request.session = {
-            'oidc_states': {'example_state': None}
+            'oidc_states': {'example_state': {'nonce': None, 'added_on': datetime.now().timestamp()}}
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
@@ -66,7 +68,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
         request.session = {
-            'oidc_states': {'example_state': None},
+            'oidc_states': {'example_state': {'nonce': None, 'added_on': datetime.now().timestamp()}},
             'oidc_login_next': '/foobar'
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
@@ -94,7 +96,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
         request.session = {
-            'oidc_states': {'example_state': None}
+            'oidc_states': {'example_state': {'nonce': None, 'added_on': datetime.now().timestamp()}}
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
@@ -123,7 +125,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
         request.session = {
-            'oidc_states': {'example_state': None}
+            'oidc_states': {'example_state': {'nonce': None, 'added_on': datetime.now().timestamp()}}
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
@@ -213,7 +215,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         url = reverse('oidc_authentication_callback')
         request = self.factory.get(url, get_data)
         request.session = {
-            'oidc_states': {'example_state': 'example_nonce'},
+            'oidc_states': {'example_state': {'nonce': 'example_nonce', 'added_on': datetime.now().timestamp()}},
             'oidc_nonce': 'example_nonce'
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
@@ -241,8 +243,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         request = self.factory.get(url, get_data)
         request.session = {
             'oidc_states': {
-                'example_state': None,
-                'example_state2': None,
+                'example_state': {'nonce': None, 'added_on': datetime.now().timestamp()},
+                'example_state2': {'nonce': None, 'added_on': datetime.now().timestamp()},
             }
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
