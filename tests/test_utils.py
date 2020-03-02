@@ -146,4 +146,4 @@ class SessionStateTestCase(TestCase):
 
         add_state_and_nonce_to_session(self.request, state, params)
 
-        self.assertTrue(isinstance(self.request.session['oidc_states'][state]['nonce'], str))
+        self.assertNotEqual(self.request.session['oidc_states'][state]['nonce'], None)
