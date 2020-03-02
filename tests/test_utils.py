@@ -52,7 +52,7 @@ class AbsolutifyTestCase(TestCase):
 
 class SessionStateTestCase(TestCase):
 
-    def setUp(self) -> None:
+    def setUp(self):
         self.request = RequestFactory().get('/doesnt/matter')
 
         # Setup request with a session for testing
