@@ -1,5 +1,5 @@
-from datetime import datetime
 import logging
+import time
 import warnings
 
 try:
@@ -84,7 +84,7 @@ def add_state_and_nonce_to_session(request, state, params):
     if len(request.session['oidc_states']) >= limit:
         LOGGER.warning('User has more than {} "oidc_states" in his session, deleting the oldest one!'.format(limit))
         oldest_state = None
-        oldest_added_on = datetime.now().timestamp()  # use float because datetime is not JSON serializable
+        oldest_added_on = time.time()
         for item_state, item in request.session['oidc_states'].items():
             if item['added_on'] < oldest_added_on:
                 oldest_state = item_state
@@ -94,5 +94,5 @@ def add_state_and_nonce_to_session(request, state, params):
 
     request.session['oidc_states'][state] = {
         'nonce': nonce,
-        'added_on': datetime.now().timestamp(),  # use float because datetime is not JSON serializable
+        'added_on': time.time(),
     }
