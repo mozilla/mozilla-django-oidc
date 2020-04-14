@@ -140,13 +140,16 @@ Add routing to urls.py
 
 Next, edit your ``urls.py`` and add the following:
 
+
 .. code-block:: python
 
-   urlpatterns = patterns(
+   from django.urls import path
+   
+   urlpatterns = [
        # ...
-       url(r'^oidc/', include('mozilla_django_oidc.urls')),
+       path('oidc/', include('mozilla_django_oidc.urls')),
        # ...
-   )
+   ]
 
 
 Enable login and logout functionality in templates
