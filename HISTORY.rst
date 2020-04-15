@@ -3,6 +3,12 @@
 History
 -------
 
+1.2.4 (Unreleased)
+==================
+
+* Fix JWKS handling when the same `kid` value is used across JWKs with
+  different `alg` specified
+
 1.2.3 (2020-01-02)
 ===================
 
