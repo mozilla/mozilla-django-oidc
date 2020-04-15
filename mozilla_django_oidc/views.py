@@ -81,6 +81,14 @@ class OIDCAuthenticationCallbackView(View):
             nonce = request.session['oidc_states'][state]['nonce']
             del request.session['oidc_states'][state]
 
+            # Authenticating is slow, so save the updated oidc_states.
+            request.session.save()
+            # Reset the session. This forces the session to get reloaded from the database after
+            # fetching the token from the OpenID connect provider.
+            # Without this step we would overwrite items that are being added/removed from the
+            # session in parallel browser tabs.
+            request.session = request.session.__class__(request.session.session_key)
+
             kwargs = {
                 'request': request,
                 'nonce': nonce,
