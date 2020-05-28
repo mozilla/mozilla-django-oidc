@@ -183,6 +183,10 @@ class RefreshOIDCToken(SessionRefresh):
             if renew_refresh_token and request.method.upper() == 'GET':
                 return super(RefreshOIDCToken, self).process_request(request)
             else:
+                # SessionRefresh ignore POST requests without generating an
+                # error. Since this is a security vulnerability,
+                # RefreshOIDCToken middleware raise an error without passing
+                # the call to super class.
                 raise PermissionDenied('Refresh token expired')
 
         if not refresh_token:
@@ -201,7 +205,8 @@ class RefreshOIDCToken(SessionRefresh):
             data=token_payload,
             verify=import_from_settings('OIDC_VERIFY_SSL', True),
         )
-        response.raise_for_status()
+        if response.status_code != 200:
+            return super(RefreshOIDCToken, self).process_request(request)
 
         token_info = response.json()
         id_token = token_info.get('id_token')
