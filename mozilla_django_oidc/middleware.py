@@ -209,7 +209,7 @@ class RefreshOIDCToken(SessionRefresh):
         refresh_token = token_info.get('refresh_token')
 
         store_expiration_times(request.session)
-        store_tokens(request.session, id_token, access_token, refresh_token)
+        store_tokens(request.session, access_token, id_token, refresh_token)
 
     @staticmethod
     def _is_refresh_token_expired(request):
