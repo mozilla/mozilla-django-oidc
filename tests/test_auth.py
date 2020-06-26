@@ -256,11 +256,15 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
                                                   auth=None,
-                                                  verify=True)
+                                                  verify=True,
+                                                  timeout=None,
+                                                  proxies=None)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
             headers={'Authorization': 'Bearer access_granted'},
-            verify=True
+            verify=True,
+            timeout=None,
+            proxies=None
         )
 
     @patch('mozilla_django_oidc.auth.requests')
@@ -299,11 +303,15 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
                                                   auth=None,
-                                                  verify=True)
+                                                  verify=True,
+                                                  timeout=None,
+                                                  proxies=None)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
             headers={'Authorization': 'Bearer access_granted'},
-            verify=True
+            verify=True,
+            timeout=None,
+            proxies=None
         )
 
     @override_settings(OIDC_STORE_ACCESS_TOKEN=True)
@@ -344,11 +352,15 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
                                                   auth=None,
-                                                  verify=True)
+                                                  verify=True,
+                                                  timeout=None,
+                                                  proxies=None)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
             headers={'Authorization': 'Bearer access_granted'},
-            verify=True
+            verify=True,
+            timeout=None,
+            proxies=None
         )
         self.assertEqual(auth_request.session.get('oidc_id_token'), 'id_token')
         self.assertEqual(auth_request.session.get('oidc_access_token'), 'access_granted')
@@ -393,11 +405,15 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
                                                   auth=None,
-                                                  verify=True)
+                                                  verify=True,
+                                                  timeout=None,
+                                                  proxies=None)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
             headers={'Authorization': 'Bearer access_granted'},
-            verify=True
+            verify=True,
+            timeout=None,
+            proxies=None
         )
 
     @patch.object(settings, 'OIDC_USERNAME_ALGO')
@@ -441,11 +457,15 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.post.assert_called_once_with('https://server.example.com/token',
                                                   data=post_data,
                                                   auth=None,
-                                                  verify=True)
+                                                  verify=True,
+                                                  timeout=None,
+                                                  proxies=None)
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
             headers={'Authorization': 'Bearer access_granted'},
-            verify=True
+            verify=True,
+            timeout=None,
+            proxies=None,
         )
 
     @override_settings(OIDC_TOKEN_USE_BASIC_AUTH=True)
@@ -510,7 +530,9 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.get.assert_called_once_with(
             'https://server.example.com/user',
             headers={'Authorization': 'Bearer access_granted'},
-            verify=True
+            verify=True,
+            timeout=None,
+            proxies=None
         )
         self.assertEqual(auth_request.session.get('oidc_id_token'), 'id_token')
         self.assertEqual(auth_request.session.get('oidc_access_token'), 'access_granted')

@@ -141,7 +141,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Get the signing key by exploring the JWKS endpoint of the OP."""
         response_jwks = requests.get(
             self.OIDC_OP_JWKS_ENDPOINT,
-            verify=self.get_settings('OIDC_VERIFY_SSL', True)
+            verify=self.get_settings('OIDC_VERIFY_SSL', True),
+            timeout=self.get_settings('OIDC_TIMEOUT', None),
+            proxies=self.get_settings('OIDC_PROXY', None)
         )
         response_jwks.raise_for_status()
         jwks = response_jwks.json()
@@ -221,7 +223,9 @@ class OIDCAuthenticationBackend(ModelBackend):
             self.OIDC_OP_TOKEN_ENDPOINT,
             data=payload,
             auth=auth,
-            verify=self.get_settings('OIDC_VERIFY_SSL', True))
+            verify=self.get_settings('OIDC_VERIFY_SSL', True),
+            timeout=self.get_settings('OIDC_TIMEOUT', None),
+            proxies=self.get_settings('OIDC_PROXY', None))
         response.raise_for_status()
         return response.json()
 
@@ -234,7 +238,9 @@ class OIDCAuthenticationBackend(ModelBackend):
             headers={
                 'Authorization': 'Bearer {0}'.format(access_token)
             },
-            verify=self.get_settings('OIDC_VERIFY_SSL', True))
+            verify=self.get_settings('OIDC_VERIFY_SSL', True),
+            timeout=self.get_settings('OIDC_TIMEOUT', None),
+            proxies=self.get_settings('OIDC_PROXY', None))
         user_response.raise_for_status()
         return user_response.json()
 
