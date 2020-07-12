@@ -41,7 +41,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         request = self.factory.get(url, get_data)
         client = Client()
         request.session = client.session
-        request.session['oidc_states'] = {'example_state': {'nonce': None, 'added_on': time.time()}}
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
+        }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -69,7 +71,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         request = self.factory.get(url, get_data)
         client = Client()
         request.session = client.session
-        request.session['oidc_states'] = {'example_state': {'nonce': None, 'added_on': time.time()}}
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
+        }
         request.session['oidc_login_next'] = '/foobar'
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
@@ -97,7 +101,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         request = self.factory.get(url, get_data)
         client = Client()
         request.session = client.session
-        request.session['oidc_states'] = {'example_state': {'nonce': None, 'added_on': time.time()}}
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
+        }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -126,7 +132,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         request = self.factory.get(url, get_data)
         client = Client()
         request.session = client.session
-        request.session['oidc_states'] = {'example_state': {'nonce': None, 'added_on': time.time()}}
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
+        }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -216,7 +224,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         request = self.factory.get(url, get_data)
         client = Client()
         request.session = client.session
-        request.session['oidc_states'] = {'example_state': {'nonce': 'example_nonce', 'added_on': time.time()}}
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': 'example_nonce', 'added_on': time.time()},
+        }
         request.session['oidc_nonce'] = 'example_nonce'
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 

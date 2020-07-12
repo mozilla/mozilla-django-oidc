@@ -61,10 +61,11 @@ def is_authenticated(user):
 
 def add_state_and_nonce_to_session(request, state, params):
     """
-    Stores the `state` and `nonce` parameters in a session dictionary including the time when it was added.
-    The dictionary can contain multiple state/nonce combinations to allow parallel logins with multiple browser
-    sessions.
-    To keep the session space to a reasonable size, the dictionary is kept at 50 state/nonce combinations maximum.
+    Stores the `state` and `nonce` parameters in a session dictionary including the time when it
+    was added. The dictionary can contain multiple state/nonce combinations to allow parallel
+    logins with multiple browser sessions.
+    To keep the session space to a reasonable size, the dictionary is kept at 50 state/nonce
+    combinations maximum.
     """
     nonce = None
     if import_from_settings('OIDC_USE_NONCE', True):
