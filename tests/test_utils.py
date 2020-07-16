@@ -67,23 +67,9 @@ class SessionStateTestCase(TestCase):
 
         add_state_and_nonce_to_session(self.request, state, params)
 
-        self.assertIn('nonce', params)
         self.assertIn('oidc_states', self.request.session)
         self.assertEqual(1, len(self.request.session['oidc_states']))
         self.assertIn(state, self.request.session['oidc_states'].keys())
-
-    def test_existing_params(self):
-        state = 'example_state'
-
-        param_key = 'example_param'
-        params = {
-            param_key: 'example',
-        }
-
-        add_state_and_nonce_to_session(self.request, state, params)
-
-        self.assertIn('nonce', params)
-        self.assertIn(param_key, params)
 
     def test_multiple_states(self):
         state1 = 'example_state_1'
@@ -143,7 +129,9 @@ class SessionStateTestCase(TestCase):
 
     def test_state_dictionary_with_nonce_format(self):
         state = 'example_state'
-        params = {}
+        params = {
+            'nonce': 'example_nonce'
+        }
 
         add_state_and_nonce_to_session(self.request, state, params)
 
