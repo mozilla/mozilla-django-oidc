@@ -1,22 +1,25 @@
 import logging
 import time
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    # Python < 3
-    from urllib import urlencode
 
-from django.urls import reverse
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
+from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
-from mozilla_django_oidc.utils import absolutify, import_from_settings,\
-    add_state_and_nonce_to_session
+from mozilla_django_oidc.utils import (absolutify,
+                                       add_state_and_nonce_to_session,
+                                       import_from_settings)
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    # Python < 3
+    from urllib import urlencode
+
 
 LOGGER = logging.getLogger(__name__)
 

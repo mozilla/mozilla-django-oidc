@@ -1,21 +1,23 @@
 import time
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    # Python < 3
-    from urllib import urlencode
 
-from django.core.exceptions import SuspiciousOperation
-from django.urls import reverse
 from django.contrib import auth
+from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.http import is_safe_url
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings,\
-    add_state_and_nonce_to_session
+from mozilla_django_oidc.utils import (absolutify,
+                                       add_state_and_nonce_to_session,
+                                       import_from_settings)
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    # Python < 3
+    from urllib import urlencode
 
 
 class OIDCAuthenticationCallbackView(View):

@@ -2,15 +2,15 @@ import logging
 import time
 import warnings
 
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.crypto import get_random_string
+
 try:
     from urllib.request import parse_http_list, parse_keqv_list
 except ImportError:
     # python < 3
     from urllib2 import parse_http_list, parse_keqv_list
-
-from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
-from django.utils.crypto import get_random_string
 
 
 LOGGER = logging.getLogger(__name__)
@@ -88,10 +88,9 @@ def add_state_and_nonce_to_session(request, state, params):
     # If the number of State/Nonce combinations reaches a certain threshold, remove the oldest
     # state by finding out
     # which element has the oldest "add_on" time.
-    limit = import_from_settings('OIDC_MAX_OIDC_STATES', 50)
     limit = import_from_settings('OIDC_MAX_STATES', 50)
     if len(request.session['oidc_states']) >= limit:
-        LOGGER.warning(
+        LOGGER.info(
             'User has more than {} "oidc_states" in his session, '
             'deleting the oldest one!'.format(limit)
         )
