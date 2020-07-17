@@ -1,20 +1,23 @@
 import time
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    # Python < 3
-    from urllib import urlencode
 
-from django.core.exceptions import SuspiciousOperation
-from django.urls import reverse
 from django.contrib import auth
+from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.http import is_safe_url
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings
+from mozilla_django_oidc.utils import (absolutify,
+                                       add_state_and_nonce_to_session,
+                                       import_from_settings)
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    # Python < 3
+    from urllib import urlencode
 
 
 class OIDCAuthenticationCallbackView(View):
@@ -53,11 +56,6 @@ class OIDCAuthenticationCallbackView(View):
     def get(self, request):
         """Callback handler for OIDC authorization code flow"""
 
-        nonce = request.session.get('oidc_nonce')
-        if nonce:
-            # Make sure that nonce is not used twice
-            del request.session['oidc_nonce']
-
         if request.GET.get('error'):
             # Ouch! Something important failed.
             # Make sure the user doesn't get to continue to be logged in
@@ -68,17 +66,35 @@ class OIDCAuthenticationCallbackView(View):
                 auth.logout(request)
             assert not request.user.is_authenticated
         elif 'code' in request.GET and 'state' in request.GET:
+
+            # Check instead of "oidc_state" check if the "oidc_states" session key exists!
+            if 'oidc_states' not in request.session:
+                return self.login_failure()
+
+            # State and Nonce are stored in the session "oidc_states" dictionary.
+            # State is the key, the value is a dictionary with the Nonce in the "nonce" field.
+            state = request.GET.get('state')
+            if state not in request.session['oidc_states']:
+                msg = 'OIDC callback state not found in session `oidc_states`!'
+                raise SuspiciousOperation(msg)
+
+            # Get the nonce from the dictionary for further processing and delete the entry to
+            # prevent replay attacks.
+            nonce = request.session['oidc_states'][state]['nonce']
+            del request.session['oidc_states'][state]
+
+            # Authenticating is slow, so save the updated oidc_states.
+            request.session.save()
+            # Reset the session. This forces the session to get reloaded from the database after
+            # fetching the token from the OpenID connect provider.
+            # Without this step we would overwrite items that are being added/removed from the
+            # session in parallel browser tabs.
+            request.session = request.session.__class__(request.session.session_key)
+
             kwargs = {
                 'request': request,
                 'nonce': nonce,
             }
-
-            if 'oidc_state' not in request.session:
-                return self.login_failure()
-
-            if request.GET['state'] != request.session['oidc_state']:
-                msg = 'Session `oidc_state` does not match the OIDC callback state'
-                raise SuspiciousOperation(msg)
 
             self.user = auth.authenticate(**kwargs)
 
@@ -152,14 +168,8 @@ class OIDCAuthenticationRequestView(View):
 
         params.update(self.get_extra_params(request))
 
-        if self.get_settings('OIDC_USE_NONCE', True):
-            nonce = get_random_string(self.get_settings('OIDC_NONCE_SIZE', 32))
-            params.update({
-                'nonce': nonce
-            })
-            request.session['oidc_nonce'] = nonce
+        add_state_and_nonce_to_session(request, state, params)
 
-        request.session['oidc_state'] = state
         request.session['oidc_login_next'] = get_next_url(request, redirect_field_name)
 
         query = urlencode(params)

@@ -99,6 +99,13 @@ of ``mozilla-django-oidc``.
 
    Sets the length of the random string used for OpenID Connect nonce verification
 
+.. py:attribute:: OIDC_MAX_STATES
+
+   :default: ``50``
+
+   Sets the maximum number of State / Nonce combinations stored in the session.
+   Multiple combinations are used when the user does multiple concurrent login sessions.
+
 .. py:attribute:: OIDC_REDIRECT_FIELD_NAME
 
    :default: ``next``
