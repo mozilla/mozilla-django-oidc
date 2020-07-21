@@ -168,6 +168,12 @@ class OIDCAuthenticationRequestView(View):
 
         params.update(self.get_extra_params(request))
 
+        if self.get_settings('OIDC_USE_NONCE', True):
+            nonce = get_random_string(self.get_settings('OIDC_NONCE_SIZE', 32))
+            params.update({
+                'nonce': nonce
+            })
+
         add_state_and_nonce_to_session(request, state, params)
 
         request.session['oidc_login_next'] = get_next_url(request, redirect_field_name)

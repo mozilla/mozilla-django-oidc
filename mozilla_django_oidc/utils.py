@@ -4,7 +4,6 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.crypto import get_random_string
 
 try:
     from urllib.request import parse_http_list, parse_keqv_list
@@ -67,12 +66,7 @@ def add_state_and_nonce_to_session(request, state, params):
     To keep the session space to a reasonable size, the dictionary is kept at 50 state/nonce
     combinations maximum.
     """
-    nonce = None
-    if import_from_settings('OIDC_USE_NONCE', True):
-        nonce = get_random_string(import_from_settings('OIDC_NONCE_SIZE', 32))
-        params.update({
-            'nonce': nonce
-        })
+    nonce = params.get('nonce')
 
     # Store Nonce with the State parameter in the session "oidc_states" dictionary.
     # The dictionary can store multiple State/Nonce combinations to allow parallel
