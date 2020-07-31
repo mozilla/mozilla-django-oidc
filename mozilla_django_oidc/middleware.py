@@ -122,8 +122,6 @@ class SessionRefresh(MiddlewareMixin):
 
         add_state_and_nonce_to_session(request, state, params)
 
-        request.session['oidc_login_next'] = request.get_full_path()
-
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=auth_url, query=query)
         if request.is_ajax():
@@ -138,4 +136,6 @@ class SessionRefresh(MiddlewareMixin):
             response = JsonResponse({'refresh_url': redirect_url}, status=403)
             response['refresh_url'] = redirect_url
             return response
+
+        request.session['oidc_login_next'] = request.get_full_path()
         return HttpResponseRedirect(redirect_url)
