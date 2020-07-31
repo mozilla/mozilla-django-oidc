@@ -158,7 +158,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             if jwk['kid'] != smart_text(header.kid):
                 continue
             if 'alg' in jwk and jwk['alg'] != smart_text(header.alg):
-                raise SuspiciousOperation('alg values do not match.')
+                continue
             key = jwk
         if key is None:
             raise SuspiciousOperation('Could not find a valid JWKS.')
