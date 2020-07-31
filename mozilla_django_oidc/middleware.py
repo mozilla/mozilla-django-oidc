@@ -88,7 +88,7 @@ class SessionRefresh(MiddlewareMixin):
 
         now = time.time()
 
-        if 'X-Refresh-OIDC-Token' in request.headers:
+        if hasattr(request,'headers') and 'X-Refresh-OIDC-Token' in request.headers:
             request.session['oidc_id_token_expiration'] = now
 
         expiration = request.session.get('oidc_id_token_expiration', 0)
