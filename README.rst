@@ -27,7 +27,7 @@ Design principles
 -----------------
 
 * Keep it as minimal/lightweight as possible
-* Store as less authn/authz artifacts as possible
+* Store as few authn/authz artifacts as possible
 * Allow custom functionality by overriding the authentication backend
 * Mainly support OIDC authorization code flow
 * Allow shipping Mozilla-centric authn/authz features
