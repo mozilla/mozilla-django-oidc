@@ -3,14 +3,23 @@
 History
 -------
 
-1.2.4 (Unreleased)
+1.2.4 (2020-08-19)
 ==================
 
+* Fix error in README.rst
+  Thanks `@der-gabe <https://github.com/der-gabe>`_
 * Fix JWKS handling when the same `kid` value is used across JWKs with
   different `alg` specified
+  Thanks `@davidjb <https://github.com/davidjb>`_
 * Support regex patterns in ``OIDC_EXEMPT_URLS``, to allow exempting session refreshes in
   ``SessionMiddleware`` for URLs matching the pattern
-  Thanks `@jwhitlock`_
+  Thanks `@jwhitlock <https://github.com/jwhitlock>`_
+* Move nonce outside of add_state_and_noce_to_session method.  
+* Change log level to info for the add_state_and_nonce_to_session. 
+* Session save/load management 
+  Thanks `@Flor1an-dev <https://github.com/Flor1an-dev>`_
+* Allow multiple parallel login sessions
+  Thanks `@istreeter <https://github.com/istreeter>`_
 
 .. _`@jwhitlock`: https://github.com/jwhitlock
 
