@@ -66,6 +66,10 @@ class OIDCAuthenticationBackend(ModelBackend):
     def get_settings(attr, *args):
         return import_from_settings(attr, *args)
 
+    def describe_user_by_claims(self, claims):
+        email = claims.get('email')
+        return 'email {}'.format(email)
+
     def filter_users_by_claims(self, claims):
         """Return all users matching the specified email."""
         email = claims.get('email')
@@ -306,8 +310,6 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         user_info = self.get_userinfo(access_token, id_token, payload)
 
-        email = user_info.get('email')
-
         claims_verified = self.verify_claims(user_info)
         if not claims_verified:
             msg = 'Claims verification failed'
@@ -327,8 +329,9 @@ class OIDCAuthenticationBackend(ModelBackend):
             user = self.create_user(user_info)
             return user
         else:
-            LOGGER.debug('Login failed: No user with email %s found, and '
-                         'OIDC_CREATE_USER is False', email)
+            LOGGER.debug('Login failed: No user with %s found, and '
+                         'OIDC_CREATE_USER is False',
+                         self.describe_user_by_claims(user_info))
             return None
 
     def get_user(self, user_id):
