@@ -162,7 +162,7 @@ class SessionRefresh(MiddlewareMixin):
 
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=auth_url, query=query)
-        if request.is_ajax():
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             # Almost all XHR request handling in client-side code struggles
             # with redirects since redirecting to a page where the user
             # is supposed to do something is extremely unlikely to work
