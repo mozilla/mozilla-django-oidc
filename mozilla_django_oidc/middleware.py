@@ -14,11 +14,7 @@ from mozilla_django_oidc.utils import (absolutify,
                                        add_state_and_nonce_to_session,
                                        import_from_settings)
 
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    # Python < 3
-    from urllib import urlencode
+from urllib.parse import urlencode
 
 try:
     # Python 3.7 or later
@@ -166,7 +162,7 @@ class SessionRefresh(MiddlewareMixin):
 
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=auth_url, query=query)
-        if request.is_ajax():
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             # Almost all XHR request handling in client-side code struggles
             # with redirects since redirecting to a page where the user
             # is supposed to do something is extremely unlikely to work

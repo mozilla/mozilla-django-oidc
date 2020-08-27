@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 from django.test import RequestFactory, TestCase, override_settings
-from django.utils.encoding import force_bytes, smart_text
+from django.utils.encoding import force_bytes, smart_str
 
 from mozilla_django_oidc.auth import (
     default_username_algo,
@@ -86,8 +86,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         payload = force_bytes(json.dumps({'foo': 'bar'}))
         signature = ''
         token = force_bytes('{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
             signature
         ))
 
@@ -101,8 +101,8 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         payload = force_bytes(json.dumps({'foo': 'bar'}))
         signature = ''
         token = force_bytes('{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
             signature
         ))
 
@@ -118,17 +118,17 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         # Compute signature
         key = b'mysupersecuretestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
         token_bytes = force_bytes(token)
-        key_text = smart_text(key)
+        key_text = smart_str(key)
         output = self.backend.get_payload_data(token_bytes, key_text)
         self.assertEqual(output, payload)
 
@@ -141,17 +141,17 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         # Compute signature
         key = b'mysupersecuretestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
         token_bytes = force_bytes(token)
-        key_text = smart_text(key)
+        key_text = smart_str(key)
         output = self.backend.get_payload_data(token_bytes, key_text)
         self.assertEqual(output, payload)
 
@@ -165,17 +165,17 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         key = b'mysupersecuretestkey'
         fake_key = b'mysupersecurefaketestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
         token_bytes = force_bytes(token)
-        key_text = smart_text(fake_key)
+        key_text = smart_str(fake_key)
 
         with self.assertRaises(SuspiciousOperation) as ctx:
             self.backend.get_payload_data(token_bytes, key_text)
@@ -191,17 +191,17 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         key = b'mysupersecuretestkey'
         fake_key = b'mysupersecurefaketestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
         token_bytes = force_bytes(token)
-        key_text = smart_text(fake_key)
+        key_text = smart_str(fake_key)
 
         with self.assertRaises(SuspiciousOperation) as ctx:
             self.backend.get_payload_data(token_bytes, key_text)
@@ -948,14 +948,14 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         # Compute signature
         key = b'mysupersecuretestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
 
         jwk_key = self.backend.retrieve_matching_jwk(force_bytes(token))
@@ -990,14 +990,14 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         # Compute signature
         key = b'mysupersecuretestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
 
         jwk_key = self.backend.retrieve_matching_jwk(force_bytes(token))
@@ -1024,14 +1024,14 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         # Compute signature
         key = b'mysupersecuretestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
 
         with self.assertRaises(SuspiciousOperation) as ctx:
@@ -1060,14 +1060,14 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         # Compute signature
         key = b'mysupersecuretestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
 
         with self.assertRaises(SuspiciousOperation) as ctx:
@@ -1095,14 +1095,14 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         # Compute signature
         key = b'mysupersecuretestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
 
         jwk_key = self.backend.retrieve_matching_jwk(force_bytes(token))
@@ -1129,14 +1129,14 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         # Compute signature
         key = b'mysupersecuretestkey'
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = '{}.{}'.format(smart_text(b64encode(header)), smart_text(b64encode(payload)))
+        msg = '{}.{}'.format(smart_str(b64encode(header)), smart_str(b64encode(payload)))
         h.update(force_bytes(msg))
         signature = b64encode(h.finalize())
 
         token = '{}.{}.{}'.format(
-            smart_text(b64encode(header)),
-            smart_text(b64encode(payload)),
-            smart_text(signature)
+            smart_str(b64encode(header)),
+            smart_str(b64encode(payload)),
+            smart_str(signature)
         )
 
         with self.assertRaises(SuspiciousOperation) as ctx:

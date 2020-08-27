@@ -5,7 +5,13 @@ from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.crypto import get_random_string
-from django.utils.http import is_safe_url
+
+try:
+    from django.utils.http import url_has_allowed_host_and_scheme
+except ImportError:
+    # Django <= 2.2
+    from django.utils.http import is_safe_url as url_has_allowed_host_and_scheme
+
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
@@ -13,11 +19,7 @@ from mozilla_django_oidc.utils import (absolutify,
                                        add_state_and_nonce_to_session,
                                        import_from_settings)
 
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    # Python < 3
-    from urllib import urlencode
+from urllib.parse import urlencode
 
 
 class OIDCAuthenticationCallbackView(View):
@@ -127,7 +129,7 @@ def get_next_url(request, redirect_field_name):
         hosts.append(request.get_host())
         kwargs['allowed_hosts'] = hosts
 
-        is_safe = is_safe_url(**kwargs)
+        is_safe = url_has_allowed_host_and_scheme(**kwargs)
         if is_safe:
             return next_url
     return None

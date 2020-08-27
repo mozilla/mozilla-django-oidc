@@ -1,3 +1,3 @@
-from django.conf.urls import url, include
+from django.urls import path, include
 
-urlpatterns = [url(r'^namespace/', include(('mozilla_django_oidc.urls', 'namespace')))]
+urlpatterns = [path('namespace/', include(('mozilla_django_oidc.urls', 'namespace')))]

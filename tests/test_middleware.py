@@ -2,15 +2,11 @@ import json
 import re
 import time
 
-try:
-    from urllib.parse import parse_qs
-except ImportError:
-    # Python < 3
-    from urlparse import parse_qs
+from urllib.parse import parse_qs
 
 from mock import patch
 
-from django.conf.urls import url
+from django.urls import path
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_logged_out
 from django.contrib.auth.models import AnonymousUser
@@ -143,7 +139,7 @@ def fakeview(req):
 
 
 urlpatterns = list(orig_urlpatterns) + [
-    url(r'^mdo_fake_view/$', fakeview, name='mdo_fake_view')
+    path('mdo_fake_view/', fakeview, name='mdo_fake_view')
 ]
 
 
