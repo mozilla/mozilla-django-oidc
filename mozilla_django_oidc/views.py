@@ -8,7 +8,7 @@ from django.utils.crypto import get_random_string
 
 try:
     from django.utils.http import url_has_allowed_host_and_scheme
-except:
+except ImportError:
     # Django <= 2.2
     from django.utils.http import is_safe_url as url_has_allowed_host_and_scheme
 

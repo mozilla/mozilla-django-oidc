@@ -18,9 +18,7 @@ AUTHENTICATE_CLASS_PATH = import_from_settings(
 OIDCAuthenticateClass = import_string(AUTHENTICATE_CLASS_PATH)
 
 urlpatterns = [
-    path('callback/', OIDCCallbackClass.as_view(),
-        name='oidc_authentication_callback'),
-    path('authenticate/', OIDCAuthenticateClass.as_view(),
-        name='oidc_authentication_init'),
+    path('callback/', OIDCCallbackClass.as_view(), name='oidc_authentication_callback'),
+    path('authenticate/', OIDCAuthenticateClass.as_view(), name='oidc_authentication_init'),
     path('logout/', views.OIDCLogoutView.as_view(), name='oidc_logout'),
 ]
