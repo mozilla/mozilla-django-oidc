@@ -10,7 +10,7 @@ except ImportError:
 
 from mock import patch
 
-from django.conf.urls import url
+from django.urls import path
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_logged_out
 from django.contrib.auth.models import AnonymousUser
@@ -143,7 +143,7 @@ def fakeview(req):
 
 
 urlpatterns = list(orig_urlpatterns) + [
-    url(r'^mdo_fake_view/$', fakeview, name='mdo_fake_view')
+    path('mdo_fake_view/', fakeview, name='mdo_fake_view')
 ]
 
 

@@ -5,7 +5,13 @@ from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.crypto import get_random_string
-from django.utils.http import is_safe_url
+
+try:
+    from django.utils.http import url_has_allowed_host_and_scheme
+except:
+    # Django <= 2.2
+    from django.utils.http import is_safe_url as url_has_allowed_host_and_scheme
+
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
@@ -127,7 +133,7 @@ def get_next_url(request, redirect_field_name):
         hosts.append(request.get_host())
         kwargs['allowed_hosts'] = hosts
 
-        is_safe = is_safe_url(**kwargs)
+        is_safe = url_has_allowed_host_and_scheme(**kwargs)
         if is_safe:
             return next_url
     return None

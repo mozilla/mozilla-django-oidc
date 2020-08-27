@@ -297,7 +297,7 @@ class GetNextURLTestCase(TestCase):
     def test_bad_urls(self):
         urls = [
             '',
-            # NOTE(willkg): Test data taken from the Django is_safe_url tests.
+            # NOTE(willkg): Test data taken from the Django url_has_allowed_host_and_scheme tests.
             'http://example.com',
             'http:///example.com',
             'https://example.com',
