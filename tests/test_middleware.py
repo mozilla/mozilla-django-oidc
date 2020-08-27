@@ -2,11 +2,7 @@ import json
 import re
 import time
 
-try:
-    from urllib.parse import parse_qs
-except ImportError:
-    # Python < 3
-    from urlparse import parse_qs
+from urllib.parse import parse_qs
 
 from mock import patch
 

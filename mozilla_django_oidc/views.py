@@ -19,11 +19,7 @@ from mozilla_django_oidc.utils import (absolutify,
                                        add_state_and_nonce_to_session,
                                        import_from_settings)
 
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    # Python < 3
-    from urllib import urlencode
+from urllib.parse import urlencode
 
 
 class OIDCAuthenticationCallbackView(View):
