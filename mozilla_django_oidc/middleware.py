@@ -1,31 +1,21 @@
 import logging
 import time
+try:
+    from urllib.parse import urlencode, quote
+except ImportError:
+    # Python < 3
+    from urllib import urlencode, quote
 
+from django.urls import reverse
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
-from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
-from mozilla_django_oidc.utils import (absolutify,
-                                       add_state_and_nonce_to_session,
-                                       import_from_settings)
-
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    # Python < 3
-    from urllib import urlencode
-
-try:
-    # Python 3.7 or later
-    from re import Pattern as re_Pattern
-except ImportError:
-    # Python 3.6 or earlier
-    from re import _pattern_type as re_Pattern
+from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 
 LOGGER = logging.getLogger(__name__)
@@ -54,10 +44,7 @@ class SessionRefresh(MiddlewareMixin):
         :returns: list of url paths (for example "/oidc/callback/")
 
         """
-        exempt_urls = []
-        for url in self.get_settings('OIDC_EXEMPT_URLS', []):
-            if not isinstance(url, re_Pattern):
-                exempt_urls.append(url)
+        exempt_urls = list(self.get_settings('OIDC_EXEMPT_URLS', []))
         exempt_urls.extend([
             'oidc_authentication_init',
             'oidc_authentication_callback',
@@ -68,22 +55,6 @@ class SessionRefresh(MiddlewareMixin):
             url if url.startswith('/') else reverse(url)
             for url in exempt_urls
         ])
-
-    @cached_property
-    def exempt_url_patterns(self):
-        """Generate and return a set of url patterns to exempt from SessionRefresh
-
-        This takes the value of ``settings.OIDC_EXEMPT_URLS`` and returns the
-        values that are compiled regular expression patterns.
-
-        :returns: list of url patterns (for example,
-            ``re.compile(r"/user/[0-9]+/image")``)
-        """
-        exempt_patterns = set()
-        for url_pattern in self.get_settings('OIDC_EXEMPT_URLS', []):
-            if isinstance(url_pattern, re_Pattern):
-                exempt_patterns.add(url_pattern)
-        return exempt_patterns
 
     def is_refreshable_url(self, request):
         """Takes a request and returns whether it triggers a refresh examination
@@ -104,8 +75,7 @@ class SessionRefresh(MiddlewareMixin):
             request.method == 'GET' and
             request.user.is_authenticated and
             is_oidc_enabled and
-            request.path not in self.exempt_urls and
-            not any(pat.match(request.path) for pat in self.exempt_url_patterns)
+            request.path not in self.exempt_urls
         )
 
     def process_request(self, request):
@@ -146,12 +116,12 @@ class SessionRefresh(MiddlewareMixin):
             params.update({
                 'nonce': nonce
             })
+            request.session['oidc_nonce'] = nonce
 
-        add_state_and_nonce_to_session(request, state, params)
-
+        request.session['oidc_state'] = state
         request.session['oidc_login_next'] = request.get_full_path()
 
-        query = urlencode(params)
+        query = urlencode(params, quote_via=quote)
         redirect_url = '{url}?{query}'.format(url=auth_url, query=query)
         if request.is_ajax():
             # Almost all XHR request handling in client-side code struggles
