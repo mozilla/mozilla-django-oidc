@@ -1,6 +1,7 @@
 import logging
 import time
 
+import six
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
@@ -32,7 +33,7 @@ LOGGER = logging.getLogger(__name__)
 
 def urlencode_backport(query):
     l = []
-    for k, v in query:
+    for k, v in six.iteritems(query):
         k = quote(str(k))
         v = quote(str(v))
         l.append(k + '=' + v)
