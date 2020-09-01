@@ -15,10 +15,10 @@ from mozilla_django_oidc.utils import (absolutify,
                                        import_from_settings)
 
 try:
-    from urllib.parse import urlencode, quote
+    from urllib.parse import quote
 except ImportError:
     # Python < 3
-    from urllib import urlencode, quote
+    from urllib import quote
 
 try:
     # Python 3.7 or later
@@ -30,6 +30,13 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
+def urlencode_backport(query):
+    l = []
+    for k, v in query:
+        k = quote(str(k))
+        v = quote(str(v))
+        l.append(k + '=' + v)
+    return '&'.join(l)
 
 class SessionRefresh(MiddlewareMixin):
     """Refreshes the session with the OIDC RP after expiry seconds
@@ -151,7 +158,7 @@ class SessionRefresh(MiddlewareMixin):
 
         request.session['oidc_login_next'] = request.get_full_path()
 
-        query = urlencode(params, quote_via=quote)
+        query = urlencode_backport(params)
         redirect_url = '{url}?{query}'.format(url=auth_url, query=query)
         if request.is_ajax():
             # Almost all XHR request handling in client-side code struggles
