@@ -31,13 +31,15 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
+
 def urlencode_backport(query):
-    l = []
+    qp_list = []
     for k, v in six.iteritems(query):
         k = quote(str(k))
         v = quote(str(v))
-        l.append(k + '=' + v)
-    return '&'.join(l)
+        qp_list.append(k + '=' + v)
+    return '&'.join(qp_list)
+
 
 class SessionRefresh(MiddlewareMixin):
     """Refreshes the session with the OIDC RP after expiry seconds
