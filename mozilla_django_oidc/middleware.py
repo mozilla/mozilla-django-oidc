@@ -45,8 +45,10 @@ class SessionRefresh(MiddlewareMixin):
         self.OIDC_OP_AUTHORIZATION_ENDPOINT = self.get_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_STATE_SIZE = self.get_settings('OIDC_STATE_SIZE', 32)
-        self.OIDC_AUTHENTICATION_CALLBACK_URL = self.get_settings('OIDC_AUTHENTICATION_CALLBACK_URL',
-                                                                  'oidc_authentication_callback')
+        self.OIDC_AUTHENTICATION_CALLBACK_URL = self.get_settings(
+            'OIDC_AUTHENTICATION_CALLBACK_URL',
+            'oidc_authentication_callback',
+        )
         self.OIDC_RP_SCOPES = self.get_settings('OIDC_RP_SCOPES', 'openid email')
         self.OIDC_USE_NONCE = self.get_settings('OIDC_USE_NONCE', True)
         self.OIDC_NONCE_SIZE = self.get_settings('OIDC_NONCE_SIZE', 32)
