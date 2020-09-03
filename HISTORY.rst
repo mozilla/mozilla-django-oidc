@@ -3,6 +3,12 @@
 History
 -------
 
+pending
+=======
+
+* Make `get_or_create_user` compatible with custom scope configuration
+  by moving scope specific code to `describe_user_by_claims`
+
 1.2.4 (2020-08-19)
 ==================
 
@@ -14,9 +20,9 @@ History
 * Support regex patterns in ``OIDC_EXEMPT_URLS``, to allow exempting session refreshes in
   ``SessionMiddleware`` for URLs matching the pattern
   Thanks `@jwhitlock <https://github.com/jwhitlock>`_
-* Move nonce outside of add_state_and_noce_to_session method.  
-* Change log level to info for the add_state_and_nonce_to_session. 
-* Session save/load management 
+* Move nonce outside of add_state_and_noce_to_session method.
+* Change log level to info for the add_state_and_nonce_to_session.
+* Session save/load management
   Thanks `@Flor1an-dev <https://github.com/Flor1an-dev>`_
 * Allow multiple parallel login sessions
   Thanks `@istreeter <https://github.com/istreeter>`_
