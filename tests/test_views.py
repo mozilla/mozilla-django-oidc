@@ -263,6 +263,54 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         self.assertFalse('example_state' in request.session['oidc_states'])
         self.assertTrue('example_state2' in request.session['oidc_states'])
 
+    @override_settings(LOGIN_REDIRECT_URL='/success')
+    def test_session_refresh_doesnt_call_login_again(self):
+        """Test that a successful session refresh doesn't call django.contrib.auth.login
+        again (which would cycle session keys and CSRF tokens)."""
+        user = User.objects.create_user('example_username')
+
+        def make_request():
+            get_data = {
+                'code': 'example_code',
+                'state': 'example_state'
+            }
+            url = reverse('oidc_authentication_callback')
+            request = self.factory.get(url, get_data)
+            client = Client()
+            request.session = client.session
+            request.session['oidc_states'] = {
+                'example_state': {'nonce': None, 'added_on': time.time()},
+            }
+            return request
+
+        request = make_request()
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
+
+        # Login the first time. This should call login()
+        with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
+            with patch('mozilla_django_oidc.views.auth.login') as mock_login:
+                mock_auth.return_value = user
+                response = callback_view(request)
+                mock_auth.assert_called_once_with(nonce=None, request=request)
+                mock_login.assert_called_once_with(request, user)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/success')
+
+        # Set the user on the request, to mimic a session refresh
+        request = make_request()
+        request.user = user
+
+        # Login the second time. This should succeed, but not call login(), since the
+        # user is already logged in.
+        with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
+            with patch('mozilla_django_oidc.views.auth.login') as mock_login:
+                mock_auth.return_value = user
+                response = callback_view(request)
+                mock_auth.assert_called_once_with(nonce=None, request=request)
+                mock_login.assert_not_called()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/success')
+
 
 class GetNextURLTestCase(TestCase):
     def setUp(self):
