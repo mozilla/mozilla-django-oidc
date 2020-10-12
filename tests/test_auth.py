@@ -367,6 +367,54 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
+    def test_failed_authentication_inactive_user(self, token_mock, request_mock):
+        """Test successful authentication for existing user."""
+        auth_request = RequestFactory().get('/foo', {'code': 'foo',
+                                                     'state': 'bar'})
+        auth_request.session = {}
+
+        User.objects.create_user(username='a_username',
+                                 email='email@example.com',
+                                 is_active=False)
+        token_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'a_username',
+            'email': 'email@example.com'
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'id_token',
+            'access_token': 'access_granted'
+        }
+        request_mock.post.return_value = post_json_mock
+
+        post_data = {
+            'client_id': 'example_id',
+            'client_secret': 'client_secret',
+            'grant_type': 'authorization_code',
+            'code': 'foo',
+            'redirect_uri': 'http://testserver/callback/'
+        }
+        self.assertIsNone(self.backend.authenticate(request=auth_request))
+        token_mock.assert_called_once_with('id_token', nonce=None)
+        request_mock.post.assert_called_once_with('https://server.example.com/token',
+                                                  data=post_data,
+                                                  auth=None,
+                                                  verify=True,
+                                                  timeout=None,
+                                                  proxies=None)
+        request_mock.get.assert_called_once_with(
+            'https://server.example.com/user',
+            headers={'Authorization': 'Bearer access_granted'},
+            verify=True,
+            timeout=None,
+            proxies=None
+        )
+
+    @patch('mozilla_django_oidc.auth.requests')
+    @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_claims')
     def test_failed_authentication_verify_claims(self, claims_mock, token_mock, request_mock):
         """Test successful authentication for existing user."""
@@ -448,6 +496,62 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         }
         self.assertEqual(User.objects.all().count(), 0)
         self.backend.authenticate(request=auth_request)
+        self.assertEqual(User.objects.all().count(), 1)
+        user = User.objects.all()[0]
+        self.assertEqual(user.email, 'email@example.com')
+        self.assertEqual(user.username, 'username_algo')
+
+        token_mock.assert_called_once_with('id_token', nonce=None)
+        request_mock.post.assert_called_once_with('https://server.example.com/token',
+                                                  data=post_data,
+                                                  auth=None,
+                                                  verify=True,
+                                                  timeout=None,
+                                                  proxies=None)
+        request_mock.get.assert_called_once_with(
+            'https://server.example.com/user',
+            headers={'Authorization': 'Bearer access_granted'},
+            verify=True,
+            timeout=None,
+            proxies=None,
+        )
+
+    @patch.object(settings, 'OIDC_USERNAME_ALGO')
+    @patch('mozilla_django_oidc.auth.requests')
+    @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
+    @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.user_can_authenticate')
+    def test_failed_authentication_new_user_cannot_authenticate(
+        self, can_authenticate_mock, token_mock, request_mock, algo_mock
+    ):
+        """Test successful authentication and user creation."""
+        auth_request = RequestFactory().get('/foo', {'code': 'foo',
+                                                     'state': 'bar'})
+        auth_request.session = {}
+
+        can_authenticate_mock.return_value = False
+        algo_mock.return_value = 'username_algo'
+        token_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'a_username',
+            'email': 'email@example.com'
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'id_token',
+            'access_token': 'access_granted'
+        }
+        request_mock.post.return_value = post_json_mock
+        post_data = {
+            'client_id': 'example_id',
+            'client_secret': 'client_secret',
+            'grant_type': 'authorization_code',
+            'code': 'foo',
+            'redirect_uri': 'http://testserver/callback/',
+        }
+        self.assertEqual(User.objects.all().count(), 0)
+        self.assertIsNone(self.backend.authenticate(request=auth_request))
         self.assertEqual(User.objects.all().count(), 1)
         user = User.objects.all()[0]
         self.assertEqual(user.email, 'email@example.com')

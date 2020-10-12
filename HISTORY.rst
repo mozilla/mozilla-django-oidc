@@ -6,6 +6,12 @@ History
 pending
 =======
 
+Backwards-incompatible changes:
+
+* ``OIDCAuthenticationBackend.authenticate`` now calls ``user_can_authenticate``.
+
+Minor:
+
 * Make `get_or_create_user` compatible with custom scope configuration
   by moving scope specific code to `describe_user_by_claims`
 
