@@ -122,7 +122,7 @@ class SessionStateTestCase(TestCase):
         self.assertTrue(isinstance(self.request.session['oidc_states'][state], dict))
 
         # Test nonce
-        self.assertEqual(self.request.session['oidc_states'][state]['nonce'], None)
+        self.assertIsNone(self.request.session['oidc_states'][state]['nonce'])
 
         # Test added_on timestamp
         self.assertTrue(isinstance(self.request.session['oidc_states'][state]['added_on'], float))
