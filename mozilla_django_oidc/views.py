@@ -200,7 +200,7 @@ class OIDCLogoutView(View):
         """Return the logout url defined in settings."""
         return self.get_settings('LOGOUT_REDIRECT_URL', '/')
 
-    def post(self, request):
+    def get(self, request):
         """Log out the user."""
         logout_url = self.redirect_url
 
@@ -215,3 +215,6 @@ class OIDCLogoutView(View):
             auth.logout(request)
 
         return HttpResponseRedirect(logout_url)
+
+    def post(self, request):
+        return self.get(request)
