@@ -159,7 +159,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         key = None
         for jwk in jwks['keys']:
-            if jwk['kid'] != smart_text(header.kid):
+            if 'kid' in jwk and jwk['kid'] != smart_text(header.kid):
                 continue
             if 'alg' in jwk and jwk['alg'] != smart_text(header.alg):
                 continue
