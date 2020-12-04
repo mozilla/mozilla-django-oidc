@@ -158,7 +158,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         key = None
         for jwk in jwks['keys']:
-            if jwk['kid'] != smart_text(header.kid) and import_from_settings("OIDC_VERIFY_KID", True):
+            if import_from_settings("OIDC_VERIFY_KID", True) and jwk['kid'] != smart_text(header.kid):
                 continue
             if 'alg' in jwk and jwk['alg'] != smart_text(header.alg):
                 continue
