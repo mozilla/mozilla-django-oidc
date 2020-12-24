@@ -41,6 +41,12 @@ of ``mozilla-django-oidc``.
 
    Controls whether the OpenID Connect client verifies the signature of the JWT tokens
 
+.. py:attribute:: OIDC_VERIFY_KID
+
+    :default: ``True``
+
+    Controls whether the OpenID Connect client verifies the KID field of the JWT tokens
+
 .. py:attribute:: OIDC_USE_NONCE
 
    :default: ``True``
