@@ -50,3 +50,6 @@ docs/source
 # e2e tests log
 integration_tests/ghostdriver.log
 integration_tests/geckodriver.log
+
+# pyenv
+.python-version
