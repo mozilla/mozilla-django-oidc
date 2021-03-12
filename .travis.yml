@@ -5,10 +5,10 @@ sudo: false
 language: python
 
 python:
-  - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
 
 install:
   - pip install codecov tox-travis
@@ -27,5 +27,5 @@ deploy:
     on:
       repo: mozilla/mozilla-django-oidc
       tags: true
-      python: '3.6'
+      python: '3.9'
     distributions: "sdist bdist_wheel"
