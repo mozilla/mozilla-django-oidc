@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
 from django.urls import reverse
-from django.utils.encoding import force_bytes, smart_text, smart_bytes
+from django.utils.encoding import force_bytes, smart_str, smart_bytes
 from django.utils.module_loading import import_string
 
 from josepy.b64 import b64decode
@@ -38,7 +38,7 @@ def default_username_algo(email):
         hashlib.sha1(force_bytes(email)).digest()
     ).rstrip(b'=')
 
-    return smart_text(username)
+    return smart_str(username)
 
 
 class OIDCAuthenticationBackend(ModelBackend):
@@ -159,9 +159,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         key = None
         for jwk in jwks['keys']:
             if (import_from_settings("OIDC_VERIFY_KID", True)
-                    and jwk['kid'] != smart_text(header.kid)):
+                    and jwk['kid'] != smart_str(header.kid)):
                 continue
-            if 'alg' in jwk and jwk['alg'] != smart_text(header.alg):
+            if 'alg' in jwk and jwk['alg'] != smart_str(header.alg):
                 continue
             key = jwk
         if key is None:
@@ -172,7 +172,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Helper method to get the payload of the JWT token."""
         if self.get_settings('OIDC_ALLOW_UNSECURED_JWT', False):
             header, payload_data, signature = token.split(b'.')
-            header = json.loads(smart_text(b64decode(header)))
+            header = json.loads(smart_str(b64decode(header)))
 
             # If config allows unsecured JWTs check the header and return the decoded payload
             if 'alg' in header and header['alg'] == 'none':

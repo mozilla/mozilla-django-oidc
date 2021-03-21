@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.urls import path
 from django.utils.module_loading import import_string
 
 from mozilla_django_oidc import views
@@ -18,9 +18,7 @@ AUTHENTICATE_CLASS_PATH = import_from_settings(
 OIDCAuthenticateClass = import_string(AUTHENTICATE_CLASS_PATH)
 
 urlpatterns = [
-    url(r'^callback/$', OIDCCallbackClass.as_view(),
-        name='oidc_authentication_callback'),
-    url(r'^authenticate/$', OIDCAuthenticateClass.as_view(),
-        name='oidc_authentication_init'),
-    url(r'^logout/$', views.OIDCLogoutView.as_view(), name='oidc_logout'),
+    path('callback/', OIDCCallbackClass.as_view(), name='oidc_authentication_callback'),
+    path('authenticate/', OIDCAuthenticateClass.as_view(), name='oidc_authentication_init'),
+    path('logout/', views.OIDCLogoutView.as_view(), name='oidc_logout'),
 ]

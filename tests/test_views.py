@@ -1,10 +1,6 @@
 import time
 
-try:
-    from urllib.parse import parse_qs, urlparse
-except ImportError:
-    # Python < 3
-    from urlparse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse
 
 from mock import patch
 
@@ -297,7 +293,7 @@ class GetNextURLTestCase(TestCase):
     def test_bad_urls(self):
         urls = [
             '',
-            # NOTE(willkg): Test data taken from the Django is_safe_url tests.
+            # NOTE(willkg): Test data taken from the Django url_has_allowed_host_and_scheme tests.
             'http://example.com',
             'http:///example.com',
             'https://example.com',
