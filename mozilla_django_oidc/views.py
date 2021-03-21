@@ -2,7 +2,7 @@ import time
 
 from django.contrib import auth
 from django.core.exceptions import SuspiciousOperation
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseNotAllowed
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 
@@ -202,7 +202,7 @@ class OIDCLogoutView(View):
         """Return the logout url defined in settings."""
         return self.get_settings('LOGOUT_REDIRECT_URL', '/')
 
-    def get(self, request):
+    def post(self, request):
         """Log out the user."""
         logout_url = self.redirect_url
 
@@ -218,6 +218,8 @@ class OIDCLogoutView(View):
 
         return HttpResponseRedirect(logout_url)
 
-    def post(self, request):
+    def get(self, request):
         """Log out the user."""
-        return self.get(request)
+        if self.get_settings("ALLOW_LOGOUT_GET_METHOD", False):
+            return self.post(request)
+        return HttpResponseNotAllowed(["POST"])
