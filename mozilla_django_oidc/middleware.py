@@ -14,7 +14,7 @@ from mozilla_django_oidc.utils import (absolutify,
                                        add_state_and_nonce_to_session,
                                        import_from_settings)
 
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 try:
     # Python 3.7 or later
@@ -160,7 +160,7 @@ class SessionRefresh(MiddlewareMixin):
 
         request.session['oidc_login_next'] = request.get_full_path()
 
-        query = urlencode(params)
+        query = urlencode(params, quote_via=quote)
         redirect_url = '{url}?{query}'.format(url=auth_url, query=query)
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             # Almost all XHR request handling in client-side code struggles
