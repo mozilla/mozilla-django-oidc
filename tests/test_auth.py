@@ -54,7 +54,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
     def test_missing_request_arg(self):
         """Test authentication returns `None` when `request` is not provided."""
-        self.assertEqual(self.backend.authenticate(request=None), None)
+        self.assertIsNone(self.backend.authenticate(request=None))
 
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     @patch('mozilla_django_oidc.auth.requests')
@@ -77,7 +77,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'accesss_token': 'access_token'
         }
         request_mock.post.return_value = post_json_mock
-        self.assertEqual(self.backend.authenticate(request=auth_request), None)
+        self.assertIsNone(self.backend.authenticate(request=auth_request))
 
     @override_settings(OIDC_ALLOW_UNSECURED_JWT=True)
     def test_allowed_unsecured_token(self):
@@ -216,7 +216,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     def test_get_invalid_user(self):
         """Test get_user method with non existing user."""
 
-        self.assertEqual(self.backend.get_user(user_id=1), None)
+        self.assertIsNone(self.backend.get_user(user_id=1))
 
     @override_settings(ROOT_URLCONF='tests.namespaced_urls')
     @override_settings(OIDC_AUTHENTICATION_CALLBACK_URL='namespace:oidc_authentication_callback')
@@ -644,7 +644,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'access_token': 'access_granted'
         }
         request_mock.post.return_value = post_json_mock
-        self.assertEqual(self.backend.authenticate(request=auth_request), None)
+        self.assertIsNone(self.backend.authenticate(request=auth_request))
 
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend._verify_jws')
     @patch('mozilla_django_oidc.auth.requests')
@@ -759,7 +759,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'access_token': 'access_granted'
         }
         request_mock.post.return_value = post_json_mock
-        self.assertEqual(self.backend.authenticate(request=auth_request), None)
+        self.assertIsNone(self.backend.authenticate(request=auth_request))
 
     @override_settings(OIDC_USE_NONCE=False)
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend._verify_jws')
@@ -787,7 +787,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'access_token': 'access_granted'
         }
         request_mock.post.return_value = post_json_mock
-        self.assertEqual(self.backend.authenticate(request=auth_request), None)
+        self.assertIsNone(self.backend.authenticate(request=auth_request))
 
     @override_settings(OIDC_USE_NONCE=False)
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.update_user')
@@ -822,7 +822,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'access_token': 'access_granted'
         }
         request_mock.post.return_value = post_json_mock
-        self.assertEqual(self.backend.authenticate(request=auth_request), None)
+        self.assertIsNone(self.backend.authenticate(request=auth_request))
 
         self.assertEqual(User.objects.get().first_name, 'a_username')
 

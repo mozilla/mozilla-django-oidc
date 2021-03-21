@@ -274,7 +274,7 @@ class GetNextURLTestCase(TestCase):
     def test_no_param(self):
         req = self.factory.get('/')
         next_url = views.get_next_url(req, 'next')
-        self.assertEqual(next_url, None)
+        self.assertIsNone(next_url)
 
     def test_non_next_param(self):
         req = self.factory.get('/', data={'redirectto': '/foo'})
@@ -331,7 +331,7 @@ class GetNextURLTestCase(TestCase):
             req = self.build_request(next_url=url)
             next_url = views.get_next_url(req, 'next')
 
-            self.assertEqual(next_url, None)
+            self.assertIsNone(next_url)
 
     def test_https(self):
         # If the request is for HTTPS and the next url is HTTPS, then that
@@ -353,7 +353,7 @@ class GetNextURLTestCase(TestCase):
         )
         self.assertEqual(req.is_secure(), True)
         next_url = views.get_next_url(req, 'next')
-        self.assertEqual(next_url, None)
+        self.assertIsNone(next_url)
 
     @override_settings(OIDC_REDIRECT_REQUIRE_HTTPS=False)
     def test_redirect_https_not_required(self):
