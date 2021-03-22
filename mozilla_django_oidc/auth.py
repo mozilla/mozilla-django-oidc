@@ -3,7 +3,6 @@ import hashlib
 import json
 import logging
 import requests
-import six
 from requests.auth import HTTPBasicAuth
 
 from django.contrib.auth import get_user_model
@@ -102,7 +101,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         username_algo = self.get_settings('OIDC_USERNAME_ALGO', None)
 
         if username_algo:
-            if isinstance(username_algo, six.string_types):
+            if isinstance(username_algo, str):
                 username_algo = import_string(username_algo)
             return username_algo(claims.get('email'))
 
@@ -127,7 +126,7 @@ class OIDCAuthenticationBackend(ModelBackend):
                   "OIDC_RP_SIGN_ALGO.".format(alg)
             raise SuspiciousOperation(msg)
 
-        if isinstance(key, six.string_types):
+        if isinstance(key, str):
             # Use smart_bytes here since the key string comes from settings.
             jwk = JWK.load(smart_bytes(key))
         else:

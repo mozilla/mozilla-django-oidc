@@ -1,5 +1,4 @@
 import json
-import six
 from mock import Mock, call, patch
 
 from cryptography.hazmat.backends import default_backend
@@ -28,18 +27,10 @@ class DefaultUsernameAlgoTestCase(TestCase):
         self.assertEqual(type(actual), type(expected))
 
     def test_empty(self):
-        if six.PY2:
-            self.run_test('', u'2jmj7l5rSw0yVb_vlWAYkK_YBwk')
-            self.run_test(u'', u'2jmj7l5rSw0yVb_vlWAYkK_YBwk')
-        else:
-            self.run_test('', '2jmj7l5rSw0yVb_vlWAYkK_YBwk')
+        self.run_test('', '2jmj7l5rSw0yVb_vlWAYkK_YBwk')
 
     def test_email(self):
-        if six.PY2:
-            self.run_test('janet@example.com', u'VUCUpl08JVpFeAFKBYkAjLhsQ1c')
-            self.run_test(u'janet@example.com', u'VUCUpl08JVpFeAFKBYkAjLhsQ1c')
-        else:
-            self.run_test('janet@example.com', 'VUCUpl08JVpFeAFKBYkAjLhsQ1c')
+        self.run_test('janet@example.com', 'VUCUpl08JVpFeAFKBYkAjLhsQ1c')
 
 
 class OIDCAuthenticationBackendTestCase(TestCase):
