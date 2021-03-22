@@ -257,3 +257,9 @@ of ``mozilla-django-oidc``.
    :default: False
 
    Use HTTP Basic Authentication instead of sending the client secret in token request POST body.
+
+.. py:attribute:: ALLOW_LOGOUT_GET_METHOD
+
+   :default: False
+
+   Allow using GET method to logout user
