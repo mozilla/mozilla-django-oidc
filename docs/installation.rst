@@ -255,7 +255,7 @@ email address. Then we could do this:
 
            try:
                profile = Profile.objects.get(email=email)
-               return profile.user
+               return [profile.user]
 
            except Profile.DoesNotExist:
                return self.UserModel.objects.none()
