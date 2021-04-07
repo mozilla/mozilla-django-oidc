@@ -99,6 +99,22 @@ jobs:
           - TEST_OIDC_ALGO=hs
           - DJANGO_VERSION=Django>=3.1.0,<3.2
     <<: *common_steps
+  e2e_test_py3_rs_django320:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=rs
+          - DJANGO_VERSION=Django>=3.2.0,<4.0
+    <<: *common_steps
+  e2e_test_py3_hs_django320:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=hs
+          - DJANGO_VERSION=Django>=3.2.0,<4.0
+    <<: *common_steps
 
 workflows:
   version: 2
@@ -121,5 +137,11 @@ workflows:
           requires:
             - build_lib
       - e2e_test_py3_hs_django310:
+          requires:
+            - build_lib
+      - e2e_test_py3_rs_django320:
+          requires:
+            - build_lib
+      - e2e_test_py3_hs_django320:
           requires:
             - build_lib
