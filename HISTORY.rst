@@ -8,7 +8,8 @@ pending
 
 * Make `get_or_create_user` compatible with custom scope configuration
   by moving scope specific code to `describe_user_by_claims`
-
+* Fix bug in contrib.drf.OIDCAuthentication where `error_description` is assumed to
+  be present in `www-authenticate` header despite it being optional in the spec
 1.2.4 (2020-08-19)
 ==================
 
