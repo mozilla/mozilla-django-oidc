@@ -3,11 +3,29 @@
 History
 -------
 
-pending
-=======
+2.0.0 (2021-07-27)
+==================
 
 * Make `get_or_create_user` compatible with custom scope configuration
   by moving scope specific code to `describe_user_by_claims`
+  Thanks `@cfra <https://github.com/cfra>`_
+* Add support for Django 3.2
+  Thanks `@jannh <https://github.com/jannh>`_
+* Add configuration to opt in logout using GET
+* Fix url encoding using escaped space characters
+* Pass email as named argument in create_user
+* Do not fail if JWK does not have a key ID
+  Thanks `@cfra <https://github.com/cfra>`_
+* Update middleware init to configure settings 
+  Thanks `@dreynolds <https://github.com/dreynolds>`_
+* Add SessionAuthentication to DRF auth class
+  Thanks `@SpyTec <https://github.com/SpyTec>`_
+  
+Backwards-incompatible changes:
+
+* Drop Django 1.x support
+* Drop Python2 support
+
 
 1.2.4 (2020-08-19)
 ==================
