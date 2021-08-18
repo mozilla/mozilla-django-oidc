@@ -286,7 +286,14 @@ class OIDCAuthenticationBackend(ModelBackend):
         if payload:
             self.store_tokens(access_token, id_token)
             try:
-                return self.get_or_create_user(access_token, id_token, payload)
+                get_or_create_kwargs = {}
+                if self.get_settings('OIDC_ADD_TOKEN_INFO_TO_USER_CLAIMS', False):
+                    # avoid modifying the method signature if the setting isn't enabled
+                    # to avoid breaking subclasses which haven't included any kwargs
+                    get_or_create_kwargs['token_info'] = token_info
+                return self.get_or_create_user(
+                    access_token, id_token, payload, **get_or_create_kwargs
+                )
             except SuspiciousOperation as exc:
                 LOGGER.warning('failed to get or create user: %s', exc)
                 return None
@@ -303,7 +310,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         if self.get_settings('OIDC_STORE_ID_TOKEN', False):
             session['oidc_id_token'] = id_token
 
-    def get_or_create_user(self, access_token, id_token, payload):
+    def get_or_create_user(self, access_token, id_token, payload, token_info=None):
         """Returns a User instance if 1 user is found. Creates a user if not found
         and configured to do so. Returns nothing if multiple users are matched."""
 
@@ -316,6 +323,9 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         # email based filtering
         users = self.filter_users_by_claims(user_info)
+
+        if token_info:
+            user_info["token_info"] = token_info
 
         if len(users) == 1:
             return self.update_user(users[0], user_info)

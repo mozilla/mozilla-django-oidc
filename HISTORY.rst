@@ -3,6 +3,12 @@
 History
 -------
 
+next release
+============
+
+* Add `OIDC_ADD_TOKEN_INFO_TO_USER_CLAIMS` setting which adds the response
+  from the token endpoint to a user's claims
+
 2.0.0 (2021-07-27)
 ==================
 

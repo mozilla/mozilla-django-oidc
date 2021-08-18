@@ -817,6 +817,38 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         self.assertEqual(User.objects.get().first_name, 'a_username')
 
+    @override_settings(OIDC_USE_NONCE=False, OIDC_ADD_TOKEN_INFO_TO_USER_CLAIMS=True)
+    @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
+    @patch('mozilla_django_oidc.auth.requests')
+    def test_add_token_info_to_user_claims(self, request_mock, token_mock):
+        """Token endpoint response should be added to user claims."""
+        auth_request = RequestFactory().get('/foo', {'code': 'foo',
+                                                     'state': 'bar'})
+        auth_request.session = {}
+
+        token_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            'nickname': 'a_username',
+            'email': 'email@example.com'
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            'id_token': 'id_token',
+            'access_token': 'access_granted'
+        }
+        request_mock.post.return_value = post_json_mock
+
+        self.backend.create_user = Mock()
+        self.backend.authenticate(request=auth_request)
+
+        self.backend.create_user.assert_called_once()
+        self.assertEqual(
+            self.backend.create_user.call_args[0][0]["token_info"],
+            post_json_mock.json.return_value,
+        )
+
 
 class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
     """Authentication tests with ALG RS256 and provided IdP Sign Key."""

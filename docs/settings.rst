@@ -263,3 +263,10 @@ of ``mozilla-django-oidc``.
    :default: False
 
    Allow using GET method to logout user
+
+.. py:attribute:: OIDC_ADD_TOKEN_INFO_TO_USER_CLAIMS
+
+   :default: False
+
+   Add the response from the token endpoint to the user's claims under the "token_info" key.
+   Useful for storing an access_token or refresh_token in your User model.
