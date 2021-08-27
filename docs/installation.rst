@@ -143,7 +143,7 @@ Next, edit your ``urls.py`` and add the following:
 
 .. code-block:: python
 
-   from django.urls import path
+   from django.urls import path, include
    
    urlpatterns = [
        # ...
