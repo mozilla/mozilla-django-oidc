@@ -172,7 +172,6 @@ of ``mozilla-django-oidc``.
    :default: ``False``
 
    Controls whether the OpenID Connect client stores the OIDC ``id_token`` in the user session.
-   The session key used to store the data is ``oidc_id_token``.
 
 .. py:attribute:: OIDC_AUTH_REQUEST_EXTRA_PARAMS
 
