@@ -134,6 +134,10 @@ class SessionRefresh(MiddlewareMixin):
         # The id_token has expired, so we have to re-authenticate silently.
         auth_url = self.OIDC_OP_AUTHORIZATION_ENDPOINT
         client_id = self.OIDC_RP_CLIENT_ID
+        kc_idp_hint = "kc"
+        if("kc_idp_hint" in request.GET):
+            kc_idp_hint = request.GET["kc_idp_hint"]
+
         state = get_random_string(self.OIDC_STATE_SIZE)
 
         # Build the parameters as if we were doing a real auth handoff, except
@@ -145,6 +149,7 @@ class SessionRefresh(MiddlewareMixin):
                 request,
                 reverse(self.OIDC_AUTHENTICATION_CALLBACK_URL)
             ),
+            'kc_idp_hint': kc_idp_hint,
             'state': state,
             'scope': self.OIDC_RP_SCOPES,
             'prompt': 'none',
