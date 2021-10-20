@@ -60,6 +60,15 @@ class OIDCAuthenticationCallbackView(View):
 
         if request.GET.get('error'):
             # Ouch! Something important failed.
+
+            # Delete the state entry also for failed authentication attempts
+            # to prevent replay attacks.
+            if ('state' in request.GET
+                    and 'oidc_states' in request.session
+                    and request.GET['state'] in request.session['oidc_states']):
+                del request.session['oidc_states'][request.GET['state']]
+                request.session.save()
+
             # Make sure the user doesn't get to continue to be logged in
             # otherwise the refresh middleware will force the user to
             # redirect to authorize again if the session refresh has
