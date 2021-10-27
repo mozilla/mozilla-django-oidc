@@ -143,6 +143,40 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/failure')
 
+    @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
+    def test_get_auth_error(self):
+        """Test authentication error handling.
+
+        Sttate should be removed from session and user should be logged out.
+        """
+        user = User.objects.create_user('example_username')
+
+        get_data = {
+            'error': 'example_code',
+            'state': 'example_state'
+        }
+        url = reverse('oidc_authentication_callback')
+        request = self.factory.get(url, get_data)
+        client = Client()
+        request.session = client.session
+        request.session['oidc_states'] = {
+            'example_state': {'nonce': None, 'added_on': time.time()},
+        }
+        request.user = user
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
+
+        with patch('mozilla_django_oidc.views.auth.logout') as mock_logout:
+            def clear_user(request):
+                # Assert state is cleared prior to logout
+                self.assertEqual(request.session['oidc_states'], {})
+                request.user = AnonymousUser()
+            mock_logout.side_effect = clear_user
+            response = callback_view(request)
+            mock_logout.assert_called_once()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/failure')
+
     @override_settings(OIDC_USE_NONCE=False)
     @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
     def test_get_auth_dirty_data(self):
