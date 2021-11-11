@@ -68,9 +68,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         client = Client()
         request.session = client.session
         request.session['oidc_states'] = {
-            'example_state': {'nonce': None, 'added_on': time.time()},
+            'example_state': {'next': '/foobar', 'nonce': None, 'added_on': time.time()},
         }
-        request.session['oidc_login_next'] = '/foobar'
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
         with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
@@ -538,22 +537,9 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         request.session = dict()
         login_view = views.OIDCAuthenticationRequestView.as_view()
         login_view(request)
-        self.assertTrue('oidc_login_next' in request.session)
-        self.assertEqual(request.session['oidc_login_next'], '/foo')
-
-    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
-    @override_settings(OIDC_RP_CLIENT_ID='example_id')
-    def test_missing_next_url(self):
-        """Test that `next` url gets invalidated in user session."""
-        url = reverse('oidc_authentication_init')
-        request = self.factory.get(url)
-        request.session = {
-            'oidc_login_next': 'foobar'
-        }
-        login_view = views.OIDCAuthenticationRequestView.as_view()
-        login_view(request)
-        self.assertTrue('oidc_login_next' in request.session)
-        self.assertTrue(request.session['oidc_login_next'] is None)
+        generated_state = list(request.session['oidc_states'].values())[0]
+        self.assertTrue('next' in generated_state)
+        self.assertEqual(generated_state['next'], '/foo')
 
 
 class OIDCLogoutViewTestCase(TestCase):

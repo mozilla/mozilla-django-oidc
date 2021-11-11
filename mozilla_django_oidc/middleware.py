@@ -156,9 +156,7 @@ class SessionRefresh(MiddlewareMixin):
                 'nonce': nonce
             })
 
-        add_state_and_nonce_to_session(request, state, params)
-
-        request.session['oidc_login_next'] = request.get_full_path()
+        add_state_and_nonce_to_session(request, state, params, next=request.get_full_path())
 
         query = urlencode(params, quote_via=quote)
         redirect_url = '{url}?{query}'.format(url=auth_url, query=query)

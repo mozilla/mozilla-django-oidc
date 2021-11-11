@@ -54,7 +54,7 @@ def is_authenticated(user):
     return user.is_authenticated
 
 
-def add_state_and_nonce_to_session(request, state, params):
+def add_state_and_nonce_to_session(request, state, params, next=None):
     """
     Stores the `state` and `nonce` parameters in a session dictionary including the time when it
     was added. The dictionary can contain multiple state/nonce combinations to allow parallel
@@ -97,3 +97,6 @@ def add_state_and_nonce_to_session(request, state, params):
         'nonce': nonce,
         'added_on': time.time(),
     }
+
+    if next is not None:
+        request.session['oidc_states'][state]['next'] = next
