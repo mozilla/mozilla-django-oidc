@@ -39,8 +39,7 @@ class OIDCAuthenticationCallbackView(View):
     def success_url(self):
         # Pull the next url from the session or settings--we don't need to
         # sanitize here because it should already have been sanitized.
-        next_url = self.request.session.get('oidc_login_next', None)
-        return next_url or self.get_settings('LOGIN_REDIRECT_URL', '/')
+        return self.next_url or self.get_settings('LOGIN_REDIRECT_URL', '/')
 
     def login_failure(self):
         return HttpResponseRedirect(self.failure_url)
@@ -88,6 +87,9 @@ class OIDCAuthenticationCallbackView(View):
             if state not in request.session['oidc_states']:
                 msg = 'OIDC callback state not found in session `oidc_states`!'
                 raise SuspiciousOperation(msg)
+
+            # Get the next url from the state before it is deleted
+            self.next_url = request.session['oidc_states'][state].get('next', None)
 
             # Get the nonce from the dictionary for further processing and delete the entry to
             # prevent replay attacks.
@@ -185,9 +187,12 @@ class OIDCAuthenticationRequestView(View):
                 'nonce': nonce
             })
 
-        add_state_and_nonce_to_session(request, state, params)
-
-        request.session['oidc_login_next'] = get_next_url(request, redirect_field_name)
+        add_state_and_nonce_to_session(
+                request,
+                state,
+                params,
+                next=get_next_url(request, redirect_field_name)
+        )
 
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=self.OIDC_OP_AUTH_ENDPOINT, query=query)
