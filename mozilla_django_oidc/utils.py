@@ -88,7 +88,7 @@ def base64_url_decode(string_like_obj) -> bytes:
 
 def generate_code_challenge(code_verifier, method) -> str:
     """Return a code_challege, which proves knowledge of the code_verifier.
-    The code challenge is generated according method which must be one
+    The code challenge is generated according to method which must be one
     of the methods defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.2:
     - plain
       code_challenge = code_verifier
