@@ -194,7 +194,7 @@ class OIDCAuthenticationRequestView(View):
 
             # Generate code_verifier and code_challenge pair
             code_verifier = get_random_string(code_verifier_length)
-            code_challenge_method = self.get_settings('OIDC_PKCE_CODE_CHALLENGE_METHOD')
+            code_challenge_method = self.get_settings('OIDC_PKCE_CODE_CHALLENGE_METHOD', 'S256')
             code_challenge = generate_code_challenge(code_verifier, code_challenge_method)
 
             # Append code_challenge to authentication request parameters
