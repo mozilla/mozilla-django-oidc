@@ -257,6 +257,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         state = self.request.GET.get('state')
         code = self.request.GET.get('code')
         nonce = kwargs.pop('nonce', None)
+        code_verifier = kwargs.pop('code_verifier', None)
 
         if not code or not state:
             return None
@@ -274,6 +275,12 @@ class OIDCAuthenticationBackend(ModelBackend):
                 reverse(reverse_url)
             ),
         }
+
+        # Send code_verifier with token request if using PKCE
+        if code_verifier is not None:
+            token_payload.update({
+                'code_verifier': code_verifier
+            })
 
         # Get the token
         token_info = self.get_token(token_payload)

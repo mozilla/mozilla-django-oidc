@@ -16,7 +16,7 @@ from django.utils.module_loading import import_string
 from django.views.generic import View
 
 from mozilla_django_oidc.utils import (absolutify,
-                                       add_state_and_nonce_to_session,
+                                       add_state_and_verifier_and_nonce_to_session, generate_code_challenge,
                                        import_from_settings)
 
 from urllib.parse import urlencode
@@ -82,15 +82,17 @@ class OIDCAuthenticationCallbackView(View):
             if 'oidc_states' not in request.session:
                 return self.login_failure()
 
-            # State and Nonce are stored in the session "oidc_states" dictionary.
-            # State is the key, the value is a dictionary with the Nonce in the "nonce" field.
+            # State, Nonce and PKCE Code Verifier are stored in the session "oidc_states" dictionary.
+            # State is the key, the value is a dictionary with the Nonce in the "nonce" field, and
+            # Code Verifier or None in the "code_verifier" field.
             state = request.GET.get('state')
             if state not in request.session['oidc_states']:
                 msg = 'OIDC callback state not found in session `oidc_states`!'
                 raise SuspiciousOperation(msg)
 
-            # Get the nonce from the dictionary for further processing and delete the entry to
-            # prevent replay attacks.
+            # Get the nonce and optional code verifier from the dictionary for further processing and 
+            # delete the entry to prevent replay attacks.
+            code_verifier = request.session['oidc_states'][state]['code_verifier']
             nonce = request.session['oidc_states'][state]['nonce']
             del request.session['oidc_states'][state]
 
@@ -105,6 +107,7 @@ class OIDCAuthenticationCallbackView(View):
             kwargs = {
                 'request': request,
                 'nonce': nonce,
+                'code_verifier': code_verifier
             }
 
             self.user = auth.authenticate(**kwargs)
@@ -185,7 +188,25 @@ class OIDCAuthenticationRequestView(View):
                 'nonce': nonce
             })
 
-        add_state_and_nonce_to_session(request, state, params)
+        if self.get_settings('OIDC_USE_PKCE', True):
+            code_verifier_length = self.get_settings('OIDC_PKCE_CODE_VERIFIER_SIZE', 64)
+            assert 43 <= code_verifier_length <= 128  # Min and max length defined in rfc7636#section-4.1
+
+            # Generate code_verifier and code_challenge pair
+            code_verifier = get_random_string(code_verifier_length)
+            code_challenge_method = self.get_settings('OIDC_PKCE_CODE_CHALLENGE_METHOD')
+            code_challenge = generate_code_challenge(code_verifier, code_challenge_method)
+
+            # Append code_challenge to authentication request parameters
+            params.update({
+                'code_challenge': code_challenge,
+                'code_challenge_method': code_challenge_method
+            })
+
+        else:
+            code_verifier = None
+            
+        add_state_and_verifier_and_nonce_to_session(request, state, params, code_verifier)
 
         request.session['oidc_login_next'] = get_next_url(request, redirect_field_name)
 
