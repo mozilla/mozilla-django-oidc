@@ -115,7 +115,7 @@ class PKCECodeVerificationTestCase(TestCase):
         code_challenge = generate_code_challenge(code_verifier, 'plain')
 
         self.assertEqual(code_challenge, code_verifier)
-    
+
     def test_generate_code_challenge_invalid_method(self):
         """
         Tests that an exception is raised when an invalid code challenge method is provided.
