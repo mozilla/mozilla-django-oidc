@@ -59,20 +59,20 @@ def is_authenticated(user):
     return user.is_authenticated
 
 
-def base64_url_encode(bytes_like_obj) -> str:
+def base64_url_encode(bytes_like_obj):
     """Return a URL-Safe, base64 encoded version of bytes_like_obj
 
     Implements base64urlencode as described in https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
     """
 
-    s = josepy.b64.b64encode(bytes_like_obj) # josepy base64 encoder (strips '='s padding)
+    s = josepy.b64.b64encode(bytes_like_obj).decode('ascii') # josepy base64 encoder (strips '='s padding)
     s = s.replace('+', '-') # 62nd char of encoding
     s = s.replace('/', '_') # 63rd char of encoding
 
     return s
 
 
-def base64_url_decode(string_like_obj) -> bytes:
+def base64_url_decode(string_like_obj):
     """Return the bytes encoded in a URL-Safe, base64 encoded string
     Implements inverse of base64urlencode as described in https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
     This function is not used by the OpenID client; it's just for testing PKCE related functions.
@@ -86,7 +86,7 @@ def base64_url_decode(string_like_obj) -> bytes:
     return b
 
 
-def generate_code_challenge(code_verifier, method) -> str:
+def generate_code_challenge(code_verifier, method):
     """Return a code_challege, which proves knowledge of the code_verifier.
     The code challenge is generated according to method which must be one
     of the methods defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.2:
