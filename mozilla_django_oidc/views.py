@@ -92,7 +92,7 @@ class OIDCAuthenticationCallbackView(View):
 
             # Get the nonce and optional code verifier from the dictionary for further processing and 
             # delete the entry to prevent replay attacks.
-            code_verifier = request.session['oidc_states'][state]['code_verifier']
+            code_verifier = request.session['oidc_states'][state].get('code_verifier')
             nonce = request.session['oidc_states'][state]['nonce']
             del request.session['oidc_states'][state]
 
