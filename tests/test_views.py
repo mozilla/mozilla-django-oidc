@@ -13,6 +13,9 @@ from django.test import RequestFactory, TestCase, override_settings, Client
 from mozilla_django_oidc import views
 
 
+TEST_CODE_VERIFIER = 'ThisStringIsURLSafeAndAtLeast43Characters00'
+
+
 User = get_user_model()
 
 
@@ -38,7 +41,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         client = Client()
         request.session = client.session
         request.session['oidc_states'] = {
-            'example_state': {'nonce': None, 'added_on': time.time()},
+            'example_state': {'code_verifier': TEST_CODE_VERIFIER, 'nonce': None, 'added_on': time.time()},
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
@@ -47,7 +50,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
                 mock_auth.return_value = user
                 response = callback_view(request)
 
-                mock_auth.assert_called_once_with(nonce=None,
+                mock_auth.assert_called_once_with(code_verifier=TEST_CODE_VERIFIER,
+                                                  nonce=None,
                                                   request=request)
                 mock_login.assert_called_once_with(request, user)
 
@@ -68,7 +72,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         client = Client()
         request.session = client.session
         request.session['oidc_states'] = {
-            'example_state': {'nonce': None, 'added_on': time.time()},
+            'example_state': {'code_verifier': TEST_CODE_VERIFIER, 'nonce': None, 'added_on': time.time()},
         }
         request.session['oidc_login_next'] = '/foobar'
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
@@ -78,7 +82,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
                 mock_auth.return_value = user
                 response = callback_view(request)
 
-                mock_auth.assert_called_once_with(nonce=None,
+                mock_auth.assert_called_once_with(code_verifier=TEST_CODE_VERIFIER,
+                                                  nonce=None,
                                                   request=request)
                 mock_login.assert_called_once_with(request, user)
 
@@ -106,7 +111,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             mock_auth.return_value = None
             response = callback_view(request)
 
-            mock_auth.assert_called_once_with(nonce=None,
+            mock_auth.assert_called_once_with(code_verifier=None, 
+                                              nonce=None,
                                               request=request)
 
         self.assertEqual(response.status_code, 302)
@@ -137,7 +143,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             mock_auth.return_value = user
             response = callback_view(request)
 
-            mock_auth.assert_called_once_with(request=request,
+            mock_auth.assert_called_once_with(code_verifier=None,
+                                              request=request,
                                               nonce=None)
 
         self.assertEqual(response.status_code, 302)
@@ -265,7 +272,8 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
                 mock_auth.return_value = user
                 response = callback_view(request)
 
-                mock_auth.assert_called_once_with(nonce='example_nonce',
+                mock_auth.assert_called_once_with(code_verifier=None,
+                                                  nonce='example_nonce',
                                                   request=request)
                 mock_login.assert_called_once_with(request, user)
 
