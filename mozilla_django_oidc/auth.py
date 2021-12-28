@@ -2,19 +2,18 @@ import base64
 import hashlib
 import json
 import logging
-import requests
-from requests.auth import HTTPBasicAuth
 
+import requests
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.urls import reverse
-from django.utils.encoding import force_bytes, smart_str, smart_bytes
+from django.utils.encoding import force_bytes, smart_bytes, smart_str
 from django.utils.module_loading import import_string
-
 from josepy.b64 import b64decode
 from josepy.jwk import JWK
 from josepy.jws import JWS, Header
+from requests.auth import HTTPBasicAuth
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
 
@@ -263,6 +262,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         state = self.request.GET.get("state")
         code = self.request.GET.get("code")
         nonce = kwargs.pop("nonce", None)
+        code_verifier = kwargs.pop("code_verifier", None)
 
         if not code or not state:
             return None
@@ -278,6 +278,10 @@ class OIDCAuthenticationBackend(ModelBackend):
             "code": code,
             "redirect_uri": absolutify(self.request, reverse(reverse_url)),
         }
+
+        # Send code_verifier with token request if using PKCE
+        if code_verifier is not None:
+            token_payload.update({"code_verifier": code_verifier})
 
         # Get the token
         token_info = self.get_token(token_payload)

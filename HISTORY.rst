@@ -3,6 +3,13 @@
 History
 -------
 
+
+pending
+=======
+
+* Added PKCE support in the authorization code flow.
+
+
 3.0.0 (2022-11-14)
 ==================
 * Gracefully handle ``www-authenticate`` header with missing ``error_description``.
@@ -65,7 +72,7 @@ Backwards-incompatible changes:
   ``SessionMiddleware`` for URLs matching the pattern
   Thanks `@jwhitlock <https://github.com/jwhitlock>`_
 * Move nonce outside of add_state_and_noce_to_session method.
-* Change log level to info for the add_state_and_nonce_to_session.
+* Change log level to info for the add_state_and_verifier_and_nonce_to_session.
 * Session save/load management
   Thanks `@Flor1an-dev <https://github.com/Flor1an-dev>`_
 * Allow multiple parallel login sessions
