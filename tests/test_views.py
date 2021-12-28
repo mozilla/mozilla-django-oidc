@@ -98,6 +98,42 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, '/foobar')
 
+    @override_settings(LOGIN_REDIRECT_URL='/success')
+    def test_get_auth_success_without_pkce(self):
+        """Test successful callback request to RP after disabling PKCE."""
+        user = User.objects.create_user('example_username')
+
+        get_data = {
+            'code': 'example_code',
+            'state': 'example_state'
+        }
+        url = reverse('oidc_authentication_callback')
+        request = self.factory.get(url, get_data)
+        client = Client()
+        request.session = client.session
+        request.session['oidc_states'] = {
+            'example_state': {
+                # Simulates an auth request sent with PKCE disabled
+                # 'code_verifier': TEST_CODE_VERIFIER,
+                'nonce': None,
+                'added_on': time.time()
+            },
+        }
+        callback_view = views.OIDCAuthenticationCallbackView.as_view()
+
+        with patch('mozilla_django_oidc.views.auth.authenticate') as mock_auth:
+            with patch('mozilla_django_oidc.views.auth.login') as mock_login:
+                mock_auth.return_value = user
+                response = callback_view(request)
+
+                mock_auth.assert_called_once_with(code_verifier=None,
+                                                  nonce=None,
+                                                  request=request)
+                mock_login.assert_called_once_with(request, user)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/success')
+
     @override_settings(LOGIN_REDIRECT_URL_FAILURE='/failure')
     def test_get_auth_failure_nonexisting_user(self):
         """Test unsuccessful authentication and redirect url."""
@@ -465,6 +501,78 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         self.assertDictEqual(query_dict, expected_query)
         self.assertEqual(o.hostname, 'server.example.com')
         self.assertEqual(o.path, '/auth')
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(OIDC_USE_PKCE=False)
+    @patch('mozilla_django_oidc.views.get_random_string')
+    def test_get_without_PKCE(self, mock_views_random):
+        """Test initiation of a successful OIDC attempt with PKCE disabled."""
+        mock_views_random.return_value = 'examplestring'
+        url = reverse('oidc_authentication_init')
+        request = self.factory.get(url)
+        request.session = dict()
+        login_view = views.OIDCAuthenticationRequestView.as_view()
+        response = login_view(request)
+        self.assertEqual(response.status_code, 302)
+
+        o = urlparse(response.url)
+        query_dict = parse_qs(o.query)
+
+        # PKCE is disabled, so code_challenge and code_challenge_method should not be present.
+        expected_query = {
+            'response_type': ['code'],
+            'scope': ['openid email'],
+            'client_id': ['example_id'],
+            'redirect_uri': ['http://testserver/callback/'],
+            'state': ['examplestring'],
+            'nonce': ['examplestring']
+        }
+        self.assertDictEqual(query_dict, expected_query)
+        self.assertEqual(o.hostname, 'server.example.com')
+        self.assertEqual(o.path, '/auth')
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(OIDC_USE_PKCE=True)
+    @override_settings(OIDC_PKCE_CODE_VERIFIER_SIZE=42)  # must be between 43 and 128
+    @patch('mozilla_django_oidc.views.get_random_string')
+    def test_get_invalid_code_verifier_size_too_short(self, mock_views_random):
+        """Test initiation of an OIDC attempt with an invalid code verifier size."""
+        mock_views_random.return_value = 'examplestring'
+        url = reverse('oidc_authentication_init')
+        request = self.factory.get(url)
+        request.session = dict()
+        login_view = views.OIDCAuthenticationRequestView.as_view()
+        try:
+            login_view(request)
+            self.fail(
+                'OIDC_PKCE_CODE_VERIFIER_SIZE must be between 43 and 128,'
+                ' but OIDC_PKCE_CODE_VERIFIER_SIZE was 42 and no exception was raised.'
+            )
+        except ValueError:
+            pass
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(OIDC_USE_PKCE=True)
+    @override_settings(OIDC_PKCE_CODE_VERIFIER_SIZE=129)  # must be between 43 and 128
+    @patch('mozilla_django_oidc.views.get_random_string')
+    def test_get_invalid_code_verifier_size_too_long(self, mock_views_random):
+        """Test initiation of an OIDC attempt with an invalid code verifier size."""
+        mock_views_random.return_value = 'examplestring'
+        url = reverse('oidc_authentication_init')
+        request = self.factory.get(url)
+        request.session = dict()
+        login_view = views.OIDCAuthenticationRequestView.as_view()
+        try:
+            login_view(request)
+            self.fail(
+                'OIDC_PKCE_CODE_VERIFIER_SIZE must be between 43 and 128,'
+                ' but OIDC_PKCE_CODE_VERIFIER_SIZE was 129 and no exception was raised.'
+            )
+        except ValueError:
+            pass
 
     @override_settings(ROOT_URLCONF='tests.namespaced_urls')
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
