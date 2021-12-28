@@ -3,7 +3,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 
-from mozilla_django_oidc.utils import absolutify, add_state_and_verifier_and_nonce_to_session, \
+from mozilla_django_oidc.utils import absolutify, add_state_and_verifier_and_nonce_to_session, base64_url_decode, base64_url_encode, generate_code_challenge, \
     import_from_settings
 
 
@@ -49,6 +49,84 @@ class AbsolutifyTestCase(TestCase):
         ).get('/', SERVER_PORT=443)
         url = absolutify(req, 'evil.com/foo/bar')
         self.assertEqual(url, 'https://testserver/evil.com/foo/bar')
+
+
+class Base64URLEncodeTestCase(TestCase):
+
+    def test_base64_url_encode(self):
+        """
+        Tests creating a url-safe base64 encoded string from bytes.
+        Source: https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
+        """
+        data = bytes((3, 236, 255, 224, 193))
+        encoded = base64_url_encode(data)
+
+        # Using base64.b64encode() returns b'A+z/4ME='.
+        # Our implementation should strip tailing '='s padding.
+        # and replace '+' with '-' and '/' with '_'.
+        self.assertEqual(encoded, 'A-z_4ME')
+
+        # Decoding should return the original data.
+        decoded = base64_url_decode(encoded)
+        self.assertEqual(decoded, data)
+
+    def test_base64_url_encode_empty_input(self):
+        """
+        Tests creating a url-safe base64 encoded string from an empty bytes instance.
+        """
+        data = bytes()
+        encoded = base64_url_encode(data)
+        self.assertEqual(encoded, '')
+
+        decoded = base64_url_decode(encoded)
+        self.assertEqual(decoded, data)
+
+    def test_base64_url_encode_double_padding(self):
+        """
+        Test encoding a string whoose base64.b64encode encoding ends with '=='.
+        """
+        data = bytes((3, 236, 255, 224, 193, 222, 22))
+        encoded = base64_url_encode(data)
+
+        # Using base64.b64encode() returns b'A+z/4MHeFg=='.
+        self.assertEqual(encoded, 'A-z_4MHeFg')
+
+        # Decoding should return the original data.
+        decoded = base64_url_decode(encoded)
+        self.assertEqual(decoded, data)
+
+
+class PKCECodeVerificationTestCase(TestCase):
+
+    def test_generate_code_challenge(self):
+        """
+        Tests that a code challenge is generated correctly with the 'S256' method.
+        """
+        code_verifier = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'
+        code_challenge = generate_code_challenge(code_verifier, 'S256')
+
+        self.assertEqual(code_challenge, 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM')
+
+    def test_generate_plain_code_challenge(self):
+        """
+        Tests that a code challenge is generated correctly with the 'plain' method.
+        """
+        code_verifier = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'
+        code_challenge = generate_code_challenge(code_verifier, 'plain')
+
+        self.assertEqual(code_challenge, code_verifier)
+    
+    def test_generate_code_challenge_invalid_method(self):
+        """
+        Tests that an exception is raised when an invalid code challenge method is provided.
+        """
+        code_verifier = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'
+
+        try:
+            code_challenge = generate_code_challenge(code_verifier, 'INVALID')
+            self.fail('generate_code_challenge() should raise an exception when an invalid code challenge method is provided.')
+        except ValueError:
+            pass
 
 
 class SessionStateTestCase(TestCase):
