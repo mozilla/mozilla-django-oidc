@@ -440,7 +440,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         # Since it's random, we can only test that it's present and has the right length.
         # Then we just insert it into the expected_query.
         self.assertIn('code_challenge', query_dict)
-        self.assert_(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
+        self.assertTrue(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
         expected_query = {
             'code_challenge': query_dict['code_challenge'],
             'code_challenge_method': ['S256'],
