@@ -2,7 +2,7 @@ import logging
 import time
 import warnings
 
-# Make it obvious that these aren't the usual base64 functions 
+# Make it obvious that these aren't the usual base64 functions
 import josepy.b64
 
 from django.conf import settings
@@ -62,26 +62,29 @@ def is_authenticated(user):
 def base64_url_encode(bytes_like_obj):
     """Return a URL-Safe, base64 encoded version of bytes_like_obj
 
-    Implements base64urlencode as described in https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
+    Implements base64urlencode as described in
+    https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
     """
 
-    s = josepy.b64.b64encode(bytes_like_obj).decode('ascii') # josepy base64 encoder (strips '='s padding)
-    s = s.replace('+', '-') # 62nd char of encoding
-    s = s.replace('/', '_') # 63rd char of encoding
+    s = josepy.b64.b64encode(bytes_like_obj).decode('ascii')  # base64 encode
+    # the josepy base64 encoder (strips '='s padding) automatically
+    s = s.replace('+', '-')  # 62nd char of encoding
+    s = s.replace('/', '_')  # 63rd char of encoding
 
     return s
 
 
 def base64_url_decode(string_like_obj):
     """Return the bytes encoded in a URL-Safe, base64 encoded string
-    Implements inverse of base64urlencode as described in https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
+    Implements inverse of base64urlencode as described in
+    https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
     This function is not used by the OpenID client; it's just for testing PKCE related functions.
     """
     s = string_like_obj
 
-    s = s.replace('_', '/') # 63rd char of encoding
-    s = s.replace('-', '+') # 62nd char of encoding
-    b = josepy.b64.b64decode(s) # josepy base64 encoder (decodes without '='s padding)
+    s = s.replace('_', '/')  # 63rd char of encoding
+    s = s.replace('-', '+')  # 62nd char of encoding
+    b = josepy.b64.b64decode(s)  # josepy base64 encoder (decodes without '='s padding)
 
     return b
 
@@ -90,9 +93,9 @@ def generate_code_challenge(code_verifier, method):
     """Return a code_challege, which proves knowledge of the code_verifier.
     The code challenge is generated according to method which must be one
     of the methods defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.2:
-    - plain
+    - plain:
       code_challenge = code_verifier
-    - S256
+    - S256:
       code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
     """
 
@@ -108,12 +111,12 @@ def generate_code_challenge(code_verifier, method):
 
 def add_state_and_verifier_and_nonce_to_session(request, state, params, code_verifier=None):
     """
-    Stores the `state` and `nonce` parameters and an optional `code_verifier` (for PKCE) in a session dictionary 
-    which maps `state` -> {nonce, code_verifier}.  Each entry included the time when it
-    was added. The dictionary can contain multiple state -> {nonce, code_verifier}
+    Stores the `state` and `nonce` parameters and an optional `code_verifier` (for PKCE) in a
+    session dictionary which maps `state` -> {nonce, code_verifier}.  Each entry includes
+    the time when it was added. The dictionary can contain multiple state -> {nonce, code_verifier}
     mappings to allow parallel logins with multiple browser sessions.
-    To keep the session space to a reasonable size, the dictionary is kept at 50 state -> {nonce, code_verifier}
-    mappings maximum.
+    To keep the session space to a reasonable size, the dictionary is kept at 50
+    state -> {nonce, code_verifier} mappings maximum.
     """
     nonce = params.get('nonce')
 
@@ -122,7 +125,6 @@ def add_state_and_verifier_and_nonce_to_session(request, state, params, code_ver
     # Make sure that `code_challenge` and `code_verifier` are both specified
     # or neither is.
     assert ('code_challenge' in params) == (code_verifier is not None)
-    
 
     # Store Nonce with the State parameter in the session "oidc_states" dictionary.
     # The dictionary can store multiple State/Nonce combinations to allow parallel

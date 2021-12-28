@@ -3,8 +3,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 
-from mozilla_django_oidc.utils import absolutify, add_state_and_verifier_and_nonce_to_session, base64_url_decode, base64_url_encode, generate_code_challenge, \
-    import_from_settings
+from mozilla_django_oidc.utils import absolutify, add_state_and_verifier_and_nonce_to_session, \
+    base64_url_decode, base64_url_encode, generate_code_challenge, import_from_settings
 
 
 class SettingImportTestCase(TestCase):
@@ -123,8 +123,9 @@ class PKCECodeVerificationTestCase(TestCase):
         code_verifier = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'
 
         try:
-            code_challenge = generate_code_challenge(code_verifier, 'INVALID')
-            self.fail('generate_code_challenge() should raise an exception when an invalid code challenge method is provided.')
+            generate_code_challenge(code_verifier, 'INVALID')
+            self.fail('generate_code_challenge() should raise an exception when an invalid'
+                      ' code challenge method is provided.')
         except ValueError:
             pass
 

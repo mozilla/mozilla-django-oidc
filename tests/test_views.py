@@ -41,7 +41,11 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         client = Client()
         request.session = client.session
         request.session['oidc_states'] = {
-            'example_state': {'code_verifier': TEST_CODE_VERIFIER, 'nonce': None, 'added_on': time.time()},
+            'example_state': {
+                'code_verifier': TEST_CODE_VERIFIER,
+                'nonce': None,
+                'added_on': time.time()
+            },
         }
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
 
@@ -72,7 +76,11 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
         client = Client()
         request.session = client.session
         request.session['oidc_states'] = {
-            'example_state': {'code_verifier': TEST_CODE_VERIFIER, 'nonce': None, 'added_on': time.time()},
+            'example_state': {
+                'code_verifier': TEST_CODE_VERIFIER,
+                'nonce': None,
+                'added_on': time.time()
+            },
         }
         request.session['oidc_login_next'] = '/foobar'
         callback_view = views.OIDCAuthenticationCallbackView.as_view()
@@ -111,7 +119,7 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             mock_auth.return_value = None
             response = callback_view(request)
 
-            mock_auth.assert_called_once_with(code_verifier=None, 
+            mock_auth.assert_called_once_with(code_verifier=None,
                                               nonce=None,
                                               request=request)
 
@@ -440,7 +448,10 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         # Since it's random, we can only test that it's present and has the right length.
         # Then we just insert it into the expected_query.
         self.assertIn('code_challenge', query_dict)
-        self.assertTrue(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
+        self.assertTrue(
+            len(query_dict['code_challenge']) == 1 and
+            43 <= len(query_dict['code_challenge'][0]) <= 128
+        )
         expected_query = {
             'code_challenge': query_dict['code_challenge'],
             'code_challenge_method': ['S256'],
@@ -477,7 +488,10 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         # Since it's random, we can only test that it's present and has the right length.
         # Then we just insert it into the expected_query.
         self.assertIn('code_challenge', query_dict)
-        self.assertTrue(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
+        self.assertTrue(
+            len(query_dict['code_challenge']) == 1 and
+            43 <= len(query_dict['code_challenge'][0]) <= 128
+        )
         expected_query = {
             'code_challenge': query_dict['code_challenge'],
             'code_challenge_method': ['S256'],
@@ -513,7 +527,10 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         # Since it's random, we can only test that it's present and has the right length.
         # Then we just insert it into the expected_query.
         self.assertIn('code_challenge', query_dict)
-        self.assertTrue(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
+        self.assertTrue(
+            len(query_dict['code_challenge']) == 1 and
+            43 <= len(query_dict['code_challenge'][0]) <= 128
+        )
         expected_query = {
             'code_challenge': query_dict['code_challenge'],
             'code_challenge_method': ['S256'],
@@ -555,7 +572,10 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         # Since it's random, we can only test that it's present and has the right length.
         # Then we just insert it into the expected_query.
         self.assertIn('code_challenge', query_dict)
-        self.assertTrue(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
+        self.assertTrue(
+            len(query_dict['code_challenge']) == 1 and
+            43 <= len(query_dict['code_challenge'][0]) <= 128
+        )
         expected_query = {
             'code_challenge': query_dict['code_challenge'],
             'code_challenge_method': ['S256'],
