@@ -434,7 +434,16 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
         o = urlparse(response.url)
+        query_dict = parse_qs(o.query)
+
+        # The PKCE code_challenge should be a random string between 43 and 128 characters.
+        # Since it's random, we can only test that it's present and has the right length.
+        # Then we just insert it into the expected_query.
+        self.assertIn('code_challenge', query_dict)
+        self.assert_(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
         expected_query = {
+            'code_challenge': query_dict['code_challenge'],
+            'code_challenge_method': ['S256'],
             'response_type': ['code'],
             'scope': ['openid email'],
             'client_id': ['example_id'],
@@ -442,7 +451,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'state': ['examplestring'],
             'nonce': ['examplestring']
         }
-        self.assertDictEqual(parse_qs(o.query), expected_query)
+        self.assertDictEqual(query_dict, expected_query)
         self.assertEqual(o.hostname, 'server.example.com')
         self.assertEqual(o.path, '/auth')
 
@@ -462,7 +471,16 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
         o = urlparse(response.url)
+        query_dict = parse_qs(o.query)
+
+        # The PKCE code_challenge should be a random string between 43 and 128 characters.
+        # Since it's random, we can only test that it's present and has the right length.
+        # Then we just insert it into the expected_query.
+        self.assertIn('code_challenge', query_dict)
+        self.assert_(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
         expected_query = {
+            'code_challenge': query_dict['code_challenge'],
+            'code_challenge_method': ['S256'],
             'response_type': ['code'],
             'scope': ['openid email'],
             'client_id': ['example_id'],
@@ -470,7 +488,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'state': ['examplestring'],
             'nonce': ['examplestring']
         }
-        self.assertDictEqual(parse_qs(o.query), expected_query)
+        self.assertDictEqual(query_dict, expected_query)
         self.assertEqual(o.hostname, 'server.example.com')
         self.assertEqual(o.path, '/auth')
 
@@ -489,7 +507,16 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
         o = urlparse(response.url)
+        query_dict = parse_qs(o.query)
+
+        # The PKCE code_challenge should be a random string between 43 and 128 characters.
+        # Since it's random, we can only test that it's present and has the right length.
+        # Then we just insert it into the expected_query.
+        self.assertIn('code_challenge', query_dict)
+        self.assert_(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
         expected_query = {
+            'code_challenge': query_dict['code_challenge'],
+            'code_challenge_method': ['S256'],
             'response_type': ['code'],
             'scope': ['openid email'],
             'client_id': ['example_id'],
@@ -498,7 +525,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
             'nonce': ['examplestring'],
             'audience': ['some-api.example.com'],
         }
-        self.assertDictEqual(parse_qs(o.query), expected_query)
+        self.assertDictEqual(query_dict, expected_query)
         self.assertEqual(o.hostname, 'server.example.com')
         self.assertEqual(o.path, '/auth')
 
@@ -522,7 +549,16 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
         o = urlparse(response.url)
+        query_dict = parse_qs(o.query)
+
+        # The PKCE code_challenge should be a random string between 43 and 128 characters.
+        # Since it's random, we can only test that it's present and has the right length.
+        # Then we just insert it into the expected_query.
+        self.assertIn('code_challenge', query_dict)
+        self.assert_(len(query_dict['code_challenge']) == 1 and 43 <= len(query_dict['code_challenge'][0]) <= 128)
         expected_query = {
+            'code_challenge': query_dict['code_challenge'],
+            'code_challenge_method': ['S256'],
             'response_type': ['code'],
             'scope': ['openid email'],
             'client_id': ['example_id'],
