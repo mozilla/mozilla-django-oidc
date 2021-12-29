@@ -550,7 +550,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
                 'OIDC_PKCE_CODE_VERIFIER_SIZE must be between 43 and 128,'
                 ' but OIDC_PKCE_CODE_VERIFIER_SIZE was 42 and no exception was raised.'
             )
-        except AssertionError:
+        except ValueError:
             pass
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
@@ -571,7 +571,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
                 'OIDC_PKCE_CODE_VERIFIER_SIZE must be between 43 and 128,'
                 ' but OIDC_PKCE_CODE_VERIFIER_SIZE was 129 and no exception was raised.'
             )
-        except AssertionError:
+        except ValueError:
             pass
 
     @override_settings(ROOT_URLCONF='tests.namespaced_urls')

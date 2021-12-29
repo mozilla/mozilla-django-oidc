@@ -192,8 +192,9 @@ class OIDCAuthenticationRequestView(View):
         if self.get_settings('OIDC_USE_PKCE', True):
             code_verifier_length = self.get_settings('OIDC_PKCE_CODE_VERIFIER_SIZE', 64)
             # Check that code_verifier_length is between the min and max length
-            # defined in rfc7636#section-4.1
-            assert 43 <= code_verifier_length <= 128
+            # defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+            if not (43 <= code_verifier_length <= 128):
+                raise ValueError('code_verifier_length must be between 43 and 128')
 
             # Generate code_verifier and code_challenge pair
             code_verifier = get_random_string(code_verifier_length)
