@@ -263,3 +263,50 @@ of ``mozilla-django-oidc``.
    :default: False
 
    Allow using GET method to logout user
+
+.. py:attribute:: OIDC_USE_PKCE
+
+   :default: ``True``
+
+   Controls whether the authentication backend uses PKCE (Proof Key For Code Exchange) during the authorization code flow.
+
+   .. seealso::
+
+      https://datatracker.ietf.org/doc/html/rfc7636
+
+.. py:attribute:: OIDC_PKCE_CODE_CHALLENGE_METHOD
+
+   :default: ``S256``
+
+   Sets the method used to generate the PKCE code challenge.
+
+   Supported methods are:
+
+   * **plain**:
+      ``code_challenge = code_verifier``
+
+   * **S256**:
+      ``code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))``
+
+   .. note::
+
+      This only has an effect if ``OIDC_USE_PKCE`` is ``True``.
+
+   .. seealso::
+
+      https://datatracker.ietf.org/doc/html/rfc7636#section-4.2
+
+.. py:attribute:: OIDC_PKCE_CODE_VERIFIER_SIZE
+
+   :default: ``64``
+
+   Sets the length of the random string used for the PKCE code verifier.  Must be between ``43`` and ``128`` inclusive.
+
+   .. note::
+
+      This only has an effect if ``OIDC_USE_PKCE`` is ``True``.
+
+   .. seealso::
+
+      https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+

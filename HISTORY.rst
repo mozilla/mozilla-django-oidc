@@ -3,6 +3,12 @@
 History
 -------
 
+2.1.0 (2021-12-28)
+==================
+
+* Added PKCE support in the authorization code flow.
+
+
 2.0.0 (2021-07-27)
 ==================
 
