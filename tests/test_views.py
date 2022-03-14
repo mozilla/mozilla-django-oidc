@@ -20,6 +20,12 @@ def my_custom_op_logout(request):
     return request.build_absolute_uri('/logged/out')
 
 
+def my_custom_extra_params(request):
+    return {
+        'custom_param': 'custom_value'
+    }
+
+
 class OIDCAuthorizationCallbackViewTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
@@ -498,7 +504,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID='example_id')
     @patch('mozilla_django_oidc.views.get_random_string')
     @patch('mozilla_django_oidc.views.OIDCAuthenticationRequestView.get_extra_params')
-    def test_get_with_overridden_extra_params(self, mock_extra_params, mock_views_random):
+    def test_get_with_extra_params_from_func(self, mock_extra_params, mock_views_random):
         """Test overriding OIDCAuthenticationRequestView.get_extra_params()."""
         mock_views_random.return_value = 'examplestring'
 
@@ -528,6 +534,37 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         self.assertEqual(o.path, '/auth')
 
         mock_extra_params.assert_called_with(request)
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
+    @override_settings(OIDC_RP_CLIENT_ID='example_id')
+    @override_settings(
+        OIDC_AUTH_REQUEST_EXTRA_PARAMS_FUNC='tests.test_views.my_custom_extra_params'
+    )
+    @patch('mozilla_django_oidc.views.get_random_string')
+    def test_get_with_overridden_extra_params(self, mock_views_random):
+        """Test overriding OIDCAuthenticationRequestView.get_extra_params()."""
+        mock_views_random.return_value = 'examplestring'
+
+        url = reverse('oidc_authentication_init')
+        request = self.factory.get(url)
+        request.session = dict()
+        login_view = views.OIDCAuthenticationRequestView.as_view()
+        response = login_view(request)
+        self.assertEqual(response.status_code, 302)
+
+        o = urlparse(response.url)
+        expected_query = {
+            'response_type': ['code'],
+            'scope': ['openid email'],
+            'client_id': ['example_id'],
+            'redirect_uri': ['http://testserver/callback/'],
+            'state': ['examplestring'],
+            'nonce': ['examplestring'],
+            'custom_param': ['custom_value'],
+        }
+        self.assertDictEqual(parse_qs(o.query), expected_query)
+        self.assertEqual(o.hostname, 'server.example.com')
+        self.assertEqual(o.path, '/auth')
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT='https://server.example.com/auth')
     @override_settings(OIDC_RP_CLIENT_ID='example_id')

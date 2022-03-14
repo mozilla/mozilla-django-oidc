@@ -194,7 +194,12 @@ class OIDCAuthenticationRequestView(View):
         return HttpResponseRedirect(redirect_url)
 
     def get_extra_params(self, request):
-        return self.get_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
+        params = self.get_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
+        f_str = self.get_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS_FUNC', None)
+        if f_str:
+            f = import_string(f_str)
+            params.update(f(request))
+        return params
 
 
 class OIDCLogoutView(View):

@@ -180,6 +180,24 @@ of ``mozilla-django-oidc``.
 
    Additional parameters to include in the initial authorization request.
 
+.. py:attribute:: OIDC_AUTH_REQUEST_EXTRA_PARAMS_FUNC
+
+   :default: `None`
+
+   Import string of a function that accepts a Django ``request`` and returns a ``Dict`` containing
+   additonal parameters to include in the initial authorization request.
+
+   .. code-block:: python
+
+      def get_extra_params(request):
+          return {
+             'my_extra_param': 'custom_value'
+          }
+
+   .. warning::
+
+   This feature may override values set in the ``OIDC_AUTH_REQUEST_EXTRA_PARAMS`` setting on matching keys.
+
 .. py:attribute:: OIDC_RP_SIGN_ALGO
 
    :default: ``HS256``
