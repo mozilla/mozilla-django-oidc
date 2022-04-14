@@ -240,8 +240,8 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         # logindotgov-oidc, modified
         jwt_args = {
-            "iss": payload.get('client_id'),
-            "sub": payload.get('client_id'),
+            "iss": self.OIDC_RP_CLIENT_ID,
+            "sub": self.OIDC_RP_CLIENT_ID,
             "aud": self.OIDC_OP_TOKEN_ENDPOINT,
             "jti": secrets.token_hex(16),
             "exp": int(time.time()) + 300,  # 5 minutes from now
