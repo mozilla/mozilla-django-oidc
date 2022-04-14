@@ -3,6 +3,11 @@ import hashlib
 import json
 import logging
 import requests
+# logindotgov-oidc
+import secrets
+import time
+import jwt
+# /logindotgov-oidc
 from requests.auth import HTTPBasicAuth
 
 from django.contrib.auth import get_user_model
@@ -213,24 +218,48 @@ class OIDCAuthenticationBackend(ModelBackend):
     def get_token(self, payload):
         """Return token object as a dictionary."""
 
-        auth = None
-        if self.get_settings('OIDC_TOKEN_USE_BASIC_AUTH', False):
-            # When Basic auth is defined, create the Auth Header and remove secret from payload.
-            user = payload.get('client_id')
-            pw = payload.get('client_secret')
+        # Mozilla
+        # auth = None
+        # if self.get_settings('OIDC_TOKEN_USE_BASIC_AUTH', False):
+        #     # When Basic auth is defined, create the Auth Header and remove secret from payload.
+        #     user = payload.get('client_id')
+        #     pw = payload.get('client_secret')
 
-            auth = HTTPBasicAuth(user, pw)
-            del payload['client_secret']
+        #     auth = HTTPBasicAuth(user, pw)
+        #     del payload['client_secret']
 
-        response = requests.post(
-            self.OIDC_OP_TOKEN_ENDPOINT,
-            data=payload,
-            auth=auth,
-            verify=self.get_settings('OIDC_VERIFY_SSL', True),
-            timeout=self.get_settings('OIDC_TIMEOUT', None),
-            proxies=self.get_settings('OIDC_PROXY', None))
-        response.raise_for_status()
+        # response = requests.post(
+        #     self.OIDC_OP_TOKEN_ENDPOINT,
+        #     data=payload,
+        #     auth=auth,
+        #     verify=self.get_settings('OIDC_VERIFY_SSL', True),
+        #     timeout=self.get_settings('OIDC_TIMEOUT', None),
+        #     proxies=self.get_settings('OIDC_PROXY', None))
+        # response.raise_for_status()
+        # return response.json()
+
+        # logindotgov-oidc, modified
+        jwt_args = {
+            "iss": payload.get('client_id'),
+            "sub": payload.get('client_id'),
+            "aud": self.OIDC_OP_TOKEN_ENDPOINT,
+            "jti": secrets.token_hex(16),
+            "exp": int(time.time()) + 300,  # 5 minutes from now
+        }
+        encoded_jwt = jwt.encode(jwt_args, self.OIDC_RP_CLIENT_SECRET, algorithm=SIGNING_ALGO)
+
+        payload = {
+            "client_assertion": encoded_jwt,
+            "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+            "code": code,
+            "grant_type": GRANT_TYPE,
+        }
+
+        LOGGER.debug("payload", payload)
+        response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=payload)
+
         return response.json()
+
 
     def get_userinfo(self, access_token, id_token, payload):
         """Return user details dictionary. The id_token and payload are not used in
