@@ -255,7 +255,8 @@ class OIDCAuthenticationBackend(ModelBackend):
             "grant_type": GRANT_TYPE,
         }
 
-        LOGGER.debug("payload", payload)
+        # Not sure why debug isn't working, switching to print for now
+        print("payload", payload)
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=payload)
 
         return response.json()
