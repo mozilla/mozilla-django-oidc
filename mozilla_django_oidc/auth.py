@@ -246,7 +246,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             "jti": secrets.token_hex(16),
             "exp": int(time.time()) + 300,  # 5 minutes from now
         }
-        encoded_jwt = jwt.encode(jwt_args, self.OIDC_RP_CLIENT_SECRET, algorithm=SIGNING_ALGO)
+        encoded_jwt = jwt.encode(jwt_args, self.OIDC_RP_CLIENT_SECRET, algorithm=self.OIDC_RP_SIGN_ALGO)
 
         payload = {
             "client_assertion": encoded_jwt,
