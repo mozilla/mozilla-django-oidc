@@ -54,7 +54,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
         self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
-        self.OIDC_RP_CLIENT_SECRET = str(self.get_settings('OIDC_RP_CLIENT_SECRET'))
+        self.OIDC_RP_CLIENT_SECRET = self.get_settings('OIDC_RP_CLIENT_SECRET')
         self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
 
@@ -249,8 +249,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         print("jwt_args", jwt_args)
         print("self.OIDC_RP_CLIENT_SECRET", self.OIDC_RP_CLIENT_SECRET)
         print("self.OIDC_RP_SIGN_ALGO", self.OIDC_RP_SIGN_ALGO)
+        print("what is OIDC_RP_CLIENT_SECRET", type(self.OIDC_RP_CLIENT_SECRET))
+        print("decoded", self.OIDC_RP_CLIENT_SECRET.decode())
         # Is client secret pem-encoded? Used Sublime to remove newlines
-        encoded_jwt = jwt.encode(jwt_args, self.OIDC_RP_CLIENT_SECRET, algorithm=self.OIDC_RP_SIGN_ALGO)
+        encoded_jwt = jwt.encode(jwt_args, self.OIDC_RP_CLIENT_SECRET.decode(), algorithm=self.OIDC_RP_SIGN_ALGO)
 
         payload = {
             "client_assertion": encoded_jwt,
