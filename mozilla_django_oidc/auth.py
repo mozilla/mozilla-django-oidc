@@ -246,6 +246,10 @@ class OIDCAuthenticationBackend(ModelBackend):
             "jti": secrets.token_hex(16),
             "exp": int(time.time()) + 300,  # 5 minutes from now
         }
+        print("jwt_args", jwt_args)
+        print("self.OIDC_RP_CLIENT_SECRET", self.OIDC_RP_CLIENT_SECRET)
+        print("self.OIDC_RP_SIGN_ALGO", self.OIDC_RP_SIGN_ALGO)
+        # Is client secret pem-encoded? Used Sublime to remove newlines
         encoded_jwt = jwt.encode(jwt_args, self.OIDC_RP_CLIENT_SECRET, algorithm=self.OIDC_RP_SIGN_ALGO)
 
         payload = {
