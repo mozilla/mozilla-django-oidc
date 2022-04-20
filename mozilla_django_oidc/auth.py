@@ -225,7 +225,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             "jti": secrets.token_hex(16),
             "exp": int(time.time()) + 300,  # 5 minutes from now
         }
-        LOGGER.debug("get_token.jwt_args", jwt_args)
+        LOGGER.debug("get_token.jwt_args: {}".format(json.dumps(jwt_args)))
 
         # Client secret needs to be pem-encoded string
         encoded_jwt = jwt.encode(
@@ -234,7 +234,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             algorithm=self.OIDC_RP_SIGN_ALGO
         )
 
-        LOGGER.debug("get_token original payload", payload)
+        LOGGER.debug("get_token original payload: {}".format(json.dumps(payload)))
 
         token_payload = {
             "client_assertion": encoded_jwt,
@@ -243,7 +243,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             "grant_type": "authorization_code",
         }
 
-        LOGGER.debug("get_token.token_payload", token_payload)
+        LOGGER.debug("get_token.token_payload {}".format(json.dumps(token_payload)))
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
 
         return response.json()
@@ -283,7 +283,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         redirect_uri = absolutify(self.request, reverse(reverse_url))
 
-        LOGGER.debug("authenticate.redirect_uri", redirect_uri)
+        LOGGER.debug("authenticate.redirect_uri: {}".format({redirect_uri}))
 
         token_payload = {
             'client_id': self.OIDC_RP_CLIENT_ID,
