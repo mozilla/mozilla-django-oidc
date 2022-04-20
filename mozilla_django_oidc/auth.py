@@ -255,16 +255,16 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         print("original payload", payload)
 
-        payload = {
+        token_payload = {
             "client_assertion": encoded_jwt,
             "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-            "code": code,
-            "grant_type": GRANT_TYPE,
+            "code": payload.get("code"),
+            "grant_type": "authorization_code",
         }
 
         # Not sure why debug isn't working, switching to print for now
-        print("payload", payload)
-        response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=payload)
+        print("token_payload", token_payload)
+        response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
 
         return response.json()
 
