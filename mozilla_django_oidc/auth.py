@@ -301,15 +301,16 @@ class OIDCAuthenticationBackend(ModelBackend):
         reverse_url = self.get_settings('OIDC_AUTHENTICATION_CALLBACK_URL',
                                         'oidc_authentication_callback')
 
+        redirect_uri = absolutify(self.request, reverse(reverse_url))
+
+        print("authenticate.redirect_uri", redirect_uri)
+
         token_payload = {
             'client_id': self.OIDC_RP_CLIENT_ID,
             'client_secret': self.OIDC_RP_CLIENT_SECRET,
             'grant_type': 'authorization_code',
             'code': code,
-            'redirect_uri': absolutify(
-                self.request,
-                reverse(reverse_url)
-            ),
+            'redirect_uri': redirect_uri,
         }
 
         # Get the token
