@@ -216,29 +216,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         return payload
 
     def get_token(self, payload):
-        """Return token object as a dictionary."""
+        """Return token object as a dictionary. Borrowed from logindotgov-oidc, modified"""
 
-        # Mozilla
-        # auth = None
-        # if self.get_settings('OIDC_TOKEN_USE_BASIC_AUTH', False):
-        #     # When Basic auth is defined, create the Auth Header and remove secret from payload.
-        #     user = payload.get('client_id')
-        #     pw = payload.get('client_secret')
-
-        #     auth = HTTPBasicAuth(user, pw)
-        #     del payload['client_secret']
-
-        # response = requests.post(
-        #     self.OIDC_OP_TOKEN_ENDPOINT,
-        #     data=payload,
-        #     auth=auth,
-        #     verify=self.get_settings('OIDC_VERIFY_SSL', True),
-        #     timeout=self.get_settings('OIDC_TIMEOUT', None),
-        #     proxies=self.get_settings('OIDC_PROXY', None))
-        # response.raise_for_status()
-        # return response.json()
-
-        # logindotgov-oidc, modified
         jwt_args = {
             "iss": self.OIDC_RP_CLIENT_ID,
             "sub": self.OIDC_RP_CLIENT_ID,
@@ -246,14 +225,16 @@ class OIDCAuthenticationBackend(ModelBackend):
             "jti": secrets.token_hex(16),
             "exp": int(time.time()) + 300,  # 5 minutes from now
         }
-        print("jwt_args", jwt_args)
-        print("self.OIDC_RP_CLIENT_SECRET", self.OIDC_RP_CLIENT_SECRET)
-        print("self.OIDC_RP_SIGN_ALGO", self.OIDC_RP_SIGN_ALGO)
+        LOGGER.debug("get_token.jwt_args", jwt_args)
 
-        # Is client secret pem-encoded? Used Sublime to remove newlines
-        encoded_jwt = jwt.encode(jwt_args, self.OIDC_RP_CLIENT_SECRET, algorithm=self.OIDC_RP_SIGN_ALGO)
+        # Client secret needs to be pem-encoded string
+        encoded_jwt = jwt.encode(
+            jwt_args,
+            self.OIDC_RP_CLIENT_SECRET,
+            algorithm=self.OIDC_RP_SIGN_ALGO
+        )
 
-        print("original payload", payload)
+        LOGGER.debug("get_token original payload", payload)
 
         token_payload = {
             "client_assertion": encoded_jwt,
@@ -262,8 +243,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             "grant_type": "authorization_code",
         }
 
-        # Not sure why debug isn't working, switching to print for now
-        print("token_payload", token_payload)
+        LOGGER.debug("get_token.token_payload", token_payload)
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
 
         return response.json()
@@ -303,7 +283,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         redirect_uri = absolutify(self.request, reverse(reverse_url))
 
-        print("authenticate.redirect_uri", redirect_uri)
+        LOGGER.debug("authenticate.redirect_uri", redirect_uri)
 
         token_payload = {
             'client_id': self.OIDC_RP_CLIENT_ID,
