@@ -253,6 +253,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         # Is client secret pem-encoded? Used Sublime to remove newlines
         encoded_jwt = jwt.encode(jwt_args, self.OIDC_RP_CLIENT_SECRET, algorithm=self.OIDC_RP_SIGN_ALGO)
 
+        print("original payload", payload)
+
         payload = {
             "client_assertion": encoded_jwt,
             "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
