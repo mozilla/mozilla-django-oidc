@@ -82,9 +82,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         if not unique_identifier_value:
             return self.UserModel.objects.none()
         # TODO: Fix this filter
-        # filter_label = UNIQUE_IDENTIFIER + "__iexact"
         filter_label = UNIQUE_IDENTIFIER + "__iexact"
-        return self.UserModel.objects.filter(filter_label=unique_identifier_value)
+        kwargs = {filter_label: unique_identifier_value}
+        return self.UserModel.objects.filter(**kwargs)
 
     def verify_claims(self, claims):
         """Verify the provided claims to decide if authentication should be allowed."""
