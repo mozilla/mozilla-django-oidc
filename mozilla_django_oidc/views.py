@@ -240,9 +240,6 @@ class OIDCLogoutView(View):
             # post_logout_redirect_uri=${REDIRECT_URI}&
             # state=abcdefghijklmnopabcdefghijklmnop
 
-            session = request.session
-            LOGGER.debug("OIDCLogoutView.post.session", session)
-
             # id_token_hint
             # An id_token value from the token endpoint response.
 
@@ -251,6 +248,19 @@ class OIDCLogoutView(View):
 
             # state
             # A unique value at least 22 characters in length used for maintaining state between the request and the callback. This value will be returned to the client on a successful logout.
+
+
+            session = request.session
+            LOGGER.debug("OIDCLogoutView.session", json.dumps(session))
+
+            id_token_hint = session.get("oidc_id_token")
+            LOGGER.debug("OIDCLogoutView.post.id_token_hint", id_token_hint)
+
+            # logout_payload = {
+            #     "id_token_hint": id_token_hint,
+            #     "post_logout_redirect_uri": "", # TODO: Do we do this ourselves?
+            #     "state": state
+            # }
 
             # Log out the Django user if they were logged in.
             auth.logout(request)
