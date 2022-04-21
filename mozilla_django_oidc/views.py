@@ -1,4 +1,6 @@
 import time
+import requests
+import logging
 
 from django.contrib import auth
 from django.core.exceptions import SuspiciousOperation
@@ -20,6 +22,8 @@ from mozilla_django_oidc.utils import (absolutify,
                                        import_from_settings)
 
 from urllib.parse import urlencode
+
+LOGGER = logging.getLogger(__name__)
 
 
 class OIDCAuthenticationCallbackView(View):
@@ -202,6 +206,12 @@ class OIDCLogoutView(View):
 
     http_method_names = ['get', 'post']
 
+    def __init__(self, *args, **kwargs):
+        """Initialize settings."""
+        # TODO: get this from new setting
+        self.OIDC_OP_LOGOUT_URL = "https://idp.int.identitysandbox.gov/openid_connect/logout"
+
+
     @staticmethod
     def get_settings(attr, *args):
         return import_from_settings(attr, *args)
@@ -218,12 +228,29 @@ class OIDCLogoutView(View):
         if request.user.is_authenticated:
             # Check if a method exists to build the URL to log out the user
             # from the OP.
-            logout_from_op = self.get_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
-            if logout_from_op:
-                logout_url = import_string(logout_from_op)(request)
+            # logout_from_op = self.get_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
+            # if logout_from_op:
+            #     logout_url = import_string(logout_from_op)(request)
 
-            # Log out of login.gov?
-            # modify auth.logout()
+            # Log out of login.gov
+
+            # Example
+            # https://idp.int.identitysandbox.gov/openid_connect/logout?
+            # id_token_hint=eyJ0...g&
+            # post_logout_redirect_uri=${REDIRECT_URI}&
+            # state=abcdefghijklmnopabcdefghijklmnop
+
+            session = request.session
+            LOGGER.debug("OIDCLogoutView.post.session", session)
+
+            # id_token_hint
+            # An id_token value from the token endpoint response.
+
+            # post_logout_redirect_uri
+            # The URI Login.gov will redirect to after logout.
+
+            # state
+            # A unique value at least 22 characters in length used for maintaining state between the request and the callback. This value will be returned to the client on a successful logout.
 
             # Log out the Django user if they were logged in.
             auth.logout(request)

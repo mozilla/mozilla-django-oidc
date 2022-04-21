@@ -127,6 +127,8 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def update_user(self, user, claims):
         """Update existing user with new claims, if necessary save, and return user"""
+
+        # TODO: This isn't built out
         return user
 
     def _verify_jws(self, payload, key):
