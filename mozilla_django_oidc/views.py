@@ -223,6 +223,7 @@ class OIDCLogoutView(View):
                 logout_url = import_string(logout_from_op)(request)
 
             # Log out of login.gov?
+            # modify auth.logout()
 
             # Log out the Django user if they were logged in.
             auth.logout(request)

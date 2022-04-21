@@ -216,7 +216,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         return payload
 
     def get_token(self, payload):
-        """Return token object as a dictionary. Borrowed from logindotgov-oidc, modified"""
+        """Return token object as a dictionary.
+        Borrowed from logindotgov-oidc, modified
+        https://github.com/trussworks/logindotgov-oidc-py
+        """
 
         jwt_args = {
             "iss": self.OIDC_RP_CLIENT_ID,
@@ -261,6 +264,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             verify=self.get_settings('OIDC_VERIFY_SSL', True),
             timeout=self.get_settings('OIDC_TIMEOUT', None),
             proxies=self.get_settings('OIDC_PROXY', None))
+        LOGGER.debug("get_userinfo.user_response: {}".format(json.dumps(user_response.json())))
         user_response.raise_for_status()
         return user_response.json()
 
