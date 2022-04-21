@@ -84,7 +84,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Verify the provided claims to decide if authentication should be allowed."""
 
         # Verify claims required by default configuration
+        LOGGER.debug("verify_claims.claims (user_info", json.dumps(claims))
         scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
+
+        # TODO: Swap out for openID/sub?
         if 'email' in scopes.split():
             return 'email' in claims
 
