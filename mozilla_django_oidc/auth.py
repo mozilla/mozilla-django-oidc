@@ -25,21 +25,24 @@ from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 LOGGER = logging.getLogger(__name__)
 
+# TODO: Move this to OIDCAuthenticationBackend, get from settings
+UNIQUE_IDENTIFIER = "email"
 
-def default_username_algo(email):
+
+def default_username_algo(unique_identifier):
     """Generate username for the Django user.
 
-    :arg str/unicode email: the email address to use to generate a username
+    :arg str/unicode unique_identifier: the unique_identifier to use to generate a username
 
     :returns: str/unicode
 
     """
     # bluntly stolen from django-browserid
-    # store the username as a base64 encoded sha224 of the email address
+    # store the username as a base64 encoded sha224 of the unique_identifier
     # this protects against data leakage because usernames are often
-    # treated as public identifiers (so we can't use the email address).
+    # treated as public identifiers (so we can't use the unique_identifier).
     username = base64.urlsafe_b64encode(
-        hashlib.sha1(force_bytes(email)).digest()
+        hashlib.sha1(force_bytes(unique_identifier)).digest()
     ).rstrip(b'=')
 
     return smart_str(username)
@@ -70,26 +73,31 @@ class OIDCAuthenticationBackend(ModelBackend):
         return import_from_settings(attr, *args)
 
     def describe_user_by_claims(self, claims):
-        email = claims.get('email')
-        return 'email {}'.format(email)
+        unique_identifier_value = claims.get(UNIQUE_IDENTIFIER)
+        return '{} {}'.format(UNIQUE_IDENTIFIER, unique_identifier_value)
 
     def filter_users_by_claims(self, claims):
-        """Return all users matching the specified email."""
-        email = claims.get('email')
-        if not email:
+        """Return all users matching the specified unique identifier."""
+        unique_identifier_value = claims.get(UNIQUE_IDENTIFIER)
+        if not unique_identifier_value:
             return self.UserModel.objects.none()
-        return self.UserModel.objects.filter(email__iexact=email)
+        # TODO: Fix this filter
+        # filter_label = UNIQUE_IDENTIFIER + "__iexact"
+        filter_label = UNIQUE_IDENTIFIER + "__iexact"
+        return self.UserModel.objects.filter(filter_label=unique_identifier_value)
 
     def verify_claims(self, claims):
         """Verify the provided claims to decide if authentication should be allowed."""
 
         # Verify claims required by default configuration
         LOGGER.debug("verify_claims.claims (user_info", json.dumps(claims))
-        scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
+
+        # Scopes are user attributes requested, not necessarily claims
+        # scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
 
         # TODO: Swap out for openID/sub?
-        if 'email' in scopes.split():
-            return 'email' in claims
+        # if 'email' in scopes.split():
+        #     return 'email' in claims
 
         LOGGER.warning('Custom OIDC_RP_SCOPES defined. '
                        'You need to override `verify_claims` for custom claims verification.')
@@ -99,8 +107,10 @@ class OIDCAuthenticationBackend(ModelBackend):
     def create_user(self, claims):
         """Return object for a newly created user account."""
         email = claims.get('email')
+        uuid = claims.get('sub')
         username = self.get_username(claims)
-        return self.UserModel.objects.create_user(username, email=email)
+        # TODO: Temporarily put uuid in last_name
+        return self.UserModel.objects.create_user(username, email=email, last_name=uuid)
 
     def get_username(self, claims):
         """Generate username based on claims."""
@@ -111,9 +121,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         if username_algo:
             if isinstance(username_algo, str):
                 username_algo = import_string(username_algo)
-            return username_algo(claims.get('email'))
+            return username_algo(claims.get(UNIQUE_IDENTIFIER))
 
-        return default_username_algo(claims.get('email'))
+        return default_username_algo(claims.get(UNIQUE_IDENTIFIER))
 
     def update_user(self, user, claims):
         """Update existing user with new claims, if necessary save, and return user"""
@@ -343,13 +353,13 @@ class OIDCAuthenticationBackend(ModelBackend):
             msg = 'Claims verification failed'
             raise SuspiciousOperation(msg)
 
-        # email based filtering
+        # unique identifier-based filtering
         users = self.filter_users_by_claims(user_info)
 
         if len(users) == 1:
             return self.update_user(users[0], user_info)
         elif len(users) > 1:
-            # In the rare case that two user accounts have the same email address,
+            # In the rare case that two user accounts have the same unique identifier,
             # bail. Randomly selecting one seems really wrong.
             msg = 'Multiple users returned'
             raise SuspiciousOperation(msg)
