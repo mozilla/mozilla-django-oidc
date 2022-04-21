@@ -251,7 +251,8 @@ class OIDCLogoutView(View):
 
 
             session = request.session
-            LOGGER.debug("OIDCLogoutView.session", json.dumps(session))
+            LOGGER.debug("OIDCLogoutView.session.items()", session.items())
+            LOGGER.debug("OIDCLogoutView.session.keys()", session.keys())
 
             id_token_hint = session.get("oidc_id_token")
             LOGGER.debug("OIDCLogoutView.post.id_token_hint", id_token_hint)
