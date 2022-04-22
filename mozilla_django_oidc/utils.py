@@ -78,6 +78,9 @@ def add_state_and_nonce_to_session(request, state, params):
     # If the number of State/Nonce combinations reaches a certain threshold, remove the oldest
     # state by finding out
     # which element has the oldest "add_on" time.
+
+    # I think we can't do this as an OrderedDict because of the way
+    # Django stores session info?
     limit = import_from_settings('OIDC_MAX_STATES', 50)
     if len(request.session['oidc_states']) >= limit:
         LOGGER.info(
@@ -97,3 +100,13 @@ def add_state_and_nonce_to_session(request, state, params):
         'nonce': nonce,
         'added_on': time.time(),
     }
+
+def add_state_to_cookie(request, state):
+    """
+    Adds state to cookie for logout
+    """
+
+    # TODO: Does this overwrite an existing state cookie?
+
+    request.set_cookie("oidc_state", state)
+

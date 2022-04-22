@@ -12,6 +12,7 @@ from django.utils.module_loading import import_string
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import (absolutify,
                                        add_state_and_nonce_to_session,
+                                       add_state_to_cookie,
                                        import_from_settings)
 
 from urllib.parse import quote, urlencode
@@ -157,6 +158,9 @@ class SessionRefresh(MiddlewareMixin):
             })
 
         add_state_and_nonce_to_session(request, state, params)
+
+        add_state_to_cookie(request, state)
+
 
         request.session['oidc_login_next'] = request.get_full_path()
 

@@ -251,21 +251,28 @@ class OIDCLogoutView(View):
 
 
             session = request.session
-            LOGGER.debug("OIDCLogoutView.session.items()", session.items())
-            LOGGER.debug("OIDCLogoutView.session.keys()", session.keys())
+            LOGGER.debug("OIDCLogoutView.session.items(): ", session.items())
+            LOGGER.debug("OIDCLogoutView.session.keys(): ", session.keys())
 
             id_token_hint = session.get("oidc_id_token")
-            LOGGER.debug("OIDCLogoutView.post.id_token_hint", id_token_hint)
+            LOGGER.debug("OIDCLogoutView.post.id_token_hint: ", id_token_hint)
 
-            # logout_payload = {
-            #     "id_token_hint": id_token_hint,
-            #     "post_logout_redirect_uri": "", # TODO: Do we do this ourselves?
-            #     "state": state
-            # }
+            state = request.get_signed_cookie("oidc_state")
+
+            logout_payload = {
+                "id_token_hint": id_token_hint,
+                "post_logout_redirect_uri": logout_url, # TODO: Do we do this ourselves?
+                "state": state
+            }
+
+            LOGGER.debug("OIDCLogoutView.post.logout_payload: ", json.dumps(logout_payload))
+
+            response = requests.post(self.OIDC_OP_LOGOUT_URL, data=logout_payload)
 
             # Log out the Django user if they were logged in.
             auth.logout(request)
 
+        # TODO: Which redirect is happening? Ok to do both?
         return HttpResponseRedirect(logout_url)
 
     def get(self, request):
