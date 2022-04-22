@@ -19,6 +19,7 @@ from django.views.generic import View
 
 from mozilla_django_oidc.utils import (absolutify,
                                        add_state_and_nonce_to_session,
+                                       add_state_to_cookie,
                                        import_from_settings)
 
 from urllib.parse import urlencode
@@ -190,6 +191,8 @@ class OIDCAuthenticationRequestView(View):
             })
 
         add_state_and_nonce_to_session(request, state, params)
+
+        add_state_to_cookie(request, state)
 
         request.session['oidc_login_next'] = get_next_url(request, redirect_field_name)
 
