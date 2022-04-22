@@ -159,8 +159,7 @@ class SessionRefresh(MiddlewareMixin):
 
         add_state_and_nonce_to_session(request, state, params)
 
-        add_state_to_cookie(request, state)
-
+        #TODO: How do we update the cookie with state?
 
         request.session['oidc_login_next'] = request.get_full_path()
 

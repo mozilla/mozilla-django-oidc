@@ -192,8 +192,6 @@ class OIDCAuthenticationRequestView(View):
 
         add_state_and_nonce_to_session(request, state, params)
 
-        add_state_to_cookie(request, state)
-
         request.session['oidc_login_next'] = get_next_url(request, redirect_field_name)
 
         query = urlencode(params)

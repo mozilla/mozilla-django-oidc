@@ -21,7 +21,7 @@ from josepy.b64 import b64decode
 from josepy.jwk import JWK
 from josepy.jws import JWS, Header
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings
+from mozilla_django_oidc.utils import absolutify, import_from_settings, add_state_to_cookie
 
 LOGGER = logging.getLogger(__name__)
 
@@ -263,6 +263,8 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         LOGGER.debug("get_token.token_payload {}".format(json.dumps(token_payload)))
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
+
+        add_state_to_cookie(response, state)
 
         return response.json()
 

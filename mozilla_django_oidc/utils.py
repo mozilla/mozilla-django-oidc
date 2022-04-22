@@ -101,12 +101,12 @@ def add_state_and_nonce_to_session(request, state, params):
         'added_on': time.time(),
     }
 
-def add_state_to_cookie(request, state):
+def add_state_to_cookie(response, state):
     """
     Adds state to cookie for logout
     """
 
     # TODO: Does this overwrite an existing state cookie?
 
-    request.set_cookie("oidc_state", state)
+    response.set_cookie("oidc_state", state)
 
