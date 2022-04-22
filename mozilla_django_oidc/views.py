@@ -261,7 +261,7 @@ class OIDCLogoutView(View):
 
             logout_payload = {
                 "id_token_hint": id_token_hint,
-                "post_logout_redirect_uri": logout_url, # TODO: Do we do this ourselves?
+                "post_logout_redirect_uri": "", # TODO: Do we do this ourselves?
                 "state": state
             }
 
