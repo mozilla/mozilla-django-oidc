@@ -263,15 +263,19 @@ class OIDCLogoutView(View):
 
             state = request.get_signed_cookie("oidc_state")
 
+            # TODO: What if the user has cookies blocked?
+            # End all sessions? Get latest state
+
             logout_payload = {
                 "id_token_hint": id_token_hint,
-                "post_logout_redirect_uri": "", # TODO: Do we do this ourselves?
+                "post_logout_redirect_uri": logout_url, # TODO: Do we do this ourselves?
                 "state": state
             }
 
             LOGGER.debug("OIDCLogoutView.post.logout_payload: ", json.dumps(logout_payload))
 
             response = requests.post(self.OIDC_OP_LOGOUT_URL, data=logout_payload)
+
 
             # Log out the Django user if they were logged in.
             auth.logout(request)

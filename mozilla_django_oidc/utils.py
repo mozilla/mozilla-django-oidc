@@ -106,7 +106,7 @@ def add_state_to_cookie(response, state):
     """
     Adds state to cookie for logout
     """
-
+    # TODO: add test cookie. If no cookie, end all sessions
     response.set_cookie('oidc_state', state)
 
     return response
