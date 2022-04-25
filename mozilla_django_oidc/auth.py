@@ -264,8 +264,6 @@ class OIDCAuthenticationBackend(ModelBackend):
         LOGGER.debug("get_token.token_payload {}".format(json.dumps(token_payload)))
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
 
-        add_state_to_cookie(response, state)
-
         return response.json()
 
 
@@ -324,6 +322,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         if payload:
             self.store_tokens(access_token, id_token)
+            add_state_to_cookie(state)
             try:
                 return self.get_or_create_user(access_token, id_token, payload)
             except SuspiciousOperation as exc:
