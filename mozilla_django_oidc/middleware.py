@@ -159,9 +159,6 @@ class SessionRefresh(MiddlewareMixin):
 
         add_state_and_nonce_to_session(request, state, params)
 
-        #TODO: How do we update the cookie with state?
-        add_state_to_cookie(state)
-
         request.session['oidc_login_next'] = request.get_full_path()
 
         query = urlencode(params, quote_via=quote)
@@ -178,4 +175,8 @@ class SessionRefresh(MiddlewareMixin):
             response = JsonResponse({'refresh_url': redirect_url}, status=403)
             response['refresh_url'] = redirect_url
             return response
-        return HttpResponseRedirect(redirect_url)
+
+        response = HttpResponseRedirect(redirect_url)
+        add_state_to_cookie(response, state)
+
+        return response

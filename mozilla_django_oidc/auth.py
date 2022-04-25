@@ -21,7 +21,7 @@ from josepy.b64 import b64decode
 from josepy.jwk import JWK
 from josepy.jws import JWS, Header
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings, add_state_to_cookie
+from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -322,7 +322,6 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         if payload:
             self.store_tokens(access_token, id_token)
-            add_state_to_cookie(state)
             try:
                 return self.get_or_create_user(access_token, id_token, payload)
             except SuspiciousOperation as exc:

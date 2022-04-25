@@ -102,12 +102,12 @@ def add_state_and_nonce_to_session(request, state, params):
         'added_on': time.time(),
     }
 
-def add_state_to_cookie(state):
+def add_state_to_cookie(response, state):
     """
     Adds state to cookie for logout
     """
 
-    # Cookies can only be added on response objects, so spoof one
-    response = HttpResponse('add_state_to_cookie')
     response.set_cookie('oidc_state', state)
+
+    return response
 
