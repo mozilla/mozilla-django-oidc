@@ -58,7 +58,10 @@ class OIDCAuthenticationCallbackView(View):
         expiration_interval = self.get_settings('OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS', 60 * 15)
         self.request.session['oidc_id_token_expiration'] = time.time() + expiration_interval
 
-        return HttpResponseRedirect(self.success_url)
+        response = HttpResponseRedirect(self.success_url)
+        response.set_cookie("test", "test")
+
+        return response
 
     def get(self, request):
         """Callback handler for OIDC authorization code flow"""
