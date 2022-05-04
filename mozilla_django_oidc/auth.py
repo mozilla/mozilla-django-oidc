@@ -25,9 +25,6 @@ from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 LOGGER = logging.getLogger(__name__)
 
-# TODO: Move this to OIDCAuthenticationBackend, get from settings
-UNIQUE_IDENTIFIER = "email"
-
 
 def default_username_algo(unique_identifier):
     """Generate username for the Django user.
@@ -53,13 +50,16 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def __init__(self, *args, **kwargs):
         """Initialize settings."""
+        # OP = OIDC provider, or identity provider
         self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings('OIDC_OP_TOKEN_ENDPOINT')
         self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
         self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
+        # RP = Relying Party, or web app
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_RP_CLIENT_SECRET = self.get_settings('OIDC_RP_CLIENT_SECRET')
         self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
+        self.OIDC_RP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_RP_UNIQUE_IDENTIFIER', 'email')
 
         if (self.OIDC_RP_SIGN_ALGO.startswith('RS') and
                 (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
@@ -73,16 +73,15 @@ class OIDCAuthenticationBackend(ModelBackend):
         return import_from_settings(attr, *args)
 
     def describe_user_by_claims(self, claims):
-        unique_identifier_value = claims.get(UNIQUE_IDENTIFIER)
-        return '{} {}'.format(UNIQUE_IDENTIFIER, unique_identifier_value)
+        unique_identifier_value = claims.get(self.OIDC_RP_UNIQUE_IDENTIFIER)
+        return '{} {}'.format(self.OIDC_RP_UNIQUE_IDENTIFIER, unique_identifier_value)
 
     def filter_users_by_claims(self, claims):
         """Return all users matching the specified unique identifier."""
-        unique_identifier_value = claims.get(UNIQUE_IDENTIFIER)
+        unique_identifier_value = claims.get(self.OIDC_RP_UNIQUE_IDENTIFIER)
         if not unique_identifier_value:
             return self.UserModel.objects.none()
-        # TODO: Fix this filter
-        filter_label = UNIQUE_IDENTIFIER + "__iexact"
+        filter_label = self.OIDC_RP_UNIQUE_IDENTIFIER + "__iexact"
         kwargs = {filter_label: unique_identifier_value}
         return self.UserModel.objects.filter(**kwargs)
 
@@ -121,9 +120,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         if username_algo:
             if isinstance(username_algo, str):
                 username_algo = import_string(username_algo)
-            return username_algo(claims.get(UNIQUE_IDENTIFIER))
+            return username_algo(claims.get(self.OIDC_RP_UNIQUE_IDENTIFIER))
 
-        return default_username_algo(claims.get(UNIQUE_IDENTIFIER))
+        return default_username_algo(claims.get(self.OIDC_RP_UNIQUE_IDENTIFIER))
 
     def update_user(self, user, claims):
         """Update existing user with new claims, if necessary save, and return user"""
