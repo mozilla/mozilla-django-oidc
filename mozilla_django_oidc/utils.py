@@ -4,7 +4,6 @@ import warnings
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.http import HttpResponse
 
 from urllib.request import parse_http_list, parse_keqv_list
 
@@ -102,6 +101,7 @@ def add_state_and_nonce_to_session(request, state, params):
         'added_on': time.time(),
     }
 
+
 def add_state_to_cookie(response, state):
     """
     Adds state to cookie for logout
@@ -110,4 +110,3 @@ def add_state_to_cookie(response, state):
     response.set_signed_cookie('oidc_state', state)
 
     return response
-

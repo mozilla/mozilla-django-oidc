@@ -8,7 +8,6 @@ import secrets
 import time
 import jwt
 # /logindotgov-oidc
-from requests.auth import HTTPBasicAuth
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
@@ -60,6 +59,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
         self.OIDC_RP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_RP_UNIQUE_IDENTIFIER', 'email')
+        self.OIDC_RP_EXTRA_USER_FIELDS = self.get_settings('OIDC_RP_EXTRA_USER_FIELDS', {})
 
         if (self.OIDC_RP_SIGN_ALGO.startswith('RS') and
                 (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
@@ -92,11 +92,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         LOGGER.debug("verify_claims.claims (user_info", json.dumps(claims))
 
         # Scopes are user attributes requested, not necessarily claims
-        # scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
+        scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
 
-        # TODO: Swap out for openID/sub?
-        # if 'email' in scopes.split():
-        #     return 'email' in claims
+        if 'email' in scopes.split():
+            return 'email' in claims
 
         LOGGER.warning('Custom OIDC_RP_SCOPES defined. '
                        'You need to override `verify_claims` for custom claims verification.')
@@ -105,18 +104,17 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def create_user(self, claims):
         """Return object for a newly created user account."""
+
+        LOGGER.debug("verify_claims.claims (user_info", json.dumps(claims))
         email = claims.get('email')
-        uuid = claims.get('sub')
-        first_name = claims.get('given_name')
-        last_name = claims.get('family_name')
         username = self.get_username(claims)
-        # TODO: Temporarily put uuid in last_name
+
+        extra_params = {key: claims.get(value) for (key,value) in self.OIDC_RP_EXTRA_USER_FIELDS.items()}
+
         return self.UserModel.objects.create_user(
             username,
             email=email,
-            first_name=first_name,
-            last_name=last_name,
-            uuid=uuid
+            **extra_params
         )
 
     def get_username(self, claims):
@@ -272,7 +270,6 @@ class OIDCAuthenticationBackend(ModelBackend):
         response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
 
         return response.json()
-
 
     def get_userinfo(self, access_token, id_token, payload):
         """Return user details dictionary. The id_token and payload are not used in

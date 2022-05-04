@@ -233,27 +233,11 @@ class OIDCLogoutView(View):
         if request.user.is_authenticated:
             # Check if a method exists to build the URL to log out the user
             # from the OP.
-            # logout_from_op = self.get_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
-            # if logout_from_op:
-            #     logout_url = import_string(logout_from_op)(request)
+            logout_from_op = self.get_settings('OIDC_OP_LOGOUT_URL_METHOD', '')
+            if logout_from_op:
+                logout_url = import_string(logout_from_op)(request)
 
             # Log out of login.gov
-
-            # Example
-            # https://idp.int.identitysandbox.gov/openid_connect/logout?
-            # id_token_hint=eyJ0...g&
-            # post_logout_redirect_uri=${REDIRECT_URI}&
-            # state=abcdefghijklmnopabcdefghijklmnop
-
-            # id_token_hint
-            # An id_token value from the token endpoint response.
-
-            # post_logout_redirect_uri
-            # The URI Login.gov will redirect to after logout.
-
-            # state
-            # A unique value at least 22 characters in length used for maintaining state between the request and the callback. This value will be returned to the client on a successful logout.
-
 
             session = request.session
             LOGGER.debug("OIDCLogoutView.session.items(): ", session.items())
@@ -276,7 +260,6 @@ class OIDCLogoutView(View):
             LOGGER.debug("OIDCLogoutView.post.logout_payload: ", json.dumps(logout_payload))
 
             response = requests.post(self.OIDC_OP_LOGOUT_URL, data=logout_payload)
-
 
             # Log out the Django user if they were logged in.
             auth.logout(request)
