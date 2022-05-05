@@ -53,13 +53,14 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings('OIDC_OP_TOKEN_ENDPOINT')
         self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
         self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
+        # Sometimes the OP has a different label for the unique ID
+        self.OIDC_OP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_OP_UNIQUE_IDENTIFIER', 'email')
         # RP = Relying Party, or web app
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_RP_CLIENT_SECRET = self.get_settings('OIDC_RP_CLIENT_SECRET')
         self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
         self.OIDC_RP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_RP_UNIQUE_IDENTIFIER', 'email')
-        self.OIDC_RP_EXTRA_USER_FIELDS = self.get_settings('OIDC_RP_EXTRA_USER_FIELDS', {})
 
         if (self.OIDC_RP_SIGN_ALGO.startswith('RS') and
                 (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
@@ -72,15 +73,21 @@ class OIDCAuthenticationBackend(ModelBackend):
     def get_settings(attr, *args):
         return import_from_settings(attr, *args)
 
+    def get_idp_unique_id_value(self, claims):
+        """Helper method to clarify whether we're using OP or RP unique ID"""
+        return claims.get(self.OIDC_OP_UNIQUE_IDENTIFIER)
+
     def describe_user_by_claims(self, claims):
-        unique_identifier_value = claims.get(self.OIDC_RP_UNIQUE_IDENTIFIER)
+        unique_identifier_value = self.get_idp_unique_id_value(claims)
         return '{} {}'.format(self.OIDC_RP_UNIQUE_IDENTIFIER, unique_identifier_value)
 
     def filter_users_by_claims(self, claims):
         """Return all users matching the specified unique identifier."""
-        unique_identifier_value = claims.get(self.OIDC_RP_UNIQUE_IDENTIFIER)
+        # Get the unique ID value from IDP
+        unique_identifier_value = self.get_idp_unique_id_value(claims)
         if not unique_identifier_value:
             return self.UserModel.objects.none()
+        # Use the app label to filter
         filter_label = self.OIDC_RP_UNIQUE_IDENTIFIER + "__iexact"
         kwargs = {filter_label: unique_identifier_value}
         return self.UserModel.objects.filter(**kwargs)
@@ -109,7 +116,13 @@ class OIDCAuthenticationBackend(ModelBackend):
         email = claims.get('email')
         username = self.get_username(claims)
 
-        extra_params = {key: claims.get(value) for (key,value) in self.OIDC_RP_EXTRA_USER_FIELDS.items()}
+        # Create user with custom values if they're specified
+        if not (self.OIDC_RP_UNIQUE_IDENTIFIER == self.OIDC_RP_UNIQUE_IDENTIFIER == 'email'):
+            # { app_field: idp_field}
+            # { "uuid": "sub"}
+            extra_params = {self.OIDC_RP_UNIQUE_IDENTIFIER: self.OIDC_OP_UNIQUE_IDENTIFIER}
+        else:
+            extra_params = {}
 
         return self.UserModel.objects.create_user(
             username,
@@ -126,9 +139,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         if username_algo:
             if isinstance(username_algo, str):
                 username_algo = import_string(username_algo)
-            return username_algo(claims.get(self.OIDC_RP_UNIQUE_IDENTIFIER))
+            return username_algo(self.get_idp_unique_id_value(claims))
 
-        return default_username_algo(claims.get(self.OIDC_RP_UNIQUE_IDENTIFIER))
+        return default_username_algo(self.get_idp_unique_id_value(claims))
 
     def update_user(self, user, claims):
         """Update existing user with new claims, if necessary save, and return user"""
