@@ -55,6 +55,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
         # Sometimes the OP has a different label for the unique ID
         self.OIDC_OP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_OP_UNIQUE_IDENTIFIER', 'email')
+        self.OIDC_OP_CLIENT_AUTH_METHOD = self.get_settings('OIDC_OP_CLIENT_AUTH_METHOD', 'implicit_flow')
         # RP = Relying Party, or web app
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_RP_CLIENT_SECRET = self.get_settings('OIDC_RP_CLIENT_SECRET')
@@ -119,8 +120,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         # Create user with custom values if they're specified
         if not (self.OIDC_RP_UNIQUE_IDENTIFIER == self.OIDC_RP_UNIQUE_IDENTIFIER == 'email'):
             # { app_field: idp_field}
-            # { "uuid": "sub"}
-            extra_params = {self.OIDC_RP_UNIQUE_IDENTIFIER: self.OIDC_OP_UNIQUE_IDENTIFIER}
+            # { "uuid": "sub_value"}
+            extra_params = {self.OIDC_RP_UNIQUE_IDENTIFIER: self.get_idp_unique_id_value(claims)}
         else:
             extra_params = {}
 
@@ -254,34 +255,53 @@ class OIDCAuthenticationBackend(ModelBackend):
         https://github.com/trussworks/logindotgov-oidc-py
         """
 
-        jwt_args = {
-            "iss": self.OIDC_RP_CLIENT_ID,
-            "sub": self.OIDC_RP_CLIENT_ID,
-            "aud": self.OIDC_OP_TOKEN_ENDPOINT,
-            "jti": secrets.token_hex(16),
-            "exp": int(time.time()) + 300,  # 5 minutes from now
-        }
-        LOGGER.debug("get_token.jwt_args: {}".format(json.dumps(jwt_args)))
+        if self.OIDC_OP_CLIENT_AUTH_METHOD == "private_key_jwt":
+            jwt_args = {
+                "iss": self.OIDC_RP_CLIENT_ID,
+                "sub": self.OIDC_RP_CLIENT_ID,
+                "aud": self.OIDC_OP_TOKEN_ENDPOINT,
+                "jti": secrets.token_hex(16),
+                "exp": int(time.time()) + 300,  # 5 minutes from now
+            }
+            LOGGER.debug("get_token.jwt_args: {}".format(json.dumps(jwt_args)))
 
-        # Client secret needs to be pem-encoded string
-        encoded_jwt = jwt.encode(
-            jwt_args,
-            self.OIDC_RP_CLIENT_SECRET,
-            algorithm=self.OIDC_RP_SIGN_ALGO
-        )
+            # Client secret needs to be pem-encoded string
+            encoded_jwt = jwt.encode(
+                jwt_args,
+                self.OIDC_RP_CLIENT_SECRET,
+                algorithm=self.OIDC_RP_SIGN_ALGO
+            )
+            LOGGER.debug("get_token original payload: {}".format(json.dumps(payload)))
 
-        LOGGER.debug("get_token original payload: {}".format(json.dumps(payload)))
+            token_payload = {
+                "client_assertion": encoded_jwt,
+                "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                "code": payload.get("code"),
+                "grant_type": "authorization_code",
+            }
 
-        token_payload = {
-            "client_assertion": encoded_jwt,
-            "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-            "code": payload.get("code"),
-            "grant_type": "authorization_code",
-        }
+            LOGGER.debug("get_token.token_payload {}".format(json.dumps(token_payload)))
+            response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
+            return response.json()
 
-        LOGGER.debug("get_token.token_payload {}".format(json.dumps(token_payload)))
-        response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
+        # Default implementation
+        auth = None
+        if self.get_settings('OIDC_TOKEN_USE_BASIC_AUTH', False):
+            # When Basic auth is defined, create the Auth Header and remove secret from payload.
+            user = payload.get('client_id')
+            pw = payload.get('client_secret')
 
+            auth = HTTPBasicAuth(user, pw)
+            del payload['client_secret']
+
+        response = requests.post(
+            self.OIDC_OP_TOKEN_ENDPOINT,
+            data=payload,
+            auth=auth,
+            verify=self.get_settings('OIDC_VERIFY_SSL', True),
+            timeout=self.get_settings('OIDC_TIMEOUT', None),
+            proxies=self.get_settings('OIDC_PROXY', None))
+        response.raise_for_status()
         return response.json()
 
     def get_userinfo(self, access_token, id_token, payload):
