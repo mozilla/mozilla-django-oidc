@@ -92,7 +92,12 @@ class OIDCAuthenticationBackend(ModelBackend):
         # Use the app label to filter
         filter_label = self.OIDC_RP_UNIQUE_IDENTIFIER + "__iexact"
         kwargs = {filter_label: unique_identifier_value}
-        return self.UserModel.objects.filter(**kwargs)
+        LOGGER.debug("filter_label", filter_label)
+        LOGGER.debug("unique_identifier_value", unique_identifier_value)
+        filtered_users = self.UserModel.objects.filter(**kwargs)
+        LOGGER.debug("filtered_users query", filtered_users.query)
+
+        return filtered_users
 
     def verify_claims(self, claims):
         """Verify the provided claims to decide if authentication should be allowed."""
