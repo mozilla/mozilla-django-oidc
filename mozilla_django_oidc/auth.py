@@ -151,9 +151,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         return default_username_algo(self.get_idp_unique_id_value(claims))
 
     def update_user(self, user, claims):
-        """Update existing user with new claims, if necessary save, and return user"""
+        """Update existing user with new email, if necessary save, and return user"""
 
-        # TODO: This isn't built out
+        user.email = claims.get("email")
+        user.save()
         return user
 
     def _verify_jws(self, payload, key):
