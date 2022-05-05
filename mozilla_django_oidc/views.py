@@ -246,7 +246,7 @@ class OIDCLogoutView(View):
             id_token_hint = session.get("oidc_id_token")
             LOGGER.debug("OIDCLogoutView.post.id_token_hint: ", id_token_hint)
 
-            state = request.get_signed_cookie("oidc_state")
+            state = request.get_signed_cookie("oidc_state", None)
 
             # TODO: What if the user has cookies blocked?
             # End all sessions? Get latest state

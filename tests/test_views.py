@@ -7,6 +7,7 @@ from mock import patch
 from django.core.exceptions import SuspiciousOperation
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.urls import reverse
 from django.test import RequestFactory, TestCase, override_settings, Client
 
@@ -564,6 +565,7 @@ class OIDCLogoutViewTestCase(TestCase):
     def test_get_anonymous_user(self):
         url = reverse('oidc_logout')
         request = self.factory.post(url)
+        request.session = {'oidc_state': '123'}
         request.user = AnonymousUser()
         logout_view = views.OIDCLogoutView.as_view()
 
@@ -576,6 +578,7 @@ class OIDCLogoutViewTestCase(TestCase):
         user = User.objects.create_user('example_username')
         url = reverse('oidc_logout')
         request = self.factory.post(url)
+        request.session = {'oidc_state': '123'}
         request.user = user
         logout_view = views.OIDCLogoutView.as_view()
 
@@ -592,6 +595,7 @@ class OIDCLogoutViewTestCase(TestCase):
         user = User.objects.create_user('example_username')
         url = reverse('oidc_logout')
         request = self.factory.post(url)
+        request.session = {'oidc_state': '123'}
         request.user = user
         logout_view = views.OIDCLogoutView.as_view()
 
