@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import requests
+from requests.auth import HTTPBasicAuth
 # logindotgov-oidc
 import secrets
 import time
