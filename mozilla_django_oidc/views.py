@@ -49,9 +49,13 @@ class OIDCAuthenticationCallbackView(View):
         auth.login(self.request, self.user)
 
         # Figure out when this id_token will expire. This is ignored unless you're
-        # using the RenewIDToken middleware.
-        expiration_interval = self.get_settings('OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS', 60 * 15)
-        self.request.session['oidc_id_token_expiration'] = time.time() + expiration_interval
+        # using the SessionRefresh or RefreshOIDCAccessToken middlewares.
+        expiration_interval = self.get_settings(
+            'OIDC_RENEW_TOKEN_EXPIRY_SECONDS',
+            # Handle old configuration value
+            self.get_settings('OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS', 60 * 15)
+        )
+        self.request.session['oidc_token_expiration'] = time.time() + expiration_interval
 
         return HttpResponseRedirect(self.success_url)
 
