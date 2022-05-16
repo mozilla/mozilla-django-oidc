@@ -37,6 +37,7 @@ install_requirements = [
     'josepy',
     'requests',
     'cryptography',
+    'pyjwt',
 ]
 
 setup(

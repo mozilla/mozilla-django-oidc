@@ -12,6 +12,7 @@ from django.utils.module_loading import import_string
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import (absolutify,
                                        add_state_and_nonce_to_session,
+                                       add_state_to_cookie,
                                        import_from_settings)
 
 from urllib.parse import quote, urlencode
@@ -174,4 +175,8 @@ class SessionRefresh(MiddlewareMixin):
             response = JsonResponse({'refresh_url': redirect_url}, status=403)
             response['refresh_url'] = redirect_url
             return response
-        return HttpResponseRedirect(redirect_url)
+
+        response = HttpResponseRedirect(redirect_url)
+        add_state_to_cookie(response, state)
+
+        return response

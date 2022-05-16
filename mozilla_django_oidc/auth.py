@@ -4,6 +4,11 @@ import json
 import logging
 import requests
 from requests.auth import HTTPBasicAuth
+# logindotgov-oidc
+import secrets
+import time
+import jwt
+# /logindotgov-oidc
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
@@ -21,20 +26,20 @@ from mozilla_django_oidc.utils import absolutify, import_from_settings
 LOGGER = logging.getLogger(__name__)
 
 
-def default_username_algo(email):
+def default_username_algo(unique_identifier):
     """Generate username for the Django user.
 
-    :arg str/unicode email: the email address to use to generate a username
+    :arg str/unicode unique_identifier: the unique_identifier to use to generate a username
 
     :returns: str/unicode
 
     """
     # bluntly stolen from django-browserid
-    # store the username as a base64 encoded sha224 of the email address
+    # store the username as a base64 encoded sha224 of the unique_identifier
     # this protects against data leakage because usernames are often
-    # treated as public identifiers (so we can't use the email address).
+    # treated as public identifiers (so we can't use the unique_identifier).
     username = base64.urlsafe_b64encode(
-        hashlib.sha1(force_bytes(email)).digest()
+        hashlib.sha1(force_bytes(unique_identifier)).digest()
     ).rstrip(b'=')
 
     return smart_str(username)
@@ -45,13 +50,19 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def __init__(self, *args, **kwargs):
         """Initialize settings."""
+        # OP = OIDC provider, or identity provider
         self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings('OIDC_OP_TOKEN_ENDPOINT')
         self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
         self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
+        # Sometimes the OP has a different label for the unique ID
+        self.OIDC_OP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_OP_UNIQUE_IDENTIFIER', 'email')
+        self.OIDC_OP_CLIENT_AUTH_METHOD = self.get_settings('OIDC_OP_CLIENT_AUTH_METHOD', 'implicit_flow')
+        # RP = Relying Party, or web app
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_RP_CLIENT_SECRET = self.get_settings('OIDC_RP_CLIENT_SECRET')
         self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
+        self.OIDC_RP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_RP_UNIQUE_IDENTIFIER', 'email')
 
         if (self.OIDC_RP_SIGN_ALGO.startswith('RS') and
                 (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
@@ -64,22 +75,39 @@ class OIDCAuthenticationBackend(ModelBackend):
     def get_settings(attr, *args):
         return import_from_settings(attr, *args)
 
+    def get_idp_unique_id_value(self, claims):
+        """Helper method to clarify whether we're using OP or RP unique ID"""
+        return claims.get(self.OIDC_OP_UNIQUE_IDENTIFIER)
+
     def describe_user_by_claims(self, claims):
-        email = claims.get('email')
-        return 'email {}'.format(email)
+        unique_identifier_value = self.get_idp_unique_id_value(claims)
+        return '{} {}'.format(self.OIDC_RP_UNIQUE_IDENTIFIER, unique_identifier_value)
 
     def filter_users_by_claims(self, claims):
-        """Return all users matching the specified email."""
-        email = claims.get('email')
-        if not email:
+        """Return all users matching the specified unique identifier."""
+        # Get the unique ID value from IDP
+        unique_identifier_value = self.get_idp_unique_id_value(claims)
+        if not unique_identifier_value:
             return self.UserModel.objects.none()
-        return self.UserModel.objects.filter(email__iexact=email)
+        # Use the app label to filter
+        filter_label = self.OIDC_RP_UNIQUE_IDENTIFIER + "__iexact"
+        kwargs = {filter_label: unique_identifier_value}
+        LOGGER.debug("filter_label", filter_label)
+        LOGGER.debug("unique_identifier_value", unique_identifier_value)
+        filtered_users = self.UserModel.objects.filter(**kwargs)
+        LOGGER.debug("filtered_users query", filtered_users.query)
+
+        return filtered_users
 
     def verify_claims(self, claims):
         """Verify the provided claims to decide if authentication should be allowed."""
 
         # Verify claims required by default configuration
+        LOGGER.debug("verify_claims.claims (user_info", json.dumps(claims))
+
+        # Scopes are user attributes requested, not necessarily claims
         scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
+
         if 'email' in scopes.split():
             return 'email' in claims
 
@@ -90,9 +118,24 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def create_user(self, claims):
         """Return object for a newly created user account."""
+
+        LOGGER.debug("verify_claims.claims (user_info", json.dumps(claims))
         email = claims.get('email')
         username = self.get_username(claims)
-        return self.UserModel.objects.create_user(username, email=email)
+
+        # Create user with custom values if they're specified
+        if not (self.OIDC_RP_UNIQUE_IDENTIFIER == self.OIDC_RP_UNIQUE_IDENTIFIER == 'email'):
+            # { app_field: idp_field}
+            # { "uuid": "sub_value"}
+            extra_params = {self.OIDC_RP_UNIQUE_IDENTIFIER: self.get_idp_unique_id_value(claims)}
+        else:
+            extra_params = {}
+
+        return self.UserModel.objects.create_user(
+            username,
+            email=email,
+            **extra_params
+        )
 
     def get_username(self, claims):
         """Generate username based on claims."""
@@ -103,12 +146,15 @@ class OIDCAuthenticationBackend(ModelBackend):
         if username_algo:
             if isinstance(username_algo, str):
                 username_algo = import_string(username_algo)
-            return username_algo(claims.get('email'))
+            return username_algo(self.get_idp_unique_id_value(claims))
 
-        return default_username_algo(claims.get('email'))
+        return default_username_algo(self.get_idp_unique_id_value(claims))
 
     def update_user(self, user, claims):
-        """Update existing user with new claims, if necessary save, and return user"""
+        """Update existing user with new email, if necessary save, and return user"""
+
+        user.email = claims.get("email")
+        user.save()
         return user
 
     def _verify_jws(self, payload, key):
@@ -211,8 +257,41 @@ class OIDCAuthenticationBackend(ModelBackend):
         return payload
 
     def get_token(self, payload):
-        """Return token object as a dictionary."""
+        """Return token object as a dictionary.
+        Borrowed from logindotgov-oidc, modified
+        https://github.com/trussworks/logindotgov-oidc-py
+        """
 
+        if self.OIDC_OP_CLIENT_AUTH_METHOD == "private_key_jwt":
+            jwt_args = {
+                "iss": self.OIDC_RP_CLIENT_ID,
+                "sub": self.OIDC_RP_CLIENT_ID,
+                "aud": self.OIDC_OP_TOKEN_ENDPOINT,
+                "jti": secrets.token_hex(16),
+                "exp": int(time.time()) + 300,  # 5 minutes from now
+            }
+            LOGGER.debug("get_token.jwt_args: {}".format(json.dumps(jwt_args)))
+
+            # Client secret needs to be pem-encoded string
+            encoded_jwt = jwt.encode(
+                jwt_args,
+                self.OIDC_RP_CLIENT_SECRET,
+                algorithm=self.OIDC_RP_SIGN_ALGO
+            )
+            LOGGER.debug("get_token original payload: {}".format(json.dumps(payload)))
+
+            token_payload = {
+                "client_assertion": encoded_jwt,
+                "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                "code": payload.get("code"),
+                "grant_type": "authorization_code",
+            }
+
+            LOGGER.debug("get_token.token_payload {}".format(json.dumps(token_payload)))
+            response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
+            return response.json()
+
+        # Default implementation
         auth = None
         if self.get_settings('OIDC_TOKEN_USE_BASIC_AUTH', False):
             # When Basic auth is defined, create the Auth Header and remove secret from payload.
@@ -244,6 +323,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             verify=self.get_settings('OIDC_VERIFY_SSL', True),
             timeout=self.get_settings('OIDC_TIMEOUT', None),
             proxies=self.get_settings('OIDC_PROXY', None))
+        LOGGER.debug("get_userinfo.user_response: {}".format(json.dumps(user_response.json())))
         user_response.raise_for_status()
         return user_response.json()
 
@@ -264,15 +344,16 @@ class OIDCAuthenticationBackend(ModelBackend):
         reverse_url = self.get_settings('OIDC_AUTHENTICATION_CALLBACK_URL',
                                         'oidc_authentication_callback')
 
+        redirect_uri = absolutify(self.request, reverse(reverse_url))
+
+        LOGGER.debug("authenticate.redirect_uri: {}".format({redirect_uri}))
+
         token_payload = {
             'client_id': self.OIDC_RP_CLIENT_ID,
             'client_secret': self.OIDC_RP_CLIENT_SECRET,
             'grant_type': 'authorization_code',
             'code': code,
-            'redirect_uri': absolutify(
-                self.request,
-                reverse(reverse_url)
-            ),
+            'redirect_uri': redirect_uri,
         }
 
         # Get the token
@@ -307,6 +388,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Returns a User instance if 1 user is found. Creates a user if not found
         and configured to do so. Returns nothing if multiple users are matched."""
 
+        LOGGER.debug("get_or_create_user.access_token", access_token)
+        LOGGER.debug("get_or_create_user.id_token", id_token)
+        LOGGER.debug("get_or_create_user.json.dumps(payload)", json.dumps(payload))
+
         user_info = self.get_userinfo(access_token, id_token, payload)
 
         claims_verified = self.verify_claims(user_info)
@@ -314,13 +399,13 @@ class OIDCAuthenticationBackend(ModelBackend):
             msg = 'Claims verification failed'
             raise SuspiciousOperation(msg)
 
-        # email based filtering
+        # unique identifier-based filtering
         users = self.filter_users_by_claims(user_info)
 
         if len(users) == 1:
             return self.update_user(users[0], user_info)
         elif len(users) > 1:
-            # In the rare case that two user accounts have the same email address,
+            # In the rare case that two user accounts have the same unique identifier,
             # bail. Randomly selecting one seems really wrong.
             msg = 'Multiple users returned'
             raise SuspiciousOperation(msg)

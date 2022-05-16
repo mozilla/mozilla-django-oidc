@@ -1,4 +1,7 @@
 import time
+import requests
+import logging
+import json
 
 from django.contrib import auth
 from django.core.exceptions import SuspiciousOperation
@@ -17,9 +20,12 @@ from django.views.generic import View
 
 from mozilla_django_oidc.utils import (absolutify,
                                        add_state_and_nonce_to_session,
+                                       add_state_to_cookie,
                                        import_from_settings)
 
 from urllib.parse import urlencode
+
+LOGGER = logging.getLogger(__name__)
 
 
 class OIDCAuthenticationCallbackView(View):
@@ -191,7 +197,10 @@ class OIDCAuthenticationRequestView(View):
 
         query = urlencode(params)
         redirect_url = '{url}?{query}'.format(url=self.OIDC_OP_AUTH_ENDPOINT, query=query)
-        return HttpResponseRedirect(redirect_url)
+
+        response = HttpResponseRedirect(redirect_url)
+        add_state_to_cookie(response, state)
+        return response
 
     def get_extra_params(self, request):
         return self.get_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', {})
@@ -201,6 +210,12 @@ class OIDCLogoutView(View):
     """Logout helper view"""
 
     http_method_names = ['get', 'post']
+
+    def __init__(self, *args, **kwargs):
+        """Initialize settings."""
+        # TODO: get this from new setting
+        self.OIDC_OP_LOGOUT_URL = "https://idp.int.identitysandbox.gov/openid_connect/logout"
+
 
     @staticmethod
     def get_settings(attr, *args):
@@ -222,9 +237,34 @@ class OIDCLogoutView(View):
             if logout_from_op:
                 logout_url = import_string(logout_from_op)(request)
 
+            # Log out of login.gov
+
+            session = request.session
+            LOGGER.debug("OIDCLogoutView.session.items(): ", session.items())
+            LOGGER.debug("OIDCLogoutView.session.keys(): ", session.keys())
+
+            id_token_hint = session.get("oidc_id_token")
+            LOGGER.debug("OIDCLogoutView.post.id_token_hint: ", id_token_hint)
+
+            state = request.get_signed_cookie("oidc_state", None)
+
+            # TODO: What if the user has cookies blocked?
+            # End all sessions? Get latest state
+
+            logout_payload = {
+                "id_token_hint": id_token_hint,
+                "post_logout_redirect_uri": logout_url, # TODO: Do we do this ourselves?
+                "state": state
+            }
+
+            LOGGER.debug("OIDCLogoutView.post.logout_payload: ", json.dumps(logout_payload))
+
+            response = requests.post(self.OIDC_OP_LOGOUT_URL, data=logout_payload)
+
             # Log out the Django user if they were logged in.
             auth.logout(request)
 
+        # TODO: Which redirect is happening? Ok to do both?
         return HttpResponseRedirect(logout_url)
 
     def get(self, request):
