@@ -5,6 +5,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponseRedirect, HttpResponseNotAllowed
 from django.urls import reverse
 from django.utils.crypto import get_random_string
+from django.shortcuts import resolve_url
 
 try:
     from django.utils.http import url_has_allowed_host_and_scheme
@@ -40,7 +41,7 @@ class OIDCAuthenticationCallbackView(View):
         # Pull the next url from the session or settings--we don't need to
         # sanitize here because it should already have been sanitized.
         next_url = self.request.session.get('oidc_login_next', None)
-        return next_url or self.get_settings('LOGIN_REDIRECT_URL', '/')
+        return next_url or resolve_url(self.get_settings('LOGIN_REDIRECT_URL', '/'))
 
     def login_failure(self):
         return HttpResponseRedirect(self.failure_url)
