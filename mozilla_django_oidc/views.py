@@ -47,7 +47,11 @@ class OIDCAuthenticationCallbackView(View):
         return HttpResponseRedirect(self.failure_url)
 
     def login_success(self):
-        auth.login(self.request, self.user)
+        # If the user hasn't changed (because this is a session refresh instead of a
+        # normal login), don't call login. This prevents invaliding the user's current CSRF token
+        request_user = getattr(self.request, 'user', None)
+        if not request_user or not request_user.is_authenticated or request_user != self.user:
+            auth.login(self.request, self.user)
 
         # Figure out when this id_token will expire. This is ignored unless you're
         # using the SessionRefresh middleware.
