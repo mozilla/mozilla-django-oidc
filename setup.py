@@ -8,9 +8,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-
 from mozilla_django_oidc import __version__ as VERSION
-
 
 if sys.argv[-1] == 'publish':
     try:
@@ -33,7 +31,7 @@ readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 install_requirements = [
-    'Django >= 2.2',
+    'Django >= 3.2',
     'josepy',
     'requests',
     'cryptography',
@@ -56,10 +54,8 @@ setup(
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Framework :: Django',
-        'Framework :: Django :: 2.2',
-        'Framework :: Django :: 3.0',
-        'Framework :: Django :: 3.1',
         'Framework :: Django :: 3.2',
+        'Framework :: Django :: 4.0',
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
         'Intended Audience :: Developers',
         'Operating System :: MacOS',
@@ -67,9 +63,9 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
 )
