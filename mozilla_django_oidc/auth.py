@@ -124,7 +124,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         username = self.get_username(claims)
 
         # Create user with custom values if they're specified
-        if not (self.OIDC_RP_UNIQUE_IDENTIFIER == self.OIDC_RP_UNIQUE_IDENTIFIER == 'email'):
+        if not ((self.OIDC_RP_UNIQUE_IDENTIFIER == self.OIDC_RP_UNIQUE_IDENTIFIER == 'email') or 
+            (self.OIDC_RP_UNIQUE_IDENTIFIER == self.OIDC_RP_UNIQUE_IDENTIFIER == 'username')):
             # { app_field: idp_field}
             # { "uuid": "sub_value"}
             extra_params = {self.OIDC_RP_UNIQUE_IDENTIFIER: self.get_idp_unique_id_value(claims)}
@@ -132,8 +133,8 @@ class OIDCAuthenticationBackend(ModelBackend):
             extra_params = {}
 
         return self.UserModel.objects.create_user(
-            username,
-            email=email,
+            email,
+            username=username,
             **extra_params
         )
 
@@ -287,7 +288,7 @@ class OIDCAuthenticationBackend(ModelBackend):
                 "grant_type": "authorization_code",
             }
 
-            LOGGER.debug("get_token.token_payload {}".format(json.dumps(token_payload)))
+            LOGGER.debug("get_token.token_payload")
             response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
             return response.json()
 
