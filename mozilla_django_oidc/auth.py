@@ -15,6 +15,7 @@ from josepy.b64 import b64decode
 from josepy.jwk import JWK
 from josepy.jws import JWS, Header
 from requests.auth import HTTPBasicAuth
+from requests.exceptions import HTTPError
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
 
@@ -243,8 +244,19 @@ class OIDCAuthenticationBackend(ModelBackend):
             timeout=self.get_settings("OIDC_TIMEOUT", None),
             proxies=self.get_settings("OIDC_PROXY", None),
         )
-        response.raise_for_status()
+        self.raise_token_response_error(response)
         return response.json()
+
+    def raise_token_response_error(self, response):
+        """Raises :class:`HTTPError`, if one occurred.
+        as per: https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
+        """
+        # if there wasn't an error all is good
+        if response.status_code == 200:
+            return
+        # otherwise something is up...
+        http_error_msg = f"Get Token Error (url: {response.url}, status: {response.status_code}, body: {response.text})"
+        raise HTTPError(http_error_msg, response=response)
 
     def get_userinfo(self, access_token, id_token, payload):
         """Return user details dictionary. The id_token and payload are not used in
