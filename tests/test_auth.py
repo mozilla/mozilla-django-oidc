@@ -566,7 +566,6 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         ]
         jws_mock.assert_has_calls(calls)
 
-    @override_settings(OIDC_VERIFY_JWT=False)
     @override_settings(OIDC_USE_NONCE=False)
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend._verify_jws')
     @patch('mozilla_django_oidc.auth.requests')
