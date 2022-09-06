@@ -124,8 +124,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         username = self.get_username(claims)
 
         # Create user with custom values if they're specified
-        if not ((self.OIDC_RP_UNIQUE_IDENTIFIER == self.OIDC_RP_UNIQUE_IDENTIFIER == 'email') or 
-            (self.OIDC_RP_UNIQUE_IDENTIFIER == self.OIDC_RP_UNIQUE_IDENTIFIER == 'username')):
+        if not ((self.OIDC_RP_UNIQUE_IDENTIFIER == 'email') or 
+            (self.OIDC_RP_UNIQUE_IDENTIFIER == 'username')):
             # { app_field: idp_field}
             # { "uuid": "sub_value"}
             extra_params = {self.OIDC_RP_UNIQUE_IDENTIFIER: self.get_idp_unique_id_value(claims)}
