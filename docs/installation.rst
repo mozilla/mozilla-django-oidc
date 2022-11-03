@@ -85,6 +85,10 @@ Start by making the following changes to your ``settings.py`` file.
    AUTHENTICATION_BACKENDS = (
        'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
        # ...
+       
+   # Configure django's login_required decorator
+   # to use mozilla-django-keycloak's login URL
+   LOGIN_URL = 'oidc_authentication_init'
    )
 
 You also need to configure some OpenID Connect related settings too.
