@@ -1,24 +1,21 @@
 import json
 import re
 import time
-
 from urllib.parse import parse_qs
 
-from mock import patch
-
-from django.urls import path
 from django.contrib.auth import get_user_model
-from django.contrib.auth.signals import user_logged_out
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.signals import user_logged_out
 from django.core.cache import cache
 from django.dispatch import receiver
 from django.http import HttpResponse
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.test.client import ClientHandler
+from django.urls import path
+from mock import MagicMock, patch
 
 from mozilla_django_oidc.middleware import SessionRefresh
 from mozilla_django_oidc.urls import urlpatterns as orig_urlpatterns
-
 
 User = get_user_model()
 
@@ -30,7 +27,7 @@ User = get_user_model()
 class SessionRefreshTokenMiddlewareTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.middleware = SessionRefresh()
+        self.middleware = SessionRefresh(MagicMock)
         self.user = User.objects.create_user('example_username')
 
     def test_anonymous(self, mock_middleware_random):
@@ -210,7 +207,7 @@ class MiddlewareTestCase(TestCase):
 
     @override_settings(OIDC_EXEMPT_URLS=['mdo_fake_view'])
     def test_get_exempt_urls_setting_view_name(self):
-        middleware = SessionRefresh()
+        middleware = SessionRefresh(MagicMock())
         self.assertEqual(
             sorted(list(middleware.exempt_urls)),
             [u'/authenticate/', u'/callback/', u'/logout/', u'/mdo_fake_view/']
@@ -218,7 +215,7 @@ class MiddlewareTestCase(TestCase):
 
     @override_settings(OIDC_EXEMPT_URLS=['/foo/'])
     def test_get_exempt_urls_setting_url_path(self):
-        middleware = SessionRefresh()
+        middleware = SessionRefresh(MagicMock())
         self.assertEqual(
             sorted(list(middleware.exempt_urls)),
             [u'/authenticate/', u'/callback/', u'/foo/', u'/logout/']
@@ -228,7 +225,7 @@ class MiddlewareTestCase(TestCase):
         request = self.factory.get('/mdo_fake_view/')
         request.user = self.user
         request.session = dict()
-        middleware = SessionRefresh()
+        middleware = SessionRefresh(MagicMock())
         assert middleware.is_refreshable_url(request)
 
     @override_settings(OIDC_EXEMPT_URLS=['mdo_fake_view'])
@@ -236,7 +233,7 @@ class MiddlewareTestCase(TestCase):
         request = self.factory.get('/mdo_fake_view/')
         request.user = self.user
         request.session = dict()
-        middleware = SessionRefresh()
+        middleware = SessionRefresh(MagicMock())
         assert not middleware.is_refreshable_url(request)
 
     @override_settings(OIDC_EXEMPT_URLS=['/mdo_fake_view/'])
@@ -244,7 +241,7 @@ class MiddlewareTestCase(TestCase):
         request = self.factory.get('/mdo_fake_view/')
         request.user = self.user
         request.session = dict()
-        middleware = SessionRefresh()
+        middleware = SessionRefresh(MagicMock())
         assert not middleware.is_refreshable_url(request)
 
     @override_settings(OIDC_EXEMPT_URLS=[re.compile(r'^/mdo_.*_view/$')])
@@ -252,7 +249,7 @@ class MiddlewareTestCase(TestCase):
         request = self.factory.get('/mdo_fake_view/')
         request.user = self.user
         request.session = dict()
-        middleware = SessionRefresh()
+        middleware = SessionRefresh(MagicMock())
         assert not middleware.is_refreshable_url(request)
 
     def test_anonymous(self):

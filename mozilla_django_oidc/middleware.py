@@ -1,5 +1,6 @@
 import logging
 import time
+from urllib.parse import quote, urlencode
 
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
@@ -13,8 +14,6 @@ from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import (absolutify,
                                        add_state_and_nonce_to_session,
                                        import_from_settings)
-
-from urllib.parse import quote, urlencode
 
 try:
     # Python 3.7 or later
@@ -35,8 +34,8 @@ class SessionRefresh(MiddlewareMixin):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super(SessionRefresh, self).__init__(*args, **kwargs)
+    def __init__(self, get_response):
+        super(SessionRefresh, self).__init__(get_response)
         self.OIDC_EXEMPT_URLS = self.get_settings('OIDC_EXEMPT_URLS', [])
         self.OIDC_OP_AUTHORIZATION_ENDPOINT = self.get_settings('OIDC_OP_AUTHORIZATION_ENDPOINT')
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
