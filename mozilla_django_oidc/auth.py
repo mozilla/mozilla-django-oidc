@@ -318,7 +318,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         users = self.filter_users_by_claims(user_info)
 
         if len(users) == 1:
-            return self.update_user(users[0], user_info)
+            user = self.update_user(users[0], user_info)
+            return user if self.user_can_authenticate(user) else None
         elif len(users) > 1:
             # In the rare case that two user accounts have the same email address,
             # bail. Randomly selecting one seems really wrong.
@@ -326,7 +327,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             raise SuspiciousOperation(msg)
         elif self.get_settings('OIDC_CREATE_USER', True):
             user = self.create_user(user_info)
-            return user
+            return user if self.user_can_authenticate(user) else None
         else:
             LOGGER.debug('Login failed: No user with %s found, and '
                          'OIDC_CREATE_USER is False',
