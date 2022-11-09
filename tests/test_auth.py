@@ -438,9 +438,9 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             'redirect_uri': 'http://testserver/callback/',
         }
         self.assertEqual(User.objects.all().count(), 0)
-        self.backend.authenticate(request=auth_request)
+        user = self.backend.authenticate(request=auth_request)
         self.assertEqual(User.objects.all().count(), 1)
-        user = User.objects.all()[0]
+        self.assertEqual(user, User.objects.get())
         self.assertEqual(user.email, 'email@example.com')
         self.assertEqual(user.username, 'username_algo')
 
