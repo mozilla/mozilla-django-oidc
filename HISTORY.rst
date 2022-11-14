@@ -3,6 +3,10 @@
 History
 -------
 
+pending
+=======
+* Fix bug in ``contrib.drf.OIDCAuthentication`` where ``error_description`` is assumed to be present in ``www-authenticate`` header despite it being optional in the spec.
+
 2.0.0 (2021-07-27)
 ==================
 
