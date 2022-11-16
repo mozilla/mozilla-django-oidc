@@ -7,19 +7,7 @@ from django.http import HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import resolve_url
 from django.urls import reverse
 from django.utils.crypto import get_random_string
-<<<<<<< HEAD
 from django.utils.http import url_has_allowed_host_and_scheme
-=======
-
-try:
-    from django.utils.http import url_has_allowed_host_and_scheme
-except ImportError:
-    # Django <= 2.2
-    from django.utils.http import is_safe_url as url_has_allowed_host_and_scheme
-
-from urllib.parse import urlencode
-
->>>>>>> 4254763 (Support for PKCE)
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
