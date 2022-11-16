@@ -9,3 +9,6 @@ Sphinx
 mock
 tox
 djangorestframework
+pre-commit
+flake8
+importlib_metadata<5.0.0
