@@ -338,7 +338,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             with patch("mozilla_django_oidc.views.auth.login") as mock_login:
                 mock_auth.return_value = user
                 response = callback_view(request)
-                mock_auth.assert_called_once_with(nonce=None, request=request)
+                mock_auth.assert_called_once_with(
+                    code_verifier=None, nonce=None, request=request
+                )
                 mock_login.assert_called_once_with(request, user)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/success")
@@ -353,7 +355,9 @@ class OIDCAuthorizationCallbackViewTestCase(TestCase):
             with patch("mozilla_django_oidc.views.auth.login") as mock_login:
                 mock_auth.return_value = user
                 response = callback_view(request)
-                mock_auth.assert_called_once_with(nonce=None, request=request)
+                mock_auth.assert_called_once_with(
+                    code_verifier=None, nonce=None, request=request
+                )
                 mock_login.assert_not_called()
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/success")
