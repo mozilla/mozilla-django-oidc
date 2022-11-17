@@ -85,9 +85,11 @@ Start by making the following changes to your ``settings.py`` file.
    AUTHENTICATION_BACKENDS = (
        'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
        # ...
-       
-   # Configure django's login_required decorator
-   # to use mozilla-django-keycloak's login URL
+
+   # Set LOGIN_URL to mozilla_django_oidc's login URL.
+   # Views decorated with django.contrib.auth.decorators.login_required decorator
+   # or class-based views using the LoginRequiredMixin or AccessMixin will
+   # automatically be redirected to this URL if a user is not logged in.
    LOGIN_URL = 'oidc_authentication_init'
    )
 
@@ -148,7 +150,7 @@ Next, edit your ``urls.py`` and add the following:
 .. code-block:: python
 
    from django.urls import path, include
-   
+
    urlpatterns = [
        # ...
        path('oidc/', include('mozilla_django_oidc.urls')),
