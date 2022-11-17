@@ -13,7 +13,10 @@ from rest_framework import authentication, exceptions
 from requests.exceptions import HTTPError
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
-from mozilla_django_oidc.utils import import_from_settings, parse_www_authenticate_header
+from mozilla_django_oidc.utils import (
+    import_from_settings,
+    parse_www_authenticate_header,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,12 +29,14 @@ def get_oidc_backend():
     # allow the user to force which back backend to use. this is mostly
     # convenient if you want to use OIDC with DRF but don't want to configure
     # OIDC for the "normal" Django auth.
-    backend_setting = import_from_settings('OIDC_DRF_AUTH_BACKEND', None)
+    backend_setting = import_from_settings("OIDC_DRF_AUTH_BACKEND", None)
     if backend_setting:
         backend = import_string(backend_setting)()
         if not isinstance(backend, OIDCAuthenticationBackend):
-            msg = 'Class configured in OIDC_DRF_AUTH_BACKEND ' \
-                  'does not extend OIDCAuthenticationBackend!'
+            msg = (
+                "Class configured in OIDC_DRF_AUTH_BACKEND "
+                "does not extend OIDCAuthenticationBackend!"
+            )
             raise ImproperlyConfigured(msg)
         return backend
 
@@ -40,11 +45,13 @@ def get_oidc_backend():
     backends = [b for b in get_backends() if isinstance(b, OIDCAuthenticationBackend)]
 
     if not backends:
-        msg = 'No backends extending OIDCAuthenticationBackend found - ' \
-              'add one to AUTHENTICATION_BACKENDS or set OIDC_DRF_AUTH_BACKEND!'
+        msg = (
+            "No backends extending OIDCAuthenticationBackend found - "
+            "add one to AUTHENTICATION_BACKENDS or set OIDC_DRF_AUTH_BACKEND!"
+        )
         raise ImproperlyConfigured(msg)
     if len(backends) > 1:
-        raise ImproperlyConfigured('More than one OIDCAuthenticationBackend found!')
+        raise ImproperlyConfigured("More than one OIDCAuthenticationBackend found!")
     return backends[0]
 
 
@@ -54,7 +61,7 @@ class OIDCAuthentication(authentication.BaseAuthentication):
     """
 
     # used by the authenticate_header method.
-    www_authenticate_realm = 'api'
+    www_authenticate_realm = "api"
 
     def __init__(self, backend=None):
         self.backend = backend or get_oidc_backend()
@@ -77,18 +84,22 @@ class OIDCAuthentication(authentication.BaseAuthentication):
             # if the oidc provider returns 401, it means the token is invalid.
             # in that case, we want to return the upstream error message (which
             # we can get from the www-authentication header) in the response.
-            if resp.status_code == 401 and 'www-authenticate' in resp.headers:
-                data = parse_www_authenticate_header(resp.headers['www-authenticate'])
-                raise exceptions.AuthenticationFailed(data['error_description'])
+            if resp.status_code == 401 and "www-authenticate" in resp.headers:
+                data = parse_www_authenticate_header(resp.headers["www-authenticate"])
+                raise exceptions.AuthenticationFailed(
+                    data.get(
+                        "error_description", "no error description in www-authenticate"
+                    )
+                )
 
             # for all other http errors, just re-raise the exception.
             raise
         except SuspiciousOperation as exc:
-            LOGGER.info('Login failed: %s', exc)
-            raise exceptions.AuthenticationFailed('Login failed')
+            LOGGER.info("Login failed: %s", exc)
+            raise exceptions.AuthenticationFailed("Login failed")
 
         if not user:
-            msg = 'Login failed: No user found for the given access token.'
+            msg = "Login failed: No user found for the given access token."
             raise exceptions.AuthenticationFailed(msg)
 
         return user, access_token
@@ -107,14 +118,16 @@ class OIDCAuthentication(authentication.BaseAuthentication):
 
         auth = header.split()
 
-        if auth[0].lower() != 'bearer':
+        if auth[0].lower() != "bearer":
             return None
 
         if len(auth) == 1:
             msg = 'Invalid "bearer" header: No credentials provided.'
             raise exceptions.AuthenticationFailed(msg)
         elif len(auth) > 2:
-            msg = 'Invalid "bearer" header: Credentials string should not contain spaces.'
+            msg = (
+                'Invalid "bearer" header: Credentials string should not contain spaces.'
+            )
             raise exceptions.AuthenticationFailed(msg)
 
         return auth[1]

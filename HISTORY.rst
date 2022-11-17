@@ -3,6 +3,32 @@
 History
 -------
 
+3.0.0 (2022-11-14)
+==================
+* Gracefully handle ``www-authenticate`` header with missing ``error_description``.
+  Thanks `@vinitsharswat <https://github.com/vinitsharswat>`_ and `@adamj9431 <https://github.com/adamj9431>`_
+* Lint project with ``black``.
+* Add support for Django 4
+* Document OIDC_OP_JWKS_ENDPOINT.
+  Thanks `@yoctozepto <https://github.com/yoctozepto>`_
+* Update typo in comments.
+  Thanks `@rabbit-aaron <https://github.com/rabbit-aaron>`_
+* LOGIN_REDIRECT_URL now accepts a named url pattern.
+  Thanks `@dispiste <https://github.com/dispiste>`_
+* Pass `OIDC_AUTH_REQUEST_EXTRA_PARAMS` to SessionRefresh
+  Thanks `@melanger <https://github.com/melanger>`_
+* Remove state from from session after failed authentication attempts
+  Thanks `@cfra <https://github.com/cfra>`_
+* Do not call auth.login() on session refresh.
+  Thanks `crgwbr <https://github.com/crgwbr>`_
+
+Backwards-incompatible changes:
+
+* Drop Python 3.6 support
+* Drop Django 2.x Support
+* Drop Django 3.1 support
+
+
 2.0.0 (2021-07-27)
 ==================
 

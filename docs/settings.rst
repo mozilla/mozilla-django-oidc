@@ -23,6 +23,14 @@ of ``mozilla-django-oidc``.
 
    URL of your OpenID Connect provider userinfo endpoint
 
+.. py:attribute:: OIDC_OP_JWKS_ENDPOINT
+
+   :default: No default
+
+   URL of your OpenID Connect provider JWKS (JSON Web Key Sets) endpoint.
+   Used in JWT verification with PKI when ``OIDC_RP_IDP_SIGN_KEY`` is not
+   provided.
+
 .. py:attribute:: OIDC_RP_CLIENT_ID
 
    :default: No default
