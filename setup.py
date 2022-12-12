@@ -57,6 +57,7 @@ setup(
         "Framework :: Django",
         "Framework :: Django :: 3.2",
         "Framework :: Django :: 4.0",
+        "Framework :: Django :: 4.1",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         "Intended Audience :: Developers",
         "Operating System :: MacOS",
@@ -68,5 +69,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
 )
