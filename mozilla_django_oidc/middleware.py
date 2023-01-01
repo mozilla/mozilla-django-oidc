@@ -1,5 +1,6 @@
 import logging
 import time
+from re import Pattern as re_Pattern
 from urllib.parse import quote, urlencode
 
 from django.contrib.auth import BACKEND_SESSION_KEY
@@ -16,14 +17,6 @@ from mozilla_django_oidc.utils import (
     add_state_and_nonce_to_session,
     import_from_settings,
 )
-
-try:
-    # Python 3.7 or later
-    from re import Pattern as re_Pattern
-except ImportError:
-    # Python 3.6 or earlier
-    from re import _pattern_type as re_Pattern
-
 
 LOGGER = logging.getLogger(__name__)
 

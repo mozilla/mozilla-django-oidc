@@ -133,6 +133,12 @@ You can also run linting with ``tox``:
 
     $ tox -e lint
 
+Finally you can use pre-commit hooks to run linting and formatting before you commit your code:
+
+.. code-block:: shell
+
+  (venv)  $ pre-commit install
+
 
 Releasing a new version
 ------------------------

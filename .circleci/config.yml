@@ -83,6 +83,14 @@ jobs:
           - TEST_OIDC_ALGO=rs
           - DJANGO_VERSION=Django>=3.2.0,<4.0
     <<: *common_steps
+  e2e_test_py311_rs_django320:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py311-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=rs
+          - DJANGO_VERSION=Django>=3.2.0,<4.0
+    <<: *common_steps
   e2e_test_py37_hs_django320:
     docker:
       - image: mozilla/oidc-testprovider:oidc_e2e_setup_py37-latest
@@ -115,6 +123,14 @@ jobs:
           - TEST_OIDC_ALGO=hs
           - DJANGO_VERSION=Django>=3.2.0,<4.0
     <<: *common_steps
+  e2e_test_py311_hs_django320:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py311-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=hs
+          - DJANGO_VERSION=Django>=3.2.0,<4.0
+    <<: *common_steps
   e2e_test_py38_rs_django400:
     docker:
       - image: mozilla/oidc-testprovider:oidc_e2e_setup_py38-latest
@@ -134,6 +150,14 @@ jobs:
   e2e_test_py310_rs_django400:
     docker:
       - image: mozilla/oidc-testprovider:oidc_e2e_setup_py310-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=rs
+          - DJANGO_VERSION=Django>=4.0,<4.1
+    <<: *common_steps
+  e2e_test_py311_rs_django400:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py311-latest
         name: testoidcsetup
         environment:
           - TEST_OIDC_ALGO=rs
@@ -163,6 +187,78 @@ jobs:
           - TEST_OIDC_ALGO=hs
           - DJANGO_VERSION=Django>=4.0,<4.1
     <<: *common_steps
+  e2e_test_py311_hs_django400:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py311-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=hs
+          - DJANGO_VERSION=Django>=4.0,<4.1
+    <<: *common_steps
+  e2e_test_py38_rs_django410:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py38-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=rs
+          - DJANGO_VERSION=Django>=4.1,<4.2
+    <<: *common_steps
+  e2e_test_py39_rs_django410:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py39-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=rs
+          - DJANGO_VERSION=Django>=4.1,<4.2
+    <<: *common_steps
+  e2e_test_py310_rs_django410:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py310-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=rs
+          - DJANGO_VERSION=Django>=4.1,<4.2
+    <<: *common_steps
+  e2e_test_py311_rs_django410:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py311-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=rs
+          - DJANGO_VERSION=Django>=4.1,<4.2
+    <<: *common_steps
+  e2e_test_py38_hs_django410:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py38-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=hs
+          - DJANGO_VERSION=Django>=4.1,<4.2
+    <<: *common_steps
+  e2e_test_py39_hs_django410:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py39-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=hs
+          - DJANGO_VERSION=Django>=4.1,<4.2
+    <<: *common_steps
+  e2e_test_py310_hs_django410:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py310-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=hs
+          - DJANGO_VERSION=Django>=4.1,<4.2
+    <<: *common_steps
+  e2e_test_py311_hs_django410:
+    docker:
+      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py311-latest
+        name: testoidcsetup
+        environment:
+          - TEST_OIDC_ALGO=hs
+          - DJANGO_VERSION=Django>=4.1,<4.2
+    <<: *common_steps
 
 workflows:
   version: 2
@@ -181,6 +277,9 @@ workflows:
       - e2e_test_py310_rs_django320:
           requires:
             - build_lib
+      - e2e_test_py311_rs_django320:
+          requires:
+            - build_lib
       - e2e_test_py37_hs_django320:
           requires:
             - build_lib
@@ -193,6 +292,9 @@ workflows:
       - e2e_test_py310_hs_django320:
           requires:
             - build_lib
+      - e2e_test_py311_hs_django320:
+          requires:
+            - build_lib
       - e2e_test_py38_rs_django400:
           requires:
             - build_lib
@@ -202,6 +304,9 @@ workflows:
       - e2e_test_py310_rs_django400:
           requires:
             - build_lib
+      - e2e_test_py311_rs_django400:
+          requires:
+            - build_lib
       - e2e_test_py38_hs_django400:
           requires:
             - build_lib
@@ -209,5 +314,32 @@ workflows:
           requires:
             - build_lib
       - e2e_test_py310_hs_django400:
+          requires:
+            - build_lib
+      - e2e_test_py311_hs_django400:
+          requires:
+            - build_lib
+      - e2e_test_py38_rs_django410:
+          requires:
+            - build_lib
+      - e2e_test_py39_rs_django410:
+          requires:
+            - build_lib
+      - e2e_test_py310_rs_django410:
+          requires:
+            - build_lib
+      - e2e_test_py311_rs_django410:
+          requires:
+            - build_lib
+      - e2e_test_py38_hs_django410:
+          requires:
+            - build_lib
+      - e2e_test_py39_hs_django410:
+          requires:
+            - build_lib
+      - e2e_test_py310_hs_django410:
+          requires:
+            - build_lib
+      - e2e_test_py311_hs_django410:
           requires:
             - build_lib
