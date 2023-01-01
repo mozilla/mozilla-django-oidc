@@ -86,7 +86,7 @@ Start by making the following changes to your ``settings.py`` file.
        'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
        # ...
 
-   # Set LOGIN_URL to mozilla_django_oidc's login URL.
+   # Optional: Set LOGIN_URL to mozilla_django_oidc's login URL.
    # Views decorated with django.contrib.auth.decorators.login_required decorator
    # or class-based views using the LoginRequiredMixin or AccessMixin will
    # automatically be redirected to this URL if a user is not logged in.
