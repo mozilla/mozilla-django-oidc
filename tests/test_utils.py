@@ -121,14 +121,8 @@ class PKCECodeVerificationTestCase(TestCase):
         """
         code_verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
 
-        try:
-            generate_code_challenge(code_verifier, "INVALID")
-            self.fail(
-                "generate_code_challenge() should raise an exception when an invalid"
-                " code challenge method is provided."
-            )
-        except ValueError:
-            pass
+        self.assertRaises(ValueError, generate_code_challenge, code_verifier, "INVALID")
+
 
 
 class SessionStateTestCase(TestCase):
