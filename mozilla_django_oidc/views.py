@@ -1,4 +1,5 @@
 import time
+from urllib.parse import urlencode
 
 from django.contrib import auth
 from django.core.exceptions import SuspiciousOperation
@@ -6,15 +7,7 @@ from django.http import HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import resolve_url
 from django.urls import reverse
 from django.utils.crypto import get_random_string
-
-try:
-    from django.utils.http import url_has_allowed_host_and_scheme
-except ImportError:
-    # Django <= 2.2
-    from django.utils.http import is_safe_url as url_has_allowed_host_and_scheme
-
-from urllib.parse import urlencode
-
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
