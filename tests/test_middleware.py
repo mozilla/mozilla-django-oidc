@@ -12,7 +12,7 @@ from django.http import HttpResponse
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.test.client import ClientHandler
 from django.urls import path
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from mozilla_django_oidc.middleware import SessionRefresh
 from mozilla_django_oidc.urls import urlpatterns as orig_urlpatterns

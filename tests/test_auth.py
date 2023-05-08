@@ -1,5 +1,5 @@
 import json
-from mock import Mock, call, patch
+from unittest.mock import Mock, call, patch
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
