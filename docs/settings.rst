@@ -71,11 +71,11 @@ of ``mozilla-django-oidc``.
 
    :default: ``None``
 
-    Defines a timeout for all requests to the OpenID Connect provider (fetch JWS,
-    retrieve JWT tokens, Userinfo Endpoint). The default is set to `None` which means
-    the library will wait indefinitely. The time can be defined as seconds (integer).
-    More information about possible configuration values, see Python `requests`:
-    https://requests.readthedocs.io/en/master/user/quickstart/#timeouts
+   Defines a timeout for all requests to the OpenID Connect provider (fetch JWS,
+   retrieve JWT tokens, Userinfo Endpoint). The default is set to `None` which means
+   the library will wait indefinitely. The time can be defined as seconds (integer).
+   More information about possible configuration values, see Python `requests`:
+   https://requests.readthedocs.io/en/master/user/quickstart/#timeouts
 
 .. py:attribute:: OIDC_PROXY
 
