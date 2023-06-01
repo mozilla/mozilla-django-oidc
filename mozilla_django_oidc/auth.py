@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 
+import inspect
 import requests
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
@@ -20,10 +21,11 @@ from mozilla_django_oidc.utils import absolutify, import_from_settings
 LOGGER = logging.getLogger(__name__)
 
 
-def default_username_algo(email):
+def default_username_algo(email, claims):
     """Generate username for the Django user.
 
     :arg str/unicode email: the email address to use to generate a username
+    :arg dic claims: the claims from your OIDC provider, currently unused
 
     :returns: str/unicode
 
@@ -100,14 +102,21 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Generate username based on claims."""
         # bluntly stolen from django-browserid
         # https://github.com/mozilla/django-browserid/blob/master/django_browserid/auth.py
+
         username_algo = self.get_settings("OIDC_USERNAME_ALGO", None)
 
         if username_algo:
             if isinstance(username_algo, str):
                 username_algo = import_string(username_algo)
-            return username_algo(claims.get("email"))
+            if len(inspect.getfullargspec(username_algo).args) == 1:
+                # this is for backwards compatibility only
+                return username_algo(claims.get("email"))
+            else:
+                # also pass the claims to the custom user name algo
+                return username_algo(claims.get("email"), claims)
 
-        return default_username_algo(claims.get("email"))
+
+        return default_username_algo(claims.get("email"), claims)
 
     def update_user(self, user, claims):
         """Update existing user with new claims, if necessary save, and return user"""
