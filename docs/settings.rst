@@ -106,7 +106,7 @@ of ``mozilla-django-oidc``.
    :default: ``None``
 
    It enables using a custom method to generate the django username from the user's
-   email and OIDC claims
+   email and OIDC claims.
 
 .. py:attribute:: OIDC_STATE_SIZE
 
