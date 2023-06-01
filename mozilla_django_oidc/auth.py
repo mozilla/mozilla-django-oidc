@@ -21,7 +21,7 @@ from mozilla_django_oidc.utils import absolutify, import_from_settings
 LOGGER = logging.getLogger(__name__)
 
 
-def default_username_algo(email, claims):
+def default_username_algo(email, claims=None):
     """Generate username for the Django user.
 
     :arg str/unicode email: the email address to use to generate a username
@@ -114,7 +114,6 @@ class OIDCAuthenticationBackend(ModelBackend):
             else:
                 # also pass the claims to the custom user name algo
                 return username_algo(claims.get("email"), claims)
-
 
         return default_username_algo(claims.get("email"), claims)
 
