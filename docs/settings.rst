@@ -101,6 +101,13 @@ of ``mozilla-django-oidc``.
 
    Enables or disables automatic user creation during authentication
 
+ .. py:attribute:: OIDC_USERNAME_ALGO
+
+   :default: ``None``
+
+   It enables using a custom method to generate the django username from the user's
+   email and OIDC claims.
+
 .. py:attribute:: OIDC_STATE_SIZE
 
    :default: ``32``
