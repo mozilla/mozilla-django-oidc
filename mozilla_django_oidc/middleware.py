@@ -29,22 +29,6 @@ class SessionRefresh(MiddlewareMixin):
 
     """
 
-    def __init__(self, get_response):
-        super(SessionRefresh, self).__init__(get_response)
-        self.OIDC_EXEMPT_URLS = self.get_settings("OIDC_EXEMPT_URLS", [])
-        self.OIDC_OP_AUTHORIZATION_ENDPOINT = self.get_settings(
-            "OIDC_OP_AUTHORIZATION_ENDPOINT"
-        )
-        self.OIDC_RP_CLIENT_ID = self.get_settings("OIDC_RP_CLIENT_ID")
-        self.OIDC_STATE_SIZE = self.get_settings("OIDC_STATE_SIZE", 32)
-        self.OIDC_AUTHENTICATION_CALLBACK_URL = self.get_settings(
-            "OIDC_AUTHENTICATION_CALLBACK_URL",
-            "oidc_authentication_callback",
-        )
-        self.OIDC_RP_SCOPES = self.get_settings("OIDC_RP_SCOPES", "openid email")
-        self.OIDC_USE_NONCE = self.get_settings("OIDC_USE_NONCE", True)
-        self.OIDC_NONCE_SIZE = self.get_settings("OIDC_NONCE_SIZE", 32)
-
     @staticmethod
     def get_settings(attr, *args):
         return import_from_settings(attr, *args)
@@ -61,7 +45,7 @@ class SessionRefresh(MiddlewareMixin):
 
         """
         exempt_urls = []
-        for url in self.OIDC_EXEMPT_URLS:
+        for url in self.get_settings("OIDC_EXEMPT_URLS", []):
             if not isinstance(url, re_Pattern):
                 exempt_urls.append(url)
         exempt_urls.extend(
@@ -87,7 +71,7 @@ class SessionRefresh(MiddlewareMixin):
             ``re.compile(r"/user/[0-9]+/image")``)
         """
         exempt_patterns = set()
-        for url_pattern in self.OIDC_EXEMPT_URLS:
+        for url_pattern in self.get_settings("OIDC_EXEMPT_URLS", []):
             if isinstance(url_pattern, re_Pattern):
                 exempt_patterns.add(url_pattern)
         return exempt_patterns
@@ -129,9 +113,9 @@ class SessionRefresh(MiddlewareMixin):
 
         LOGGER.debug("id token has expired")
         # The id_token has expired, so we have to re-authenticate silently.
-        auth_url = self.OIDC_OP_AUTHORIZATION_ENDPOINT
-        client_id = self.OIDC_RP_CLIENT_ID
-        state = get_random_string(self.OIDC_STATE_SIZE)
+        auth_url = self.get_settings("OIDC_OP_AUTHORIZATION_ENDPOINT")
+        client_id = self.get_settings("OIDC_RP_CLIENT_ID")
+        state = get_random_string(self.get_settings("OIDC_STATE_SIZE", 32))
 
         # Build the parameters as if we were doing a real auth handoff, except
         # we also include prompt=none.
@@ -139,17 +123,17 @@ class SessionRefresh(MiddlewareMixin):
             "response_type": "code",
             "client_id": client_id,
             "redirect_uri": absolutify(
-                request, reverse(self.OIDC_AUTHENTICATION_CALLBACK_URL)
+                request, reverse(self.get_settings("OIDC_AUTHENTICATION_CALLBACK_URL", "oidc_authentication_callback"))
             ),
             "state": state,
-            "scope": self.OIDC_RP_SCOPES,
+            "scope": self.get_settings("OIDC_RP_SCOPES", "openid email"),
             "prompt": "none",
         }
 
         params.update(self.get_settings("OIDC_AUTH_REQUEST_EXTRA_PARAMS", {}))
 
-        if self.OIDC_USE_NONCE:
-            nonce = get_random_string(self.OIDC_NONCE_SIZE)
+        if self.get_settings("OIDC_USE_NONCE", True):
+            nonce = get_random_string(self.get_settings("OIDC_NONCE_SIZE", 32))
             params.update({"nonce": nonce})
 
         add_state_and_verifier_and_nonce_to_session(request, state, params)

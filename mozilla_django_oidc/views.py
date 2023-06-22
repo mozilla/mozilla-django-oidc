@@ -165,12 +165,6 @@ class OIDCAuthenticationRequestView(View):
 
     http_method_names = ["get"]
 
-    def __init__(self, *args, **kwargs):
-        super(OIDCAuthenticationRequestView, self).__init__(*args, **kwargs)
-
-        self.OIDC_OP_AUTH_ENDPOINT = self.get_settings("OIDC_OP_AUTHORIZATION_ENDPOINT")
-        self.OIDC_RP_CLIENT_ID = self.get_settings("OIDC_RP_CLIENT_ID")
-
     @staticmethod
     def get_settings(attr, *args):
         return import_from_settings(attr, *args)
@@ -186,7 +180,7 @@ class OIDCAuthenticationRequestView(View):
         params = {
             "response_type": "code",
             "scope": self.get_settings("OIDC_RP_SCOPES", "openid email"),
-            "client_id": self.OIDC_RP_CLIENT_ID,
+            "client_id": self.get_settings("OIDC_RP_CLIENT_ID"),
             "redirect_uri": absolutify(request, reverse(reverse_url)),
             "state": state,
         }
@@ -232,7 +226,7 @@ class OIDCAuthenticationRequestView(View):
 
         query = urlencode(params)
         redirect_url = "{url}?{query}".format(
-            url=self.OIDC_OP_AUTH_ENDPOINT, query=query
+            url=self.get_settings("OIDC_OP_AUTHORIZATION_ENDPOINT"), query=query
         )
         return HttpResponseRedirect(redirect_url)
 
