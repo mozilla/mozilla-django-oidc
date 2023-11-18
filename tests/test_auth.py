@@ -1200,14 +1200,16 @@ class OIDCAuthenticationBackendES256WithJwksEndpointTestCase(TestCase):
 
         self.backend = OIDCAuthenticationBackend()
 
+        # Generate a private key to create a test token with
         private_key = ec.generate_private_key(ec.SECP256R1, default_backend())
         private_key_pem = private_key.private_bytes(
             serialization.Encoding.PEM,
             serialization.PrivateFormat.PKCS8,
             serialization.NoEncryption(),
         )
-        public_numbers = private_key.public_key().public_numbers()
 
+        # Make the public key available through the JWKS response
+        public_numbers = private_key.public_key().public_numbers()
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             "keys": [
@@ -1248,6 +1250,8 @@ class OIDCAuthenticationBackendES256WithJwksEndpointTestCase(TestCase):
             smart_str(signature),
         )
 
+        # Verify the token created with the private key by using the JWKS endpoint,
+        # where the public numbers are.
         payload = self.backend.verify_token(token)
 
         self.assertEqual(payload, data)
