@@ -8,6 +8,7 @@ pending
 =======
 
 * Added PKCE support in the authorization code flow.
+* Added support for Elliptic Curve JWT signing algorithms
 
 
 3.0.0 (2022-11-14)
