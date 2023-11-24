@@ -2,7 +2,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from mozilla_django_oidc.utils import (
     absolutify,

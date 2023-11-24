@@ -6,7 +6,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import SuspiciousOperation
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
-from mock import patch
+from unittest.mock import patch
 
 from mozilla_django_oidc import views
 
