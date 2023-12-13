@@ -1,5 +1,5 @@
 import json
-from mock import Mock, call, patch
+from unittest.mock import Mock, call, patch
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac, serialization
@@ -738,6 +738,38 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             User.objects.get(username="dotted_username_algo"),
         )
 
+    @override_settings(
+        OIDC_USE_NONCE=False,
+        OIDC_USERNAME_ALGO="tests.test_auth.dotted_username_algo_callback_with_claims",
+    )
+    @patch("mozilla_django_oidc.auth.OIDCAuthenticationBackend._verify_jws")
+    @patch("mozilla_django_oidc.auth.requests")
+    def test_dotted_username_algo_callback_with_claims(self, request_mock, jws_mock):
+        """Test user creation with custom username algorithm with a dotted path."""
+        auth_request = RequestFactory().get("/foo", {"code": "foo", "state": "bar"})
+        auth_request.session = {}
+
+        self.assertEqual(User.objects.filter(email="email@example.com").exists(), False)
+        jws_mock.return_value = json.dumps({"nonce": "nonce"}).encode("utf-8")
+        domain = "django.con"
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            "nickname": "a_username",
+            "email": "email@example.com",
+            "domain": domain,
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock()
+        post_json_mock.json.return_value = {
+            "id_token": "id_token",
+            "access_token": "access_granted",
+        }
+        request_mock.post.return_value = post_json_mock
+        self.assertEqual(
+            self.backend.authenticate(request=auth_request),
+            User.objects.get(username=f"{domain}/email@example.com"),
+        )
+
     @override_settings(OIDC_USE_NONCE=False)
     @patch("mozilla_django_oidc.auth.OIDCAuthenticationBackend._verify_jws")
     @patch("mozilla_django_oidc.auth.requests")
@@ -1172,6 +1204,12 @@ class TestVerifyClaim(TestCase):
 
 def dotted_username_algo_callback(email):
     return "dotted_username_algo"
+
+
+def dotted_username_algo_callback_with_claims(email, claims=None):
+    domain = claims["domain"]
+    username = f"{domain}/{email}"
+    return username
 
 
 @override_settings(OIDC_OP_TOKEN_ENDPOINT="https://server.example.com/token")
