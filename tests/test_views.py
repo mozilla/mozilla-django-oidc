@@ -477,6 +477,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="https://server.example.com/auth")
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
+    @override_settings(OIDC_USE_PKCE=True)
     @patch("mozilla_django_oidc.views.get_random_string")
     def test_get(self, mock_views_random):
         """Test initiation of a successful OIDC attempt."""
@@ -588,6 +589,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(ROOT_URLCONF="tests.namespaced_urls")
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="https://server.example.com/auth")
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
+    @override_settings(OIDC_USE_PKCE=True)
     @override_settings(
         OIDC_AUTHENTICATION_CALLBACK_URL="namespace:oidc_authentication_callback"
     )
@@ -629,6 +631,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="https://server.example.com/auth")
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
+    @override_settings(OIDC_USE_PKCE=True)
     @override_settings(
         OIDC_AUTH_REQUEST_EXTRA_PARAMS={"audience": "some-api.example.com"}
     )
@@ -671,6 +674,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="https://server.example.com/auth")
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
+    @override_settings(OIDC_USE_PKCE=True)
     @patch("mozilla_django_oidc.views.get_random_string")
     @patch("mozilla_django_oidc.views.OIDCAuthenticationRequestView.get_extra_params")
     def test_get_with_overridden_extra_params(
