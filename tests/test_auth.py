@@ -2,13 +2,15 @@ import json
 from unittest.mock import Mock, call, patch
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, hmac
+from cryptography.hazmat.primitives import hashes, hmac, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils.encoding import force_bytes, smart_str
 from josepy.b64 import b64encode
+from josepy.jwa import ES256
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend, default_username_algo
 
@@ -1203,3 +1205,87 @@ def dotted_username_algo_callback_with_claims(email, claims=None):
     domain = claims["domain"]
     username = f"{domain}/{email}"
     return username
+
+
+@override_settings(OIDC_OP_TOKEN_ENDPOINT="https://server.example.com/token")
+@override_settings(OIDC_OP_USER_ENDPOINT="https://server.example.com/user")
+@override_settings(OIDC_RP_CLIENT_ID="example_id")
+@override_settings(OIDC_RP_CLIENT_SECRET="client_secret")
+@override_settings(OIDC_RP_SIGN_ALGO="ES256")
+class OIDCAuthenticationBackendES256WithJwksEndpointTestCase(TestCase):
+    """Authentication tests with ALG ES256 and IpD JWKS Endpoint."""
+
+    def test_es256_alg_misconfiguration(self):
+        """Test that ES algorithm requires a JWKS endpoint"""
+
+        with self.assertRaises(ImproperlyConfigured) as ctx:
+            OIDCAuthenticationBackend()
+
+        self.assertEqual(
+            ctx.exception.args[0],
+            "ES256 alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured.",
+        )
+
+    @patch("mozilla_django_oidc.auth.requests")
+    @override_settings(OIDC_OP_JWKS_ENDPOINT="https://server.example.com/jwks")
+    def test_es256_alg_verification(self, mock_requests):
+        """Test that token can be verified with the ES algorithm"""
+
+        self.backend = OIDCAuthenticationBackend()
+
+        # Generate a private key to create a test token with
+        private_key = ec.generate_private_key(ec.SECP256R1, default_backend())
+        private_key_pem = private_key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        )
+
+        # Make the public key available through the JWKS response
+        public_numbers = private_key.public_key().public_numbers()
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            "keys": [
+                {
+                    "kid": "eckid",
+                    "kty": "EC",
+                    "alg": "ES256",
+                    "use": "sig",
+                    "x": smart_str(b64encode(public_numbers.x.to_bytes(32, "big"))),
+                    "y": smart_str(b64encode(public_numbers.y.to_bytes(32, "big"))),
+                    "crv": "P-256",
+                }
+            ]
+        }
+        mock_requests.get.return_value = get_json_mock
+
+        header = force_bytes(
+            json.dumps(
+                {
+                    "typ": "JWT",
+                    "alg": "ES256",
+                    "kid": "eckid",
+                },
+            )
+        )
+        data = {"name": "John Doe", "test": "test_es256_alg_verification"}
+
+        h = hmac.HMAC(private_key_pem, hashes.SHA256(), backend=default_backend())
+        msg = "{}.{}".format(
+            smart_str(b64encode(header)),
+            smart_str(b64encode(force_bytes(json.dumps(data)))),
+        )
+        h.update(force_bytes(msg))
+
+        signature = b64encode(ES256.sign(private_key, force_bytes(msg)))
+        token = "{}.{}".format(
+            msg,
+            smart_str(signature),
+        )
+
+        # Verify the token created with the private key by using the JWKS endpoint,
+        # where the public numbers are.
+        payload = self.backend.verify_token(token)
+
+        self.assertEqual(payload, data)
+        mock_requests.get.assert_called_once()

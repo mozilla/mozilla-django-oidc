@@ -55,7 +55,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_RP_SIGN_ALGO = self.get_settings("OIDC_RP_SIGN_ALGO", "HS256")
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings("OIDC_RP_IDP_SIGN_KEY", None)
 
-        if self.OIDC_RP_SIGN_ALGO.startswith("RS") and (
+        if (
+            self.OIDC_RP_SIGN_ALGO.startswith("RS")
+            or self.OIDC_RP_SIGN_ALGO.startswith("ES")
+        ) and (
             self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None
         ):
             msg = "{} alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured."
@@ -199,7 +202,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         nonce = kwargs.get("nonce")
 
         token = force_bytes(token)
-        if self.OIDC_RP_SIGN_ALGO.startswith("RS"):
+        if self.OIDC_RP_SIGN_ALGO.startswith("RS") or self.OIDC_RP_SIGN_ALGO.startswith(
+            "ES"
+        ):
             if self.OIDC_RP_IDP_SIGN_KEY is not None:
                 key = self.OIDC_RP_IDP_SIGN_KEY
             else:
