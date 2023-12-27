@@ -3,19 +3,14 @@ from unittest.mock import Mock, call, patch
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
-from josepy.b64 import b64encode
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import SuspiciousOperation
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils.encoding import force_bytes, smart_str
+from josepy.b64 import b64encode
 
-from mozilla_django_oidc.auth import (
-    default_username_algo,
-    OIDCAuthenticationBackend,
-)
-
+from mozilla_django_oidc.auth import OIDCAuthenticationBackend, default_username_algo
 
 User = get_user_model()
 
@@ -61,7 +56,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "accesss_token": "access_token",
@@ -239,7 +234,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -288,7 +283,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -341,7 +336,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -394,7 +389,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         claims_response = {"nickname": "a_username", "email": "email@example.com"}
         get_json_mock.json.return_value = claims_response
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -445,7 +440,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -505,7 +500,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -576,7 +571,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "token",
             "access_token": "access_token",
@@ -602,7 +597,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "token",
             "access_token": "access_token",
@@ -642,7 +637,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -666,7 +661,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -695,7 +690,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -725,7 +720,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -757,7 +752,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "domain": domain,
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -785,7 +780,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -810,7 +805,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -844,7 +839,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "id_token",
             "access_token": "access_granted",
@@ -882,7 +877,7 @@ class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "token",
             "access_token": "access_token",
@@ -931,7 +926,7 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
             "email": "email@example.com",
         }
         request_mock.get.return_value = get_json_mock
-        post_json_mock = Mock()
+        post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
             "id_token": "token",
             "access_token": "access_token",
