@@ -281,7 +281,7 @@ of ``mozilla-django-oidc``.
 
 .. py:attribute:: OIDC_USE_PKCE
 
-   :default: ``True``
+   :default: ``False``
 
    Controls whether the authentication backend uses PKCE (Proof Key For Code Exchange) during the authorization code flow.
 
@@ -324,4 +324,3 @@ of ``mozilla-django-oidc``.
    .. seealso::
 
       https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
-

@@ -88,7 +88,6 @@ class OIDCAuthenticationCallbackView(View):
                 auth.logout(request)
             assert not request.user.is_authenticated
         elif "code" in request.GET and "state" in request.GET:
-
             # Check instead of "oidc_state" check if the "oidc_states" session key exists!
             if "oidc_states" not in request.session:
                 return self.login_failure()
@@ -197,7 +196,7 @@ class OIDCAuthenticationRequestView(View):
             nonce = get_random_string(self.get_settings("OIDC_NONCE_SIZE", 32))
             params.update({"nonce": nonce})
 
-        if self.get_settings("OIDC_USE_PKCE", True):
+        if self.get_settings("OIDC_USE_PKCE", False):
             code_verifier_length = self.get_settings("OIDC_PKCE_CODE_VERIFIER_SIZE", 64)
             # Check that code_verifier_length is between the min and max length
             # defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
