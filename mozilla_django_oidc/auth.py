@@ -10,6 +10,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_bytes, smart_str
+from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from josepy.b64 import b64decode
 from josepy.jwk import JWK
@@ -47,21 +48,27 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def __init__(self, *args, **kwargs):
         """Initialize settings."""
-        self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings("OIDC_OP_TOKEN_ENDPOINT")
-        self.OIDC_OP_USER_ENDPOINT = self.get_settings("OIDC_OP_USER_ENDPOINT")
-        self.OIDC_OP_JWKS_ENDPOINT = self.get_settings("OIDC_OP_JWKS_ENDPOINT", None)
-        self.OIDC_RP_CLIENT_ID = self.get_settings("OIDC_RP_CLIENT_ID")
-        self.OIDC_RP_CLIENT_SECRET = self.get_settings("OIDC_RP_CLIENT_SECRET")
-        self.OIDC_RP_SIGN_ALGO = self.get_settings("OIDC_RP_SIGN_ALGO", "HS256")
-        self.OIDC_RP_IDP_SIGN_KEY = self.get_settings("OIDC_RP_IDP_SIGN_KEY", None)
+        self.UserModel = get_user_model()
 
-        if self.OIDC_RP_SIGN_ALGO.startswith("RS") and (
-            self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None
+    @cached_property
+    def settings(self):
+        retval = {
+            "OIDC_OP_TOKEN_ENDPOINT": self.get_settings("OIDC_OP_TOKEN_ENDPOINT"),
+            "OIDC_OP_USER_ENDPOINT": self.get_settings("OIDC_OP_USER_ENDPOINT"),
+            "OIDC_OP_JWKS_ENDPOINT": self.get_settings("OIDC_OP_JWKS_ENDPOINT", None),
+            "OIDC_RP_CLIENT_ID": self.get_settings("OIDC_RP_CLIENT_ID"),
+            "OIDC_RP_CLIENT_SECRET": self.get_settings("OIDC_RP_CLIENT_SECRET"),
+            "OIDC_RP_SIGN_ALGO": self.get_settings("OIDC_RP_SIGN_ALGO", "HS256"),
+            "OIDC_RP_IDP_SIGN_KEY": self.get_settings("OIDC_RP_IDP_SIGN_KEY", None),
+        }
+
+        if retval["OIDC_RP_SIGN_ALGO"].startswith("RS") and (
+            retval["OIDC_RP_IDP_SIGN_KEY"] is None and retval["OIDC_OP_JWKS_ENDPOINT"] is None
         ):
             msg = "{} alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured."
-            raise ImproperlyConfigured(msg.format(self.OIDC_RP_SIGN_ALGO))
+            raise ImproperlyConfigured(msg.format(retval["OIDC_RP_SIGN_ALGO"]))
 
-        self.UserModel = get_user_model()
+        return retval
 
     @staticmethod
     def get_settings(attr, *args):
@@ -132,7 +139,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             msg = "No alg value found in header"
             raise SuspiciousOperation(msg)
 
-        if alg != self.OIDC_RP_SIGN_ALGO:
+        if alg != self.settings["OIDC_RP_SIGN_ALGO"]:
             msg = (
                 "The provider algorithm {!r} does not match the client's "
                 "OIDC_RP_SIGN_ALGO.".format(alg)
@@ -155,7 +162,7 @@ class OIDCAuthenticationBackend(ModelBackend):
     def retrieve_matching_jwk(self, token):
         """Get the signing key by exploring the JWKS endpoint of the OP."""
         response_jwks = requests.get(
-            self.OIDC_OP_JWKS_ENDPOINT,
+            self.settings["OIDC_OP_JWKS_ENDPOINT"],
             verify=self.get_settings("OIDC_VERIFY_SSL", True),
             timeout=self.get_settings("OIDC_TIMEOUT", None),
             proxies=self.get_settings("OIDC_PROXY", None),
@@ -199,13 +206,13 @@ class OIDCAuthenticationBackend(ModelBackend):
         nonce = kwargs.get("nonce")
 
         token = force_bytes(token)
-        if self.OIDC_RP_SIGN_ALGO.startswith("RS"):
-            if self.OIDC_RP_IDP_SIGN_KEY is not None:
-                key = self.OIDC_RP_IDP_SIGN_KEY
+        if self.settings["OIDC_RP_SIGN_ALGO"].startswith("RS"):
+            if self.settings["OIDC_RP_IDP_SIGN_KEY"] is not None:
+                key = self.settings["OIDC_RP_IDP_SIGN_KEY"]
             else:
                 key = self.retrieve_matching_jwk(token)
         else:
-            key = self.OIDC_RP_CLIENT_SECRET
+            key = self.settings["OIDC_RP_CLIENT_SECRET"]
 
         payload_data = self.get_payload_data(token, key)
 
@@ -237,7 +244,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             del payload["client_secret"]
 
         response = requests.post(
-            self.OIDC_OP_TOKEN_ENDPOINT,
+            self.settings["OIDC_OP_TOKEN_ENDPOINT"],
             data=payload,
             auth=auth,
             verify=self.get_settings("OIDC_VERIFY_SSL", True),
@@ -267,7 +274,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         the default implementation, but may be used when overriding this method"""
 
         user_response = requests.get(
-            self.OIDC_OP_USER_ENDPOINT,
+            self.settings["OIDC_OP_USER_ENDPOINT"],
             headers={"Authorization": "Bearer {0}".format(access_token)},
             verify=self.get_settings("OIDC_VERIFY_SSL", True),
             timeout=self.get_settings("OIDC_TIMEOUT", None),
@@ -296,8 +303,8 @@ class OIDCAuthenticationBackend(ModelBackend):
         )
 
         token_payload = {
-            "client_id": self.OIDC_RP_CLIENT_ID,
-            "client_secret": self.OIDC_RP_CLIENT_SECRET,
+            "client_id": self.settings["OIDC_RP_CLIENT_ID"],
+            "client_secret": self.settings["OIDC_RP_CLIENT_SECRET"],
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": absolutify(self.request, reverse(reverse_url)),
