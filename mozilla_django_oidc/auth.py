@@ -255,7 +255,11 @@ class OIDCAuthenticationBackend(ModelBackend):
         if response.status_code == 200:
             return
         # otherwise something is up...
-        http_error_msg = f"Get Token Error (url: {response.url}, status: {response.status_code}, body: {response.text})"
+        http_error_msg = (
+            f"Get Token Error (url: {response.url}, "
+            f"status: {response.status_code}, "
+            f"body: {response.text})"
+        )
         raise HTTPError(http_error_msg, response=response)
 
     def get_userinfo(self, access_token, id_token, payload):
