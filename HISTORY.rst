@@ -4,11 +4,31 @@ History
 -------
 
 
-pending
-=======
+4.0.0 (2024-01-11)
+==================
 
 * Added PKCE support in the authorization code flow.
+  Thanks `@themooer1 <https://github.com/themooer1>`_ and `@escattone https://github.com/escattone/`_
 * Added support for Elliptic Curve JWT signing algorithms
+  Thanks `@atanunq <https://github.com/atanunq>`_
+* Replace mock with unittest.mock
+  Thanks `@traylenator <https://github.com/traylenator>`_
+* Add pre-commit hooks
+* Add support for Python 3.11 and 3.12
+* Add support for Django 4.2
+* Document OIDC_USERNAME_ALGO
+  Thanks `@polyccon <https://github.com/polyccon>`_
+* Add claims to custom username algorithm
+  Thanks `@EduardRosert <https://github.com/EduardRosert>`_
+* Formatting fixes in the Documentation
+  Thanks `@EduardRosert <https://github.com/EduardRosert>`_
+* Update token error response handling
+  Thanks `@dopry <https://github.com/dopry>`
+
+Backwards-incompatible changes:
+
+* Drop Python 3.7 support
+* Drop Django 4.1 support
 
 
 3.0.0 (2022-11-14)
@@ -50,11 +70,11 @@ Backwards-incompatible changes:
 * Pass email as named argument in create_user
 * Do not fail if JWK does not have a key ID
   Thanks `@cfra <https://github.com/cfra>`_
-* Update middleware init to configure settings 
+* Update middleware init to configure settings
   Thanks `@dreynolds <https://github.com/dreynolds>`_
 * Add SessionAuthentication to DRF auth class
   Thanks `@SpyTec <https://github.com/SpyTec>`_
-  
+
 Backwards-incompatible changes:
 
 * Drop Django 1.x support
