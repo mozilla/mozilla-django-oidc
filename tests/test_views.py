@@ -3,7 +3,7 @@ from urllib.parse import parse_qs, urlparse
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from unittest.mock import patch
@@ -478,7 +478,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="https://server.example.com/auth")
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
     @override_settings(OIDC_USE_PKCE=True)
-    @patch("mozilla_django_oidc.views.get_random_string")
+    @patch("mozilla_django_oidc.utils.get_random_string")
     def test_get(self, mock_views_random):
         """Test initiation of a successful OIDC attempt."""
         mock_views_random.return_value = "examplestring"
@@ -517,7 +517,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="https://server.example.com/auth")
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
     @override_settings(OIDC_USE_PKCE=False)
-    @patch("mozilla_django_oidc.views.get_random_string")
+    @patch("mozilla_django_oidc.utils.get_random_string")
     def test_get_without_PKCE(self, mock_views_random):
         """Test initiation of a successful OIDC attempt with PKCE disabled."""
         mock_views_random.return_value = "examplestring"
@@ -548,7 +548,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
     @override_settings(OIDC_USE_PKCE=True)
     @override_settings(OIDC_PKCE_CODE_VERIFIER_SIZE=42)  # must be between 43 and 128
-    @patch("mozilla_django_oidc.views.get_random_string")
+    @patch("mozilla_django_oidc.utils.get_random_string")
     def test_get_invalid_code_verifier_size_too_short(self, mock_views_random):
         """Test initiation of an OIDC attempt with an invalid code verifier size."""
         mock_views_random.return_value = "examplestring"
@@ -556,20 +556,14 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         request = self.factory.get(url)
         request.session = dict()
         login_view = views.OIDCAuthenticationRequestView.as_view()
-        try:
+        with self.assertRaises(ImproperlyConfigured):
             login_view(request)
-            self.fail(
-                "OIDC_PKCE_CODE_VERIFIER_SIZE must be between 43 and 128,"
-                " but OIDC_PKCE_CODE_VERIFIER_SIZE was 42 and no exception was raised."
-            )
-        except ValueError:
-            pass
 
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="https://server.example.com/auth")
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
     @override_settings(OIDC_USE_PKCE=True)
     @override_settings(OIDC_PKCE_CODE_VERIFIER_SIZE=129)  # must be between 43 and 128
-    @patch("mozilla_django_oidc.views.get_random_string")
+    @patch("mozilla_django_oidc.utils.get_random_string")
     def test_get_invalid_code_verifier_size_too_long(self, mock_views_random):
         """Test initiation of an OIDC attempt with an invalid code verifier size."""
         mock_views_random.return_value = "examplestring"
@@ -577,14 +571,8 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
         request = self.factory.get(url)
         request.session = dict()
         login_view = views.OIDCAuthenticationRequestView.as_view()
-        try:
+        with self.assertRaises(ImproperlyConfigured):
             login_view(request)
-            self.fail(
-                "OIDC_PKCE_CODE_VERIFIER_SIZE must be between 43 and 128,"
-                " but OIDC_PKCE_CODE_VERIFIER_SIZE was 129 and no exception was raised."
-            )
-        except ValueError:
-            pass
 
     @override_settings(ROOT_URLCONF="tests.namespaced_urls")
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="https://server.example.com/auth")
@@ -593,7 +581,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(
         OIDC_AUTHENTICATION_CALLBACK_URL="namespace:oidc_authentication_callback"
     )
-    @patch("mozilla_django_oidc.views.get_random_string")
+    @patch("mozilla_django_oidc.utils.get_random_string")
     def test_get_namespaced(self, mock_views_random):
         """Test initiation of a successful OIDC attempt with namespaced redirect_uri."""
         mock_views_random.return_value = "examplestring"
@@ -635,7 +623,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(
         OIDC_AUTH_REQUEST_EXTRA_PARAMS={"audience": "some-api.example.com"}
     )
-    @patch("mozilla_django_oidc.views.get_random_string")
+    @patch("mozilla_django_oidc.utils.get_random_string")
     def test_get_with_audience(self, mock_views_random):
         """Test initiation of a successful OIDC attempt."""
         mock_views_random.return_value = "examplestring"
@@ -675,7 +663,7 @@ class OIDCAuthorizationRequestViewTestCase(TestCase):
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="https://server.example.com/auth")
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
     @override_settings(OIDC_USE_PKCE=True)
-    @patch("mozilla_django_oidc.views.get_random_string")
+    @patch("mozilla_django_oidc.utils.get_random_string")
     @patch("mozilla_django_oidc.views.OIDCAuthenticationRequestView.get_extra_params")
     def test_get_with_overridden_extra_params(
         self, mock_extra_params, mock_views_random

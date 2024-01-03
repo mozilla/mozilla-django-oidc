@@ -23,7 +23,7 @@ User = get_user_model()
 @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="http://example.com/authorize")
 @override_settings(OIDC_RP_CLIENT_ID="foo")
 @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
-@patch("mozilla_django_oidc.middleware.get_random_string")
+@patch("mozilla_django_oidc.utils.get_random_string")
 class SessionRefreshTokenMiddlewareTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
@@ -78,6 +78,36 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
         json_payload = json.loads(response.content.decode("utf-8"))
         self.assertEqual(json_payload["refresh_url"], response["refresh_url"])
 
+    @override_settings(OIDC_USE_PKCE=True)
+    def test_is_ajax_with_pkce(self, mock_middleware_random):
+        mock_middleware_random.return_value = "examplestring"
+
+        request = self.factory.get("/foo", HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        request.session = {}
+        request.user = self.user
+
+        response = SessionRefresh(MagicMock).process_request(request)
+        self.assertEqual(response.status_code, 403)
+        # The URL to go to is available both as a header and as a key
+        # in the JSON response.
+        self.assertTrue(response["refresh_url"])
+        url, qs = response["refresh_url"].split("?")
+        self.assertEqual(url, "http://example.com/authorize")
+        expected_query = {
+            "response_type": ["code"],
+            "redirect_uri": ["http://testserver/callback/"],
+            "client_id": ["foo"],
+            "nonce": ["examplestring"],
+            "prompt": ["none"],
+            "scope": ["openid email"],
+            "state": ["examplestring"],
+            "code_challenge_method": ["S256"],
+            "code_challenge": ["m8yog7rVNdOd7hYIoUg6yl5mk_IYauWdSIBUjoPJHB0"],
+        }
+        self.assertEqual(expected_query, parse_qs(qs))
+        json_payload = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(json_payload["refresh_url"], response["refresh_url"])
+
     def test_no_oidc_token_expiration_forces_renewal(self, mock_middleware_random):
         mock_middleware_random.return_value = "examplestring"
 
@@ -101,6 +131,34 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
         }
         self.assertEqual(expected_query, parse_qs(qs))
 
+    @override_settings(OIDC_USE_PKCE=True)
+    def test_no_oidc_token_expiration_forces_renewal_with_pkce(
+        self, mock_middleware_random
+    ):
+        mock_middleware_random.return_value = "examplestring"
+
+        request = self.factory.get("/foo")
+        request.user = self.user
+        request.session = {}
+
+        response = SessionRefresh(MagicMock).process_request(request)
+
+        self.assertEqual(response.status_code, 302)
+        url, qs = response.url.split("?")
+        self.assertEqual(url, "http://example.com/authorize")
+        expected_query = {
+            "response_type": ["code"],
+            "redirect_uri": ["http://testserver/callback/"],
+            "client_id": ["foo"],
+            "nonce": ["examplestring"],
+            "prompt": ["none"],
+            "scope": ["openid email"],
+            "state": ["examplestring"],
+            "code_challenge_method": ["S256"],
+            "code_challenge": ["m8yog7rVNdOd7hYIoUg6yl5mk_IYauWdSIBUjoPJHB0"],
+        }
+        self.assertEqual(expected_query, parse_qs(qs))
+
     def test_expired_token_forces_renewal(self, mock_middleware_random):
         mock_middleware_random.return_value = "examplestring"
 
@@ -121,6 +179,32 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
             "prompt": ["none"],
             "scope": ["openid email"],
             "state": ["examplestring"],
+        }
+        self.assertEqual(expected_query, parse_qs(qs))
+
+    @override_settings(OIDC_USE_PKCE=True)
+    def test_expired_token_forces_renewal_with_pkce(self, mock_middleware_random):
+        mock_middleware_random.return_value = "examplestring"
+
+        request = self.factory.get("/foo")
+        request.user = self.user
+        request.session = {"oidc_id_token_expiration": time.time() - 10}
+
+        response = SessionRefresh(MagicMock).process_request(request)
+
+        self.assertEqual(response.status_code, 302)
+        url, qs = response.url.split("?")
+        self.assertEqual(url, "http://example.com/authorize")
+        expected_query = {
+            "response_type": ["code"],
+            "redirect_uri": ["http://testserver/callback/"],
+            "client_id": ["foo"],
+            "nonce": ["examplestring"],
+            "prompt": ["none"],
+            "scope": ["openid email"],
+            "state": ["examplestring"],
+            "code_challenge_method": ["S256"],
+            "code_challenge": ["m8yog7rVNdOd7hYIoUg6yl5mk_IYauWdSIBUjoPJHB0"],
         }
         self.assertEqual(expected_query, parse_qs(qs))
 
@@ -275,7 +359,7 @@ class MiddlewareTestCase(TestCase):
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="http://example.com/authorize")
     @override_settings(OIDC_RP_CLIENT_ID="foo")
     @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
-    @patch("mozilla_django_oidc.middleware.get_random_string")
+    @patch("mozilla_django_oidc.utils.get_random_string")
     def test_expired_token_redirects_to_sso(self, mock_middleware_random):
         mock_middleware_random.return_value = "examplestring"
 
@@ -309,7 +393,44 @@ class MiddlewareTestCase(TestCase):
     @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="http://example.com/authorize")
     @override_settings(OIDC_RP_CLIENT_ID="foo")
     @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
-    @patch("mozilla_django_oidc.middleware.get_random_string")
+    @override_settings(OIDC_USE_PKCE=True)
+    @patch("mozilla_django_oidc.utils.get_random_string")
+    def test_expired_token_redirects_to_sso_with_pkce(self, mock_middleware_random):
+        mock_middleware_random.return_value = "examplestring"
+
+        client = ClientWithUser()
+        client.login(username=self.user.username, password="password")
+
+        # Set expiration to some time in the past
+        session = client.session
+        session["oidc_id_token_expiration"] = time.time() - 100
+        session[
+            "_auth_user_backend"
+        ] = "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        session.save()
+
+        resp = client.get("/mdo_fake_view/")
+        self.assertEqual(resp.status_code, 302)
+
+        url, qs = resp.url.split("?")
+        self.assertEqual(url, "http://example.com/authorize")
+        expected_query = {
+            "response_type": ["code"],
+            "redirect_uri": ["http://testserver/callback/"],
+            "client_id": ["foo"],
+            "nonce": ["examplestring"],
+            "prompt": ["none"],
+            "scope": ["openid email"],
+            "state": ["examplestring"],
+            "code_challenge_method": ["S256"],
+            "code_challenge": ["m8yog7rVNdOd7hYIoUg6yl5mk_IYauWdSIBUjoPJHB0"],
+        }
+        self.assertEqual(expected_query, parse_qs(qs))
+
+    @override_settings(OIDC_OP_AUTHORIZATION_ENDPOINT="http://example.com/authorize")
+    @override_settings(OIDC_RP_CLIENT_ID="foo")
+    @override_settings(OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS=120)
+    @patch("mozilla_django_oidc.utils.get_random_string")
     def test_refresh_fails_for_already_signed_in_user(self, mock_random_string):
         mock_random_string.return_value = "examplestring"
 

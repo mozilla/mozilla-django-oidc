@@ -1,27 +1,22 @@
 import logging
 import time
 from re import Pattern as re_Pattern
-from urllib.parse import quote, urlencode
+from urllib.parse import quote
 
 from django.contrib.auth import BACKEND_SESSION_KEY
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
-from django.utils.crypto import get_random_string
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
-from mozilla_django_oidc.utils import (
-    absolutify,
-    add_state_and_verifier_and_nonce_to_session,
-    import_from_settings,
-)
+from mozilla_django_oidc.utils import AuthorizationCodeRequestMixin
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SessionRefresh(MiddlewareMixin):
+class SessionRefresh(MiddlewareMixin, AuthorizationCodeRequestMixin):
     """Refreshes the session with the OIDC RP after expiry seconds
 
     For users authenticated with the OIDC RP, verify tokens are still valid and
@@ -30,24 +25,9 @@ class SessionRefresh(MiddlewareMixin):
     """
 
     def __init__(self, get_response):
-        super(SessionRefresh, self).__init__(get_response)
+        super().__init__(get_response)
+        self.init_settings_for_authorization_code_request()
         self.OIDC_EXEMPT_URLS = self.get_settings("OIDC_EXEMPT_URLS", [])
-        self.OIDC_OP_AUTHORIZATION_ENDPOINT = self.get_settings(
-            "OIDC_OP_AUTHORIZATION_ENDPOINT"
-        )
-        self.OIDC_RP_CLIENT_ID = self.get_settings("OIDC_RP_CLIENT_ID")
-        self.OIDC_STATE_SIZE = self.get_settings("OIDC_STATE_SIZE", 32)
-        self.OIDC_AUTHENTICATION_CALLBACK_URL = self.get_settings(
-            "OIDC_AUTHENTICATION_CALLBACK_URL",
-            "oidc_authentication_callback",
-        )
-        self.OIDC_RP_SCOPES = self.get_settings("OIDC_RP_SCOPES", "openid email")
-        self.OIDC_USE_NONCE = self.get_settings("OIDC_USE_NONCE", True)
-        self.OIDC_NONCE_SIZE = self.get_settings("OIDC_NONCE_SIZE", 32)
-
-    @staticmethod
-    def get_settings(attr, *args):
-        return import_from_settings(attr, *args)
 
     @cached_property
     def exempt_urls(self):
@@ -115,6 +95,11 @@ class SessionRefresh(MiddlewareMixin):
             and not any(pat.match(request.path) for pat in self.exempt_url_patterns)
         )
 
+    def get_extra_params(self, request):
+        extra = super().get_extra_params(request)
+        extra.update(prompt="none")
+        return extra
+
     def process_request(self, request):
         if not self.is_refreshable_url(request):
             LOGGER.debug("request is not refreshable")
@@ -129,35 +114,11 @@ class SessionRefresh(MiddlewareMixin):
 
         LOGGER.debug("id token has expired")
         # The id_token has expired, so we have to re-authenticate silently.
-        auth_url = self.OIDC_OP_AUTHORIZATION_ENDPOINT
-        client_id = self.OIDC_RP_CLIENT_ID
-        state = get_random_string(self.OIDC_STATE_SIZE)
-
-        # Build the parameters as if we were doing a real auth handoff, except
-        # we also include prompt=none.
-        params = {
-            "response_type": "code",
-            "client_id": client_id,
-            "redirect_uri": absolutify(
-                request, reverse(self.OIDC_AUTHENTICATION_CALLBACK_URL)
-            ),
-            "state": state,
-            "scope": self.OIDC_RP_SCOPES,
-            "prompt": "none",
-        }
-
-        params.update(self.get_settings("OIDC_AUTH_REQUEST_EXTRA_PARAMS", {}))
-
-        if self.OIDC_USE_NONCE:
-            nonce = get_random_string(self.OIDC_NONCE_SIZE)
-            params.update({"nonce": nonce})
-
-        add_state_and_verifier_and_nonce_to_session(request, state, params)
-
+        redirect_url = self.get_url_for_authorization_code_request(
+            request, quote_via=quote
+        )
         request.session["oidc_login_next"] = request.get_full_path()
 
-        query = urlencode(params, quote_via=quote)
-        redirect_url = "{url}?{query}".format(url=auth_url, query=query)
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             # Almost all XHR request handling in client-side code struggles
             # with redirects since redirecting to a page where the user

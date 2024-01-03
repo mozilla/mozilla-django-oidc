@@ -2,12 +2,15 @@ import logging
 import time
 import warnings
 from hashlib import sha256
+from urllib.parse import urlencode
 from urllib.request import parse_http_list, parse_keqv_list
 
 # Make it obvious that these aren't the usual base64 functions
 import josepy.b64
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.urls import reverse
+from django.utils.crypto import get_random_string
 
 LOGGER = logging.getLogger(__name__)
 
@@ -159,3 +162,88 @@ def add_state_and_verifier_and_nonce_to_session(
         "nonce": nonce,
         "added_on": time.time(),
     }
+
+
+class AuthorizationCodeRequestMixin:
+    """
+    Class that encapsulates the functionality required to make an authorization code request.
+    """
+
+    @staticmethod
+    def get_settings(attr, *args):
+        return import_from_settings(attr, *args)
+
+    def init_settings_for_authorization_code_request(self):
+        self.OIDC_OP_AUTH_ENDPOINT = self.get_settings("OIDC_OP_AUTHORIZATION_ENDPOINT")
+        self.OIDC_OP_AUTHORIZATION_ENDPOINT = self.OIDC_OP_AUTH_ENDPOINT
+        self.OIDC_RP_CLIENT_ID = self.get_settings("OIDC_RP_CLIENT_ID")
+        self.OIDC_STATE_SIZE = self.get_settings("OIDC_STATE_SIZE", 32)
+        self.OIDC_AUTHENTICATION_CALLBACK_URL = self.get_settings(
+            "OIDC_AUTHENTICATION_CALLBACK_URL",
+            "oidc_authentication_callback",
+        )
+        self.OIDC_RP_SCOPES = self.get_settings("OIDC_RP_SCOPES", "openid email")
+        self.OIDC_USE_NONCE = self.get_settings("OIDC_USE_NONCE", True)
+        self.OIDC_NONCE_SIZE = self.get_settings("OIDC_NONCE_SIZE", 32)
+        self.OIDC_USE_PKCE = self.get_settings("OIDC_USE_PKCE", False)
+        self.OIDC_PKCE_CODE_VERIFIER_SIZE = self.get_settings(
+            "OIDC_PKCE_CODE_VERIFIER_SIZE", 64
+        )
+
+        if not (43 <= self.OIDC_PKCE_CODE_VERIFIER_SIZE <= 128):
+            # Check that OIDC_PKCE_CODE_VERIFIER_SIZE is between the min and max length
+            # defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+            raise ImproperlyConfigured(
+                "OIDC_PKCE_CODE_VERIFIER_SIZE must be between 43 and 128"
+            )
+
+        self.OIDC_PKCE_CODE_CHALLENGE_METHOD = self.get_settings(
+            "OIDC_PKCE_CODE_CHALLENGE_METHOD", "S256"
+        )
+
+        if self.OIDC_PKCE_CODE_CHALLENGE_METHOD not in ("plain", "S256"):
+            raise ImproperlyConfigured(
+                "OIDC_PKCE_CODE_CHALLENGE_METHOD must be 'plain' or 'S256'"
+            )
+
+    def get_extra_params(self, request):
+        return self.get_settings("OIDC_AUTH_REQUEST_EXTRA_PARAMS", {})
+
+    def get_url_for_authorization_code_request(self, request, **urlencode_kwargs):
+        """
+        Builds and returns the URL required for the authorization code request, and
+        also adds the state, nonce, and code verifier (if using PKCE) to the session.
+        """
+        state = get_random_string(self.OIDC_STATE_SIZE)
+
+        params = {
+            "response_type": "code",
+            "scope": self.OIDC_RP_SCOPES,
+            "client_id": self.OIDC_RP_CLIENT_ID,
+            "redirect_uri": absolutify(
+                request, reverse(self.OIDC_AUTHENTICATION_CALLBACK_URL)
+            ),
+            "state": state,
+        }
+
+        params.update(self.get_extra_params(request))
+
+        if self.OIDC_USE_NONCE:
+            params.update(nonce=get_random_string(self.OIDC_NONCE_SIZE))
+
+        if self.OIDC_USE_PKCE:
+            code_verifier = get_random_string(self.OIDC_PKCE_CODE_VERIFIER_SIZE)
+            params.update(
+                code_challenge=generate_code_challenge(
+                    code_verifier, self.OIDC_PKCE_CODE_CHALLENGE_METHOD
+                ),
+                code_challenge_method=self.OIDC_PKCE_CODE_CHALLENGE_METHOD,
+            )
+        else:
+            code_verifier = None
+
+        add_state_and_verifier_and_nonce_to_session(
+            request, state, params, code_verifier
+        )
+
+        return f"{self.OIDC_OP_AUTHORIZATION_ENDPOINT}?{urlencode(params, **urlencode_kwargs)}"

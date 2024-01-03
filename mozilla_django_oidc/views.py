@@ -1,20 +1,15 @@
 import time
-from urllib.parse import urlencode
 
 from django.contrib import auth
 from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import resolve_url
-from django.urls import reverse
-from django.utils.crypto import get_random_string
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.module_loading import import_string
 from django.views.generic import View
 
 from mozilla_django_oidc.utils import (
-    absolutify,
-    add_state_and_verifier_and_nonce_to_session,
-    generate_code_challenge,
+    AuthorizationCodeRequestMixin,
     import_from_settings,
 )
 
@@ -159,84 +154,25 @@ def get_next_url(request, redirect_field_name):
     return None
 
 
-class OIDCAuthenticationRequestView(View):
+class OIDCAuthenticationRequestView(View, AuthorizationCodeRequestMixin):
     """OIDC client authentication HTTP endpoint"""
 
     http_method_names = ["get"]
 
     def __init__(self, *args, **kwargs):
-        super(OIDCAuthenticationRequestView, self).__init__(*args, **kwargs)
-
-        self.OIDC_OP_AUTH_ENDPOINT = self.get_settings("OIDC_OP_AUTHORIZATION_ENDPOINT")
-        self.OIDC_RP_CLIENT_ID = self.get_settings("OIDC_RP_CLIENT_ID")
-
-    @staticmethod
-    def get_settings(attr, *args):
-        return import_from_settings(attr, *args)
+        super().__init__(*args, **kwargs)
+        self.init_settings_for_authorization_code_request()
+        self.OIDC_REDIRECT_FIELD_NAME = self.get_settings(
+            "OIDC_REDIRECT_FIELD_NAME", "next"
+        )
 
     def get(self, request):
         """OIDC client authentication initialization HTTP endpoint"""
-        state = get_random_string(self.get_settings("OIDC_STATE_SIZE", 32))
-        redirect_field_name = self.get_settings("OIDC_REDIRECT_FIELD_NAME", "next")
-        reverse_url = self.get_settings(
-            "OIDC_AUTHENTICATION_CALLBACK_URL", "oidc_authentication_callback"
-        )
-
-        params = {
-            "response_type": "code",
-            "scope": self.get_settings("OIDC_RP_SCOPES", "openid email"),
-            "client_id": self.OIDC_RP_CLIENT_ID,
-            "redirect_uri": absolutify(request, reverse(reverse_url)),
-            "state": state,
-        }
-
-        params.update(self.get_extra_params(request))
-
-        if self.get_settings("OIDC_USE_NONCE", True):
-            nonce = get_random_string(self.get_settings("OIDC_NONCE_SIZE", 32))
-            params.update({"nonce": nonce})
-
-        if self.get_settings("OIDC_USE_PKCE", False):
-            code_verifier_length = self.get_settings("OIDC_PKCE_CODE_VERIFIER_SIZE", 64)
-            # Check that code_verifier_length is between the min and max length
-            # defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
-            if not (43 <= code_verifier_length <= 128):
-                raise ValueError("code_verifier_length must be between 43 and 128")
-
-            # Generate code_verifier and code_challenge pair
-            code_verifier = get_random_string(code_verifier_length)
-            code_challenge_method = self.get_settings(
-                "OIDC_PKCE_CODE_CHALLENGE_METHOD", "S256"
-            )
-            code_challenge = generate_code_challenge(
-                code_verifier, code_challenge_method
-            )
-
-            # Append code_challenge to authentication request parameters
-            params.update(
-                {
-                    "code_challenge": code_challenge,
-                    "code_challenge_method": code_challenge_method,
-                }
-            )
-
-        else:
-            code_verifier = None
-
-        add_state_and_verifier_and_nonce_to_session(
-            request, state, params, code_verifier
-        )
-
-        request.session["oidc_login_next"] = get_next_url(request, redirect_field_name)
-
-        query = urlencode(params)
-        redirect_url = "{url}?{query}".format(
-            url=self.OIDC_OP_AUTH_ENDPOINT, query=query
+        redirect_url = self.get_url_for_authorization_code_request(request)
+        request.session["oidc_login_next"] = get_next_url(
+            request, self.OIDC_REDIRECT_FIELD_NAME
         )
         return HttpResponseRedirect(redirect_url)
-
-    def get_extra_params(self, request):
-        return self.get_settings("OIDC_AUTH_REQUEST_EXTRA_PARAMS", {})
 
 
 class OIDCLogoutView(View):
