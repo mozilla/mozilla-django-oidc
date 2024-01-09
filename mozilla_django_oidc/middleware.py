@@ -15,6 +15,7 @@ from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import (
     absolutify,
     add_state_and_verifier_and_nonce_to_session,
+    generate_code_challenge,
     import_from_settings,
 )
 
@@ -152,7 +153,35 @@ class SessionRefresh(MiddlewareMixin):
             nonce = get_random_string(self.OIDC_NONCE_SIZE)
             params.update({"nonce": nonce})
 
-        add_state_and_verifier_and_nonce_to_session(request, state, params)
+        if self.get_settings("OIDC_USE_PKCE", False):
+            code_verifier_length = self.get_settings("OIDC_PKCE_CODE_VERIFIER_SIZE", 64)
+            # Check that code_verifier_length is between the min and max length
+            # defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+            if not (43 <= code_verifier_length <= 128):
+                raise ValueError("code_verifier_length must be between 43 and 128")
+
+            # Generate code_verifier and code_challenge pair
+            code_verifier = get_random_string(code_verifier_length)
+            code_challenge_method = self.get_settings(
+                "OIDC_PKCE_CODE_CHALLENGE_METHOD", "S256"
+            )
+            code_challenge = generate_code_challenge(
+                code_verifier, code_challenge_method
+            )
+
+            # Append code_challenge to authentication request parameters
+            params.update(
+                {
+                    "code_challenge": code_challenge,
+                    "code_challenge_method": code_challenge_method,
+                }
+            )
+        else:
+            code_verifier = None
+
+        add_state_and_verifier_and_nonce_to_session(
+            request, state, params, code_verifier
+        )
 
         request.session["oidc_login_next"] = request.get_full_path()
 
