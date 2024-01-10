@@ -56,7 +56,6 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Framework :: Django",
         "Framework :: Django :: 3.2",
-        "Framework :: Django :: 4.1",
         "Framework :: Django :: 4.2",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         "Intended Audience :: Developers",
