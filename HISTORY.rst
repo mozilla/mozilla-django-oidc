@@ -8,7 +8,7 @@ History
 ==================
 
 * Added PKCE support in the authorization code flow.
-  Thanks `@themooer1 <https://github.com/themooer1>`_ and `@escattone https://github.com/escattone/`_
+  Thanks `@themooer1 <https://github.com/themooer1>`_ and `@escattone <https://github.com/escattone/>`_
 * Added support for Elliptic Curve JWT signing algorithms
   Thanks `@atanunq <https://github.com/atanunq>`_
 * Replace mock with unittest.mock
