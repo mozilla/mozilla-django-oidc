@@ -133,8 +133,8 @@ class OIDCAuthenticationBackend(ModelBackend):
             extra_params = {}
 
         return self.UserModel.objects.create_user(
-            email,
-            username=username,
+            username,
+            email=email,
             **extra_params
         )
 
@@ -388,10 +388,6 @@ class OIDCAuthenticationBackend(ModelBackend):
     def get_or_create_user(self, access_token, id_token, payload):
         """Returns a User instance if 1 user is found. Creates a user if not found
         and configured to do so. Returns nothing if multiple users are matched."""
-
-        LOGGER.debug("get_or_create_user.access_token", access_token)
-        LOGGER.debug("get_or_create_user.id_token", id_token)
-        LOGGER.debug("get_or_create_user.json.dumps(payload)", json.dumps(payload))
 
         user_info = self.get_userinfo(access_token, id_token, payload)
 
