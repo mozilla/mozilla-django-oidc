@@ -92,18 +92,12 @@ class OIDCAuthenticationBackend(ModelBackend):
         # Use the app label to filter
         filter_label = self.OIDC_RP_UNIQUE_IDENTIFIER + "__iexact"
         kwargs = {filter_label: unique_identifier_value}
-        LOGGER.debug("filter_label", filter_label)
-        LOGGER.debug("unique_identifier_value", unique_identifier_value)
         filtered_users = self.UserModel.objects.filter(**kwargs)
-        LOGGER.debug("filtered_users query", filtered_users.query)
 
         return filtered_users
 
     def verify_claims(self, claims):
         """Verify the provided claims to decide if authentication should be allowed."""
-
-        # Verify claims required by default configuration
-        LOGGER.debug("verify_claims.claims (user_info", json.dumps(claims))
 
         # Scopes are user attributes requested, not necessarily claims
         scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
@@ -118,8 +112,6 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def create_user(self, claims):
         """Return object for a newly created user account."""
-
-        LOGGER.debug("verify_claims.claims (user_info", json.dumps(claims))
         email = claims.get('email')
         username = self.get_username(claims)
 
@@ -133,8 +125,8 @@ class OIDCAuthenticationBackend(ModelBackend):
             extra_params = {}
 
         return self.UserModel.objects.create_user(
-            email,
-            username=username,
+            username,
+            email=email,
             **extra_params
         )
 
@@ -271,7 +263,6 @@ class OIDCAuthenticationBackend(ModelBackend):
                 "jti": secrets.token_hex(16),
                 "exp": int(time.time()) + 300,  # 5 minutes from now
             }
-            LOGGER.debug("get_token.jwt_args: {}".format(json.dumps(jwt_args)))
 
             # Client secret needs to be pem-encoded string
             encoded_jwt = jwt.encode(
@@ -279,7 +270,6 @@ class OIDCAuthenticationBackend(ModelBackend):
                 self.OIDC_RP_CLIENT_SECRET,
                 algorithm=self.OIDC_RP_SIGN_ALGO
             )
-            LOGGER.debug("get_token original payload: {}".format(json.dumps(payload)))
 
             token_payload = {
                 "client_assertion": encoded_jwt,
@@ -288,7 +278,6 @@ class OIDCAuthenticationBackend(ModelBackend):
                 "grant_type": "authorization_code",
             }
 
-            LOGGER.debug("get_token.token_payload")
             response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
             return response.json()
 
@@ -324,7 +313,6 @@ class OIDCAuthenticationBackend(ModelBackend):
             verify=self.get_settings('OIDC_VERIFY_SSL', True),
             timeout=self.get_settings('OIDC_TIMEOUT', None),
             proxies=self.get_settings('OIDC_PROXY', None))
-        LOGGER.debug("get_userinfo.user_response: {}".format(json.dumps(user_response.json())))
         user_response.raise_for_status()
         return user_response.json()
 
@@ -346,8 +334,6 @@ class OIDCAuthenticationBackend(ModelBackend):
                                         'oidc_authentication_callback')
 
         redirect_uri = absolutify(self.request, reverse(reverse_url))
-
-        LOGGER.debug("authenticate.redirect_uri: {}".format({redirect_uri}))
 
         token_payload = {
             'client_id': self.OIDC_RP_CLIENT_ID,
@@ -388,10 +374,6 @@ class OIDCAuthenticationBackend(ModelBackend):
     def get_or_create_user(self, access_token, id_token, payload):
         """Returns a User instance if 1 user is found. Creates a user if not found
         and configured to do so. Returns nothing if multiple users are matched."""
-
-        LOGGER.debug("get_or_create_user.access_token", access_token)
-        LOGGER.debug("get_or_create_user.id_token", id_token)
-        LOGGER.debug("get_or_create_user.json.dumps(payload)", json.dumps(payload))
 
         user_info = self.get_userinfo(access_token, id_token, payload)
 
