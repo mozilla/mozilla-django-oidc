@@ -9,15 +9,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.urls import reverse
-from django.utils.encoding import force_bytes, smart_bytes, smart_str
+from django.utils.encoding import force_bytes, smart_str
 from django.utils.module_loading import import_string
 from josepy.b64 import b64decode
-from josepy.jwk import JWK
 from josepy.jws import JWS, Header
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import HTTPError
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
+from ._jose import verify_jws_and_decode
 
 LOGGER = logging.getLogger(__name__)
 
@@ -127,33 +127,12 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def _verify_jws(self, payload, key):
         """Verify the given JWS payload with the given key and return the payload"""
-        jws = JWS.from_compact(payload)
-
-        try:
-            alg = jws.signature.combined.alg.name
-        except KeyError:
-            msg = "No alg value found in header"
-            raise SuspiciousOperation(msg)
-
-        if alg != self.OIDC_RP_SIGN_ALGO:
-            msg = (
-                "The provider algorithm {!r} does not match the client's "
-                "OIDC_RP_SIGN_ALGO.".format(alg)
-            )
-            raise SuspiciousOperation(msg)
-
-        if isinstance(key, str):
-            # Use smart_bytes here since the key string comes from settings.
-            jwk = JWK.load(smart_bytes(key))
-        else:
-            # The key is a json returned from the IDP JWKS endpoint.
-            jwk = JWK.from_json(key)
-
-        if not jws.verify(jwk):
-            msg = "JWS token verification failed."
-            raise SuspiciousOperation(msg)
-
-        return jws.payload
+        return verify_jws_and_decode(
+            token=payload,
+            key=key,
+            signing_algorithm=self.OIDC_RP_SIGN_ALGO,
+            decode_json=False,
+        )
 
     def retrieve_matching_jwk(self, token):
         """Get the signing key by exploring the JWKS endpoint of the OP."""
