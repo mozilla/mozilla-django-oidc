@@ -16,8 +16,12 @@ from josepy.jws import JWS, Header
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import HTTPError
 
-from mozilla_django_oidc.utils import absolutify, import_from_settings
-from ._jose import verify_jws_and_decode
+from mozilla_django_oidc._jose import verify_jws_and_decode
+from mozilla_django_oidc.utils import (
+    absolutify,
+    extract_content_type,
+    import_from_settings,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -258,7 +262,40 @@ class OIDCAuthenticationBackend(ModelBackend):
             proxies=self.get_settings("OIDC_PROXY", None),
         )
         user_response.raise_for_status()
-        return user_response.json()
+
+        # From https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse
+        #
+        # > The UserInfo Endpoint MUST return a content-type header to indicate which
+        # > format is being returned.
+        #
+        # XXX: should we .lower() this value to be sure?
+        content_type = extract_content_type(user_response.headers["Content-Type"])
+        if content_type == "application/json":
+            return user_response.json()
+        elif content_type == "application/jwt":
+            token = user_response.content
+            # get the key from the configured keys endpoint
+            # XXX: tested with asymmetric encryption. algorithms like HS256 rely on
+            # out-of-band key exchange and are currently untested. Re-using
+            # self.OIDC_RP_IDP_SIGN_KEY seems like a bad idea since the endpoint may
+            # use a separate key alltogether
+            key = self.retrieve_matching_jwk(token)
+            payload = verify_jws_and_decode(
+                token,
+                key,
+                # Providers typically control the algorithm which may differ from
+                # self.OIDC_RP_SIGN_ALGO, e.g. Keycloak allows setting the algorithm
+                # specfically for the userinfo endpoint.
+                signing_algorithm="",
+                decode_json=True,
+            )
+            return payload
+        else:
+            raise ValueError(
+                f"Got an invalid Content-Type header value ({content_type}) "
+                "according to OpenID Connect Core 1.0 standard. Contact your "
+                "vendor."
+            )
 
     def authenticate(self, request, **kwargs):
         """Authenticates a user based on the OIDC code flow."""

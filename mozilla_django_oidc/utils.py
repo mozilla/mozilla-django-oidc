@@ -8,6 +8,7 @@ from urllib.request import parse_http_list, parse_keqv_list
 import josepy.b64
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from requests.utils import _parse_content_type_header  # type: ignore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -19,6 +20,19 @@ def parse_www_authenticate_header(header):
     """
     items = parse_http_list(header)
     return parse_keqv_list(items)
+
+
+def extract_content_type(ct_header: str) -> str:
+    """
+    Get the content type + parameters from content type header.
+
+    This is internal API since we use a requests internal utility, which may be
+    removed/modified at any time. However, this is a deliberate choices since I trust
+    requests to have a correct implementation more than coming up with one myself.
+    """
+    content_type, _ = _parse_content_type_header(ct_header)
+    # discard the params, we only want the content type itself
+    return content_type
 
 
 def import_from_settings(attr, *args):
