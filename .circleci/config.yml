@@ -1,147 +1,25 @@
-version: 2
-
-common_steps: &common_steps
-  steps:
-    - checkout
-    - attach_workspace:
-        at: /tmp/workspace
-    - run:
-        name: Setup testrp /etc/hosts
-        command: echo 127.0.0.1 testrp | tee -a /etc/hosts
-    - run:
-        name: Setup testprovider /etc/hosts
-        command: echo 127.0.0.1 testprovider | tee -a /etc/hosts
-    - run:
-        name: Install latest lib build
-        command: . /testrp_env/bin/activate && pip install /tmp/workspace/mozilla-django-oidc-dev.tar.gz
-    - run:
-        name: Override django version
-        command: . /testrp_env/bin/activate && pip install $DJANGO_VERSION
-    - run:
-        name: Run testprovider service
-        command: . /testprovider_env/bin/activate && ./bin/run.sh
-        background: True
-        working_directory: /testprovider
-    - run:
-        name: Run testrp service
-        command:  . /testrp_env/bin/activate && ./bin/run.sh
-        background: True
-        working_directory: /testrp
-    - run:
-        name: Wait for testprovider
-        command: wait-for-it -p 8080 -h localhost -t 60
-    - run:
-        name: Wait for testrp
-        command: wait-for-it -p 8081 -h localhost -t 60
-    - run:
-        name: Run integration tests
-        command: . /testrp_env/bin/activate && python integration_tests.py
-        working_directory: ~/project/integration_tests
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
 
 jobs:
-  build_lib:
+  test:
     docker:
       - image: cimg/python:3.10
     steps:
       - checkout
-      - run: mkdir workspace
-      - run: make sdist
-      - run: mv dist/mozilla-django-oidc-* workspace/mozilla-django-oidc-dev.tar.gz
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - mozilla-django-oidc-dev.tar.gz
-  e2e_test_py3_rs_django220:
-    docker:
-      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
-        name: testoidcsetup
-        environment:
-          - TEST_OIDC_ALGO=rs
-          - DJANGO_VERSION=Django>=2.2.0,<3.0
-    <<: *common_steps
-  e2e_test_py3_hs_django220:
-    docker:
-      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
-        name: testoidcsetup
-        environment:
-          - TEST_OIDC_ALGO=hs
-          - DJANGO_VERSION=Django>=2.2.0,<3.0
-    <<: *common_steps
-  e2e_test_py3_rs_django300:
-    docker:
-      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
-        name: testoidcsetup
-        environment:
-          - TEST_OIDC_ALGO=rs
-          - DJANGO_VERSION=Django>=3.0.0,<3.1
-    <<: *common_steps
-  e2e_test_py3_hs_django300:
-    docker:
-      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
-        name: testoidcsetup
-        environment:
-          - TEST_OIDC_ALGO=hs
-          - DJANGO_VERSION=Django>=3.0.0,<3.1
-    <<: *common_steps
-  e2e_test_py3_rs_django310:
-    docker:
-      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
-        name: testoidcsetup
-        environment:
-          - TEST_OIDC_ALGO=rs
-          - DJANGO_VERSION=Django>=3.1.0,<3.2
-    <<: *common_steps
-  e2e_test_py3_hs_django310:
-    docker:
-      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
-        name: testoidcsetup
-        environment:
-          - TEST_OIDC_ALGO=hs
-          - DJANGO_VERSION=Django>=3.1.0,<3.2
-    <<: *common_steps
-  e2e_test_py3_rs_django320:
-    docker:
-      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
-        name: testoidcsetup
-        environment:
-          - TEST_OIDC_ALGO=rs
-          - DJANGO_VERSION=Django>=3.2.0,<4.0
-    <<: *common_steps
-  e2e_test_py3_hs_django320:
-    docker:
-      - image: mozilla/oidc-testprovider:oidc_e2e_setup_py3-latest
-        name: testoidcsetup
-        environment:
-          - TEST_OIDC_ALGO=hs
-          - DJANGO_VERSION=Django>=3.2.0,<4.0
-    <<: *common_steps
+      - run:
+          command: |
+            pip install tox
+          name: Install tox
+      - run:
+          command: |
+            tox
+          name: Run tests
 
+# Invoke jobs via workflows
+# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  version: 2
-  build_and_test:
+  primary: # This is the name of the workflow, feel free to change it to better match your workflow.
     jobs:
-      - build_lib
-      - e2e_test_py3_rs_django220:
-          requires:
-            - build_lib
-      - e2e_test_py3_hs_django220:
-          requires:
-            - build_lib
-      - e2e_test_py3_rs_django300:
-          requires:
-            - build_lib
-      - e2e_test_py3_hs_django300:
-          requires:
-            - build_lib
-      - e2e_test_py3_rs_django310:
-          requires:
-            - build_lib
-      - e2e_test_py3_hs_django310:
-          requires:
-            - build_lib
-      - e2e_test_py3_rs_django320:
-          requires:
-            - build_lib
-      - e2e_test_py3_hs_django320:
-          requires:
-            - build_lib
+      - test
