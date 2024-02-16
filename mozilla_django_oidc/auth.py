@@ -56,7 +56,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
         # Sometimes the OP has a different label for the unique ID
         self.OIDC_OP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_OP_UNIQUE_IDENTIFIER', 'email')
-        self.OIDC_OP_CLIENT_AUTH_METHOD = self.get_settings('OIDC_OP_CLIENT_AUTH_METHOD', 'implicit_flow')
+        self.OIDC_OP_CLIENT_AUTH_METHOD = self.get_settings(
+            'OIDC_OP_CLIENT_AUTH_METHOD', 'implicit_flow'
+        )
         # RP = Relying Party, or web app
         self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
         self.OIDC_RP_CLIENT_SECRET = self.get_settings('OIDC_RP_CLIENT_SECRET')
@@ -116,8 +118,10 @@ class OIDCAuthenticationBackend(ModelBackend):
         username = self.get_username(claims)
 
         # Create user with custom values if they're specified
-        if not ((self.OIDC_RP_UNIQUE_IDENTIFIER == 'email') or 
-            (self.OIDC_RP_UNIQUE_IDENTIFIER == 'username')):
+        if not (
+            (self.OIDC_RP_UNIQUE_IDENTIFIER == 'email') or
+            (self.OIDC_RP_UNIQUE_IDENTIFIER == 'username')
+        ):
             # { app_field: idp_field}
             # { "uuid": "sub_value"}
             extra_params = {self.OIDC_RP_UNIQUE_IDENTIFIER: self.get_idp_unique_id_value(claims)}

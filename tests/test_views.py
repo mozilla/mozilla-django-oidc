@@ -7,7 +7,6 @@ from mock import patch
 from django.core.exceptions import SuspiciousOperation
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.contrib.sessions.middleware import SessionMiddleware
 from django.urls import reverse
 from django.test import RequestFactory, TestCase, override_settings, Client
 
