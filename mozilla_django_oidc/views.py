@@ -250,11 +250,6 @@ class OIDCLogoutView(View):
 
     http_method_names = ["get", "post"]
 
-    def __init__(self, *args, **kwargs):
-        """Initialize settings."""
-        # TODO: get this from new setting
-        self.OIDC_OP_LOGOUT_URL = "https://idp.int.identitysandbox.gov/openid_connect/logout"
-
     @staticmethod
     def get_settings(attr, *args):
         return import_from_settings(attr, *args)
