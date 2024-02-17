@@ -54,8 +54,8 @@ Depending on your OpenID Connect provider (OP) you might need to change the
 default signing algorithm from ``HS256`` to ``RS256`` by settings the
 ``OIDC_RP_SIGN_ALGO`` value accordingly.
 
-For ``RS256`` algorithm to work, you need to set either the OP signing key or
-the OP JWKS Endpoint.
+For ``RS256`` and ``ES256`` algorithms to work, you need to set either the
+OP signing key or the OP JWKS Endpoint.
 
 The corresponding settings values are:
 

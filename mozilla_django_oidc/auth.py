@@ -10,26 +10,28 @@ import time
 import jwt
 # /logindotgov-oidc
 
+import inspect
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from django.core.exceptions import SuspiciousOperation, ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.urls import reverse
-from django.utils.encoding import force_bytes, smart_str, smart_bytes
+from django.utils.encoding import force_bytes, smart_bytes, smart_str
 from django.utils.module_loading import import_string
-
 from josepy.b64 import b64decode
 from josepy.jwk import JWK
 from josepy.jws import JWS, Header
+from requests.exceptions import HTTPError
 
 from mozilla_django_oidc.utils import absolutify, import_from_settings
 
 LOGGER = logging.getLogger(__name__)
 
 
-def default_username_algo(unique_identifier):
+def default_username_algo(unique_identifier, claims=None):
     """Generate username for the Django user.
 
     :arg str/unicode unique_identifier: the unique_identifier to use to generate a username
+    :arg dic claims: the claims from your OIDC provider, currently unused
 
     :returns: str/unicode
 
@@ -40,7 +42,7 @@ def default_username_algo(unique_identifier):
     # treated as public identifiers (so we can't use the unique_identifier).
     username = base64.urlsafe_b64encode(
         hashlib.sha1(force_bytes(unique_identifier)).digest()
-    ).rstrip(b'=')
+    ).rstrip(b"=")
 
     return smart_str(username)
 
@@ -66,9 +68,13 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
         self.OIDC_RP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_RP_UNIQUE_IDENTIFIER', 'email')
 
-        if (self.OIDC_RP_SIGN_ALGO.startswith('RS') and
-                (self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None)):
-            msg = '{} alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured.'
+        if (
+            self.OIDC_RP_SIGN_ALGO.startswith("RS")
+            or self.OIDC_RP_SIGN_ALGO.startswith("ES")
+        ) and (
+            self.OIDC_RP_IDP_SIGN_KEY is None and self.OIDC_OP_JWKS_ENDPOINT is None
+        ):
+            msg = "{} alg requires OIDC_RP_IDP_SIGN_KEY or OIDC_OP_JWKS_ENDPOINT to be configured."
             raise ImproperlyConfigured(msg.format(self.OIDC_RP_SIGN_ALGO))
 
         self.UserModel = get_user_model()
@@ -101,20 +107,21 @@ class OIDCAuthenticationBackend(ModelBackend):
     def verify_claims(self, claims):
         """Verify the provided claims to decide if authentication should be allowed."""
 
-        # Scopes are user attributes requested, not necessarily claims
-        scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
+        # Verify claims required by default configuration
+        scopes = self.get_settings("OIDC_RP_SCOPES", "openid email")
+        if "email" in scopes.split():
+            return "email" in claims
 
-        if 'email' in scopes.split():
-            return 'email' in claims
-
-        LOGGER.warning('Custom OIDC_RP_SCOPES defined. '
-                       'You need to override `verify_claims` for custom claims verification.')
+        LOGGER.warning(
+            "Custom OIDC_RP_SCOPES defined. "
+            "You need to override `verify_claims` for custom claims verification."
+        )
 
         return True
 
     def create_user(self, claims):
         """Return object for a newly created user account."""
-        email = claims.get('email')
+        email = claims.get("email")
         username = self.get_username(claims)
 
         # Create user with custom values if they're specified
@@ -138,14 +145,20 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Generate username based on claims."""
         # bluntly stolen from django-browserid
         # https://github.com/mozilla/django-browserid/blob/master/django_browserid/auth.py
-        username_algo = self.get_settings('OIDC_USERNAME_ALGO', None)
+
+        username_algo = self.get_settings("OIDC_USERNAME_ALGO", None)
 
         if username_algo:
             if isinstance(username_algo, str):
                 username_algo = import_string(username_algo)
-            return username_algo(self.get_idp_unique_id_value(claims))
+            if len(inspect.getfullargspec(username_algo).args) == 1:
+                # this is for backwards compatibility only
+                return username_algo(self.get_idp_unique_id_value(claims))
+            else:
+                # also pass the claims to the custom user name algo
+                return username_algo(self.get_idp_unique_id_value(claims), claims)
 
-        return default_username_algo(self.get_idp_unique_id_value(claims))
+        return default_username_algo(self.get_idp_unique_id_value(claims), claims)
 
     def update_user(self, user, claims):
         """Update existing user with new email, if necessary save, and return user"""
@@ -161,12 +174,14 @@ class OIDCAuthenticationBackend(ModelBackend):
         try:
             alg = jws.signature.combined.alg.name
         except KeyError:
-            msg = 'No alg value found in header'
+            msg = "No alg value found in header"
             raise SuspiciousOperation(msg)
 
         if alg != self.OIDC_RP_SIGN_ALGO:
-            msg = "The provider algorithm {!r} does not match the client's " \
-                  "OIDC_RP_SIGN_ALGO.".format(alg)
+            msg = (
+                "The provider algorithm {!r} does not match the client's "
+                "OIDC_RP_SIGN_ALGO.".format(alg)
+            )
             raise SuspiciousOperation(msg)
 
         if isinstance(key, str):
@@ -177,7 +192,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             jwk = JWK.from_json(key)
 
         if not jws.verify(jwk):
-            msg = 'JWS token verification failed.'
+            msg = "JWS token verification failed."
             raise SuspiciousOperation(msg)
 
         return jws.payload
@@ -186,9 +201,9 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Get the signing key by exploring the JWKS endpoint of the OP."""
         response_jwks = requests.get(
             self.OIDC_OP_JWKS_ENDPOINT,
-            verify=self.get_settings('OIDC_VERIFY_SSL', True),
-            timeout=self.get_settings('OIDC_TIMEOUT', None),
-            proxies=self.get_settings('OIDC_PROXY', None)
+            verify=self.get_settings("OIDC_VERIFY_SSL", True),
+            timeout=self.get_settings("OIDC_TIMEOUT", None),
+            proxies=self.get_settings("OIDC_PROXY", None),
         )
         response_jwks.raise_for_status()
         jwks = response_jwks.json()
@@ -199,25 +214,26 @@ class OIDCAuthenticationBackend(ModelBackend):
         header = Header.json_loads(json_header)
 
         key = None
-        for jwk in jwks['keys']:
-            if (import_from_settings("OIDC_VERIFY_KID", True)
-                    and jwk['kid'] != smart_str(header.kid)):
+        for jwk in jwks["keys"]:
+            if import_from_settings("OIDC_VERIFY_KID", True) and jwk[
+                "kid"
+            ] != smart_str(header.kid):
                 continue
-            if 'alg' in jwk and jwk['alg'] != smart_str(header.alg):
+            if "alg" in jwk and jwk["alg"] != smart_str(header.alg):
                 continue
             key = jwk
         if key is None:
-            raise SuspiciousOperation('Could not find a valid JWKS.')
+            raise SuspiciousOperation("Could not find a valid JWKS.")
         return key
 
     def get_payload_data(self, token, key):
         """Helper method to get the payload of the JWT token."""
-        if self.get_settings('OIDC_ALLOW_UNSECURED_JWT', False):
-            header, payload_data, signature = token.split(b'.')
+        if self.get_settings("OIDC_ALLOW_UNSECURED_JWT", False):
+            header, payload_data, signature = token.split(b".")
             header = json.loads(smart_str(b64decode(header)))
 
             # If config allows unsecured JWTs check the header and return the decoded payload
-            if 'alg' in header and header['alg'] == 'none':
+            if "alg" in header and header["alg"] == "none":
                 return b64decode(payload_data)
 
         # By default fallback to verify JWT signatures
@@ -225,10 +241,12 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def verify_token(self, token, **kwargs):
         """Validate the token signature."""
-        nonce = kwargs.get('nonce')
+        nonce = kwargs.get("nonce")
 
         token = force_bytes(token)
-        if self.OIDC_RP_SIGN_ALGO.startswith('RS'):
+        if self.OIDC_RP_SIGN_ALGO.startswith("RS") or self.OIDC_RP_SIGN_ALGO.startswith(
+            "ES"
+        ):
             if self.OIDC_RP_IDP_SIGN_KEY is not None:
                 key = self.OIDC_RP_IDP_SIGN_KEY
             else:
@@ -245,11 +263,11 @@ class OIDCAuthenticationBackend(ModelBackend):
         # In Python3.6, the json.loads() function can accept a byte string
         # as it will automagically decode it to a unicode string before
         # deserializing https://bugs.python.org/issue17909
-        payload = json.loads(payload_data.decode('utf-8'))
-        token_nonce = payload.get('nonce')
+        payload = json.loads(payload_data.decode("utf-8"))
+        token_nonce = payload.get("nonce")
 
-        if self.get_settings('OIDC_USE_NONCE', True) and nonce != token_nonce:
-            msg = 'JWT Nonce verification failed.'
+        if self.get_settings("OIDC_USE_NONCE", True) and nonce != token_nonce:
+            msg = "JWT Nonce verification failed."
             raise SuspiciousOperation(msg)
         return payload
 
@@ -287,23 +305,39 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         # Default implementation
         auth = None
-        if self.get_settings('OIDC_TOKEN_USE_BASIC_AUTH', False):
+        if self.get_settings("OIDC_TOKEN_USE_BASIC_AUTH", False):
             # When Basic auth is defined, create the Auth Header and remove secret from payload.
-            user = payload.get('client_id')
-            pw = payload.get('client_secret')
+            user = payload.get("client_id")
+            pw = payload.get("client_secret")
 
             auth = HTTPBasicAuth(user, pw)
-            del payload['client_secret']
+            del payload["client_secret"]
 
         response = requests.post(
             self.OIDC_OP_TOKEN_ENDPOINT,
             data=payload,
             auth=auth,
-            verify=self.get_settings('OIDC_VERIFY_SSL', True),
-            timeout=self.get_settings('OIDC_TIMEOUT', None),
-            proxies=self.get_settings('OIDC_PROXY', None))
-        response.raise_for_status()
+            verify=self.get_settings("OIDC_VERIFY_SSL", True),
+            timeout=self.get_settings("OIDC_TIMEOUT", None),
+            proxies=self.get_settings("OIDC_PROXY", None),
+        )
+        self.raise_token_response_error(response)
         return response.json()
+
+    def raise_token_response_error(self, response):
+        """Raises :class:`HTTPError`, if one occurred.
+        as per: https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
+        """
+        # if there wasn't an error all is good
+        if response.status_code == 200:
+            return
+        # otherwise something is up...
+        http_error_msg = (
+            f"Get Token Error (url: {response.url}, "
+            f"status: {response.status_code}, "
+            f"body: {response.text})"
+        )
+        raise HTTPError(http_error_msg, response=response)
 
     def get_userinfo(self, access_token, id_token, payload):
         """Return user details dictionary. The id_token and payload are not used in
@@ -311,12 +345,11 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         user_response = requests.get(
             self.OIDC_OP_USER_ENDPOINT,
-            headers={
-                'Authorization': 'Bearer {0}'.format(access_token)
-            },
-            verify=self.get_settings('OIDC_VERIFY_SSL', True),
-            timeout=self.get_settings('OIDC_TIMEOUT', None),
-            proxies=self.get_settings('OIDC_PROXY', None))
+            headers={"Authorization": "Bearer {0}".format(access_token)},
+            verify=self.get_settings("OIDC_VERIFY_SSL", True),
+            timeout=self.get_settings("OIDC_TIMEOUT", None),
+            proxies=self.get_settings("OIDC_PROXY", None),
+        )
         user_response.raise_for_status()
         return user_response.json()
 
@@ -327,15 +360,17 @@ class OIDCAuthenticationBackend(ModelBackend):
         if not self.request:
             return None
 
-        state = self.request.GET.get('state')
-        code = self.request.GET.get('code')
-        nonce = kwargs.pop('nonce', None)
+        state = self.request.GET.get("state")
+        code = self.request.GET.get("code")
+        nonce = kwargs.pop("nonce", None)
+        code_verifier = kwargs.pop("code_verifier", None)
 
         if not code or not state:
             return None
 
-        reverse_url = self.get_settings('OIDC_AUTHENTICATION_CALLBACK_URL',
-                                        'oidc_authentication_callback')
+        reverse_url = self.get_settings(
+            "OIDC_AUTHENTICATION_CALLBACK_URL", "oidc_authentication_callback"
+        )
 
         redirect_uri = absolutify(self.request, reverse(reverse_url))
 
@@ -345,12 +380,17 @@ class OIDCAuthenticationBackend(ModelBackend):
             'grant_type': 'authorization_code',
             'code': code,
             'redirect_uri': redirect_uri,
+            # upstream:  "redirect_uri": absolutify(self.request, reverse(reverse_url)),
         }
+
+        # Send code_verifier with token request if using PKCE
+        if code_verifier is not None:
+            token_payload.update({"code_verifier": code_verifier})
 
         # Get the token
         token_info = self.get_token(token_payload)
-        id_token = token_info.get('id_token')
-        access_token = token_info.get('access_token')
+        id_token = token_info.get("id_token")
+        access_token = token_info.get("access_token")
 
         # Validate the token
         payload = self.verify_token(id_token, nonce=nonce)
@@ -360,7 +400,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             try:
                 return self.get_or_create_user(access_token, id_token, payload)
             except SuspiciousOperation as exc:
-                LOGGER.warning('failed to get or create user: %s', exc)
+                LOGGER.warning("failed to get or create user: %s", exc)
                 return None
 
         return None
@@ -369,11 +409,11 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Store OIDC tokens."""
         session = self.request.session
 
-        if self.get_settings('OIDC_STORE_ACCESS_TOKEN', False):
-            session['oidc_access_token'] = access_token
+        if self.get_settings("OIDC_STORE_ACCESS_TOKEN", False):
+            session["oidc_access_token"] = access_token
 
-        if self.get_settings('OIDC_STORE_ID_TOKEN', False):
-            session['oidc_id_token'] = id_token
+        if self.get_settings("OIDC_STORE_ID_TOKEN", False):
+            session["oidc_id_token"] = id_token
 
     def get_or_create_user(self, access_token, id_token, payload):
         """Returns a User instance if 1 user is found. Creates a user if not found
@@ -383,7 +423,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         claims_verified = self.verify_claims(user_info)
         if not claims_verified:
-            msg = 'Claims verification failed'
+            msg = "Claims verification failed"
             raise SuspiciousOperation(msg)
 
         # unique identifier-based filtering
@@ -394,15 +434,16 @@ class OIDCAuthenticationBackend(ModelBackend):
         elif len(users) > 1:
             # In the rare case that two user accounts have the same unique identifier,
             # bail. Randomly selecting one seems really wrong.
-            msg = 'Multiple users returned'
+            msg = "Multiple users returned"
             raise SuspiciousOperation(msg)
-        elif self.get_settings('OIDC_CREATE_USER', True):
+        elif self.get_settings("OIDC_CREATE_USER", True):
             user = self.create_user(user_info)
             return user
         else:
-            LOGGER.debug('Login failed: No user with %s found, and '
-                         'OIDC_CREATE_USER is False',
-                         self.describe_user_by_claims(user_info))
+            LOGGER.debug(
+                "Login failed: No user with %s found, and " "OIDC_CREATE_USER is False",
+                self.describe_user_by_claims(user_info),
+            )
             return None
 
     def get_user(self, user_id):

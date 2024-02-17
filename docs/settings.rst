@@ -23,6 +23,14 @@ of ``mozilla-django-oidc``.
 
    URL of your OpenID Connect provider userinfo endpoint
 
+.. py:attribute:: OIDC_OP_JWKS_ENDPOINT
+
+   :default: No default
+
+   URL of your OpenID Connect provider JWKS (JSON Web Key Sets) endpoint.
+   Used in JWT verification with PKI when ``OIDC_RP_IDP_SIGN_KEY`` is not
+   provided.
+
 .. py:attribute:: OIDC_RP_CLIENT_ID
 
    :default: No default
@@ -63,11 +71,11 @@ of ``mozilla-django-oidc``.
 
    :default: ``None``
 
-    Defines a timeout for all requests to the OpenID Connect provider (fetch JWS,
-    retrieve JWT tokens, Userinfo Endpoint). The default is set to `None` which means
-    the library will wait indefinitely. The time can be defined as seconds (integer).
-    More information about possible configuration values, see Python `requests`:
-    https://requests.readthedocs.io/en/master/user/quickstart/#timeouts
+   Defines a timeout for all requests to the OpenID Connect provider (fetch JWS,
+   retrieve JWT tokens, Userinfo Endpoint). The default is set to `None` which means
+   the library will wait indefinitely. The time can be defined as seconds (integer).
+   More information about possible configuration values, see Python `requests`:
+   https://requests.readthedocs.io/en/master/user/quickstart/#timeouts
 
 .. py:attribute:: OIDC_PROXY
 
@@ -92,6 +100,13 @@ of ``mozilla-django-oidc``.
    :default: ``True``
 
    Enables or disables automatic user creation during authentication
+
+ .. py:attribute:: OIDC_USERNAME_ALGO
+
+   :default: ``None``
+
+   It enables using a custom method to generate the django username from the user's
+   email and OIDC claims.
 
 .. py:attribute:: OIDC_STATE_SIZE
 
@@ -263,3 +278,49 @@ of ``mozilla-django-oidc``.
    :default: False
 
    Allow using GET method to logout user
+
+.. py:attribute:: OIDC_USE_PKCE
+
+   :default: ``False``
+
+   Controls whether the authentication backend uses PKCE (Proof Key For Code Exchange) during the authorization code flow.
+
+   .. seealso::
+
+      https://datatracker.ietf.org/doc/html/rfc7636
+
+.. py:attribute:: OIDC_PKCE_CODE_CHALLENGE_METHOD
+
+   :default: ``S256``
+
+   Sets the method used to generate the PKCE code challenge.
+
+   Supported methods are:
+
+   * **plain**:
+      ``code_challenge = code_verifier``
+
+   * **S256**:
+      ``code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))``
+
+   .. note::
+
+      This only has an effect if ``OIDC_USE_PKCE`` is ``True``.
+
+   .. seealso::
+
+      https://datatracker.ietf.org/doc/html/rfc7636#section-4.2
+
+.. py:attribute:: OIDC_PKCE_CODE_VERIFIER_SIZE
+
+   :default: ``64``
+
+   Sets the length of the random string used for the PKCE code verifier.  Must be between ``43`` and ``128`` inclusive.
+
+   .. note::
+
+      This only has an effect if ``OIDC_USE_PKCE`` is ``True``.
+
+   .. seealso::
+
+      https://datatracker.ietf.org/doc/html/rfc7636#section-4.1

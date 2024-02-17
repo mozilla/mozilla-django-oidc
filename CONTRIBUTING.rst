@@ -125,9 +125,9 @@ To run a specific environment, use the ``-e`` argument::
 
 You can also run the tests in a virtual environment without tox::
 
-    $ DJANGO_SETTINGS_MODULE=tests.settings django-admin.py test
+    $ DJANGO_SETTINGS_MODULE=tests.settings django-admin test
 
 
 You can specify test modules to run rather than the whole suite::
 
-    $ DJANGO_SETTINGS_MODULE=tests.settings django-admin.py test tests.test_views
+    $ DJANGO_SETTINGS_MODULE=tests.settings django-admin test tests.test_views
