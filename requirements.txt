@@ -1,0 +1,5 @@
+Django==4.2.7
+josepy==1.14.0
+requests==2.31.0
+cryptography==42.0.4
+PyJWT==2.8.0
