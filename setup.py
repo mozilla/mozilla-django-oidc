@@ -32,11 +32,11 @@ readme = open("README.rst").read()
 history = open("HISTORY.rst").read().replace(".. :changelog:", "")
 
 install_requirements = [
-    "Django >= 3.2",
-    "josepy",
-    "requests",
-    "cryptography",
-    'pyjwt',
+    "Django == 4.2.7",
+    "josepy == 1.14.0",
+    "requests == 2.31.0",
+    "cryptography == 42.0.4",
+    "pyjwt == 2.8.0",
 ]
 
 setup(
