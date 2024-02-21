@@ -31,6 +31,7 @@ if sys.argv[-1] == "tag":
 readme = open("README.rst").read()
 history = open("HISTORY.rst").read().replace(".. :changelog:", "")
 
+# NOTE! When updating versions here, also update requirements.txt
 install_requirements = [
     "Django == 4.2.7",
     "josepy == 1.14.0",
