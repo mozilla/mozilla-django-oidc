@@ -16,6 +16,19 @@ jobs:
           command: |
             tox
           name: Run tests
+  dependency-check:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+      - run:
+          command: |
+            pip install safety
+          name: Install safety
+      - run:
+          command: |
+            safety check -r requirements.txt --full-report
+          name: Check dependencies
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -23,3 +36,4 @@ workflows:
   primary: # This is the name of the workflow, feel free to change it to better match your workflow.
     jobs:
       - test
+      - dependency-check
