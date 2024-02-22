@@ -16,6 +16,41 @@ jobs:
           command: |
             tox
           name: Run tests
+      # Sonar cloud setup and scanning
+      - run:
+          name: Create sonar-scanner cache directory if it doesn't exist
+          command: mkdir -p /tmp/cache/scanner
+      - restore_cache:
+          keys:
+            - v1-sonarcloud-scanner-5.0.1.3006
+      - run:
+          name: SonarCloud
+          command: |
+            set -e
+            VERSION=5.0.1.3006
+            if [ -z "$SONAR_TOKEN" ]; then
+                 echo "You must set SONAR_TOKEN environemnt variable"
+                 exit 1
+            fi
+            SCANNER_DIRECTORY=/tmp/cache/scanner
+            export SONAR_USER_HOME=$SCANNER_DIRECTORY/.sonar
+            OS="linux"
+            echo $SONAR_USER_HOME
+            if [[ ! -x "$SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner" ]]; then
+              curl -Ol https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$VERSION-$OS.zip
+              unzip -qq -o sonar-scanner-cli-$VERSION-$OS.zip -d $SCANNER_DIRECTORY
+            fi
+
+            chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner
+            chmod +x $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/jre/bin/java
+            $SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner
+          environment:
+            SONARQUBE_SCANNER_PARAMS: '{"sonar.host.url":"https://sonarcloud.io"}'
+      - save_cache:
+          key: v1-sonarcloud-scanner-5.0.1.3006
+          paths: /tmp/cache/scanner
+
+
   dependency-check:
     docker:
       - image: cimg/python:3.10
