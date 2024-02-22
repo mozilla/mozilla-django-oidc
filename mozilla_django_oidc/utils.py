@@ -165,6 +165,6 @@ def add_state_to_cookie(response, state):
     """
     Adds state to cookie for logout
     """
-    response.set_signed_cookie('oidc_state', state)
+    response.set_signed_cookie("oidc_state", state)
 
     return response

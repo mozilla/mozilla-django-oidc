@@ -369,9 +369,9 @@ class MiddlewareTestCase(TestCase):
         # Set expiration to some time in the past
         session = client.session
         session["oidc_id_token_expiration"] = time.time() - 100
-        session[
-            "_auth_user_backend"
-        ] = "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        session["_auth_user_backend"] = (
+            "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        )
         session.save()
 
         resp = client.get("/mdo_fake_view/")
@@ -404,9 +404,9 @@ class MiddlewareTestCase(TestCase):
         # Set expiration to some time in the past
         session = client.session
         session["oidc_id_token_expiration"] = time.time() - 100
-        session[
-            "_auth_user_backend"
-        ] = "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        session["_auth_user_backend"] = (
+            "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        )
         session.save()
 
         resp = client.get("/mdo_fake_view/")
@@ -457,9 +457,9 @@ class MiddlewareTestCase(TestCase):
         # Set expiration to some time in the past
         session = client.session
         session["oidc_id_token_expiration"] = time.time() - 100
-        session[
-            "_auth_user_backend"
-        ] = "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        session["_auth_user_backend"] = (
+            "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        )
         session.save()
 
         # Confirm that now you're forced to authenticate again.

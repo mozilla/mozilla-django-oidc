@@ -17,7 +17,9 @@ class TestDRF(TestCase):
         self.request = RequestFactory().get("/", HTTP_AUTHORIZATION="Bearer faketoken")
 
     def test_authenticate_returns_none_if_no_access_token(self):
-        with unittest.mock.patch.object(self.auth, "get_access_token", return_value=None):
+        with unittest.mock.patch.object(
+            self.auth, "get_access_token", return_value=None
+        ):
             ret = self.auth.authenticate(self.request)
         self.assertIsNone(ret)
 

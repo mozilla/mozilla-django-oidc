@@ -753,7 +753,7 @@ class OIDCLogoutViewTestCase(TestCase):
     def test_get_anonymous_user(self):
         url = reverse("oidc_logout")
         request = self.factory.post(url)
-        request.session = {'oidc_state': '123'}
+        request.session = {"oidc_state": "123"}
         request.user = AnonymousUser()
         logout_view = views.OIDCLogoutView.as_view()
 
@@ -766,7 +766,7 @@ class OIDCLogoutViewTestCase(TestCase):
         user = User.objects.create_user("example_username")
         url = reverse("oidc_logout")
         request = self.factory.post(url)
-        request.session = {'oidc_state': '123'}
+        request.session = {"oidc_state": "123"}
         request.user = user
         logout_view = views.OIDCLogoutView.as_view()
 
@@ -783,7 +783,7 @@ class OIDCLogoutViewTestCase(TestCase):
         user = User.objects.create_user("example_username")
         url = reverse("oidc_logout")
         request = self.factory.post(url)
-        request.session = {'oidc_state': '123'}
+        request.session = {"oidc_state": "123"}
         request.user = user
         logout_view = views.OIDCLogoutView.as_view()
 

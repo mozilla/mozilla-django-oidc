@@ -4,6 +4,7 @@ import json
 import logging
 import requests
 from requests.auth import HTTPBasicAuth
+
 # logindotgov-oidc
 import secrets
 import time
@@ -53,20 +54,24 @@ class OIDCAuthenticationBackend(ModelBackend):
     def __init__(self, *args, **kwargs):
         """Initialize settings."""
         # OP = OIDC provider, or identity provider
-        self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings('OIDC_OP_TOKEN_ENDPOINT')
-        self.OIDC_OP_USER_ENDPOINT = self.get_settings('OIDC_OP_USER_ENDPOINT')
-        self.OIDC_OP_JWKS_ENDPOINT = self.get_settings('OIDC_OP_JWKS_ENDPOINT', None)
+        self.OIDC_OP_TOKEN_ENDPOINT = self.get_settings("OIDC_OP_TOKEN_ENDPOINT")
+        self.OIDC_OP_USER_ENDPOINT = self.get_settings("OIDC_OP_USER_ENDPOINT")
+        self.OIDC_OP_JWKS_ENDPOINT = self.get_settings("OIDC_OP_JWKS_ENDPOINT", None)
         # Sometimes the OP has a different label for the unique ID
-        self.OIDC_OP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_OP_UNIQUE_IDENTIFIER', 'email')
+        self.OIDC_OP_UNIQUE_IDENTIFIER = self.get_settings(
+            "OIDC_OP_UNIQUE_IDENTIFIER", "email"
+        )
         self.OIDC_OP_CLIENT_AUTH_METHOD = self.get_settings(
-            'OIDC_OP_CLIENT_AUTH_METHOD', 'implicit_flow'
+            "OIDC_OP_CLIENT_AUTH_METHOD", "implicit_flow"
         )
         # RP = Relying Party, or web app
-        self.OIDC_RP_CLIENT_ID = self.get_settings('OIDC_RP_CLIENT_ID')
-        self.OIDC_RP_CLIENT_SECRET = self.get_settings('OIDC_RP_CLIENT_SECRET')
-        self.OIDC_RP_SIGN_ALGO = self.get_settings('OIDC_RP_SIGN_ALGO', 'HS256')
-        self.OIDC_RP_IDP_SIGN_KEY = self.get_settings('OIDC_RP_IDP_SIGN_KEY', None)
-        self.OIDC_RP_UNIQUE_IDENTIFIER = self.get_settings('OIDC_RP_UNIQUE_IDENTIFIER', 'email')
+        self.OIDC_RP_CLIENT_ID = self.get_settings("OIDC_RP_CLIENT_ID")
+        self.OIDC_RP_CLIENT_SECRET = self.get_settings("OIDC_RP_CLIENT_SECRET")
+        self.OIDC_RP_SIGN_ALGO = self.get_settings("OIDC_RP_SIGN_ALGO", "HS256")
+        self.OIDC_RP_IDP_SIGN_KEY = self.get_settings("OIDC_RP_IDP_SIGN_KEY", None)
+        self.OIDC_RP_UNIQUE_IDENTIFIER = self.get_settings(
+            "OIDC_RP_UNIQUE_IDENTIFIER", "email"
+        )
 
         if (
             self.OIDC_RP_SIGN_ALGO.startswith("RS")
@@ -89,7 +94,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def describe_user_by_claims(self, claims):
         unique_identifier_value = self.get_idp_unique_id_value(claims)
-        return '{} {}'.format(self.OIDC_RP_UNIQUE_IDENTIFIER, unique_identifier_value)
+        return "{} {}".format(self.OIDC_RP_UNIQUE_IDENTIFIER, unique_identifier_value)
 
     def filter_users_by_claims(self, claims):
         """Return all users matching the specified unique identifier."""
@@ -126,20 +131,18 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         # Create user with custom values if they're specified
         if not (
-            (self.OIDC_RP_UNIQUE_IDENTIFIER == 'email') or
-            (self.OIDC_RP_UNIQUE_IDENTIFIER == 'username')
+            (self.OIDC_RP_UNIQUE_IDENTIFIER == "email")
+            or (self.OIDC_RP_UNIQUE_IDENTIFIER == "username")
         ):
             # { app_field: idp_field}
             # { "uuid": "sub_value"}
-            extra_params = {self.OIDC_RP_UNIQUE_IDENTIFIER: self.get_idp_unique_id_value(claims)}
+            extra_params = {
+                self.OIDC_RP_UNIQUE_IDENTIFIER: self.get_idp_unique_id_value(claims)
+            }
         else:
             extra_params = {}
 
-        return self.UserModel.objects.create_user(
-            username,
-            email=email,
-            **extra_params
-        )
+        return self.UserModel.objects.create_user(username, email=email, **extra_params)
 
     def get_username(self, claims):
         """Generate username based on claims."""
@@ -288,9 +291,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
             # Client secret needs to be pem-encoded string
             encoded_jwt = jwt.encode(
-                jwt_args,
-                self.OIDC_RP_CLIENT_SECRET,
-                algorithm=self.OIDC_RP_SIGN_ALGO
+                jwt_args, self.OIDC_RP_CLIENT_SECRET, algorithm=self.OIDC_RP_SIGN_ALGO
             )
 
             token_payload = {
@@ -375,11 +376,11 @@ class OIDCAuthenticationBackend(ModelBackend):
         redirect_uri = absolutify(self.request, reverse(reverse_url))
 
         token_payload = {
-            'client_id': self.OIDC_RP_CLIENT_ID,
-            'client_secret': self.OIDC_RP_CLIENT_SECRET,
-            'grant_type': 'authorization_code',
-            'code': code,
-            'redirect_uri': redirect_uri,
+            "client_id": self.OIDC_RP_CLIENT_ID,
+            "client_secret": self.OIDC_RP_CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": redirect_uri,
             # upstream:  "redirect_uri": absolutify(self.request, reverse(reverse_url)),
         }
 

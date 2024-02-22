@@ -17,7 +17,7 @@ from mozilla_django_oidc.utils import (
     add_state_and_verifier_and_nonce_to_session,
     add_state_to_cookie,
     generate_code_challenge,
-    import_from_settings
+    import_from_settings,
 )
 
 LOGGER = logging.getLogger(__name__)
