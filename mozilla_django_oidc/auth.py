@@ -372,15 +372,12 @@ class OIDCAuthenticationBackend(ModelBackend):
             "OIDC_AUTHENTICATION_CALLBACK_URL", "oidc_authentication_callback"
         )
 
-        redirect_uri = absolutify(self.request, reverse(reverse_url))
-
         token_payload = {
             "client_id": self.OIDC_RP_CLIENT_ID,
             "client_secret": self.OIDC_RP_CLIENT_SECRET,
             "grant_type": "authorization_code",
             "code": code,
-            "redirect_uri": redirect_uri,
-            # upstream:  "redirect_uri": absolutify(self.request, reverse(reverse_url)),
+            "redirect_uri": absolutify(self.request, reverse(reverse_url)),
         }
 
         # Send code_verifier with token request if using PKCE
