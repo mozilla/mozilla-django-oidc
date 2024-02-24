@@ -441,8 +441,8 @@ class OIDCAuthenticationBackend(ModelBackend):
             return user
         else:
             LOGGER.debug(
-                "Login failed: No user with %s found, and " "OIDC_CREATE_USER is False",
-                self.describe_user_by_claims(user_info),
+                "Login failed: No user with %s found, and OIDC_CREATE_USER is False" %
+                self.describe_user_by_claims(user_info)
             )
             return None
 
