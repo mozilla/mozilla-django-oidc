@@ -528,7 +528,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(self.backend.authenticate(request=auth_request), user)
         token_mock.assert_called_once_with("id_token", nonce=None)
 
-        # As the auth parameter is and object, we can't compare them directly
+        # As the auth parameter is an object, we can't compare them directly
         request_mock.post.assert_called_once()
         post_params = request_mock.post.call_args
         _kwargs = post_params[1]
@@ -606,7 +606,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(self.backend.authenticate(request=auth_request), user)
         token_mock.assert_called_once_with("id_token", nonce=None)
 
-        # As the auth parameter is an object, we can't compare them directly
+        # As the encoded_jwt is an object, we can't compare them directly
         request_mock.post.assert_called_once()
         post_params = request_mock.post.call_args
         _kwargs = post_params[1]
