@@ -1,4 +1,7 @@
 import json
+import jwt
+from jwcrypto import jwk
+from jwcrypto.common import json_decode
 from unittest.mock import Mock, call, patch
 
 from cryptography.hazmat.backends import default_backend
@@ -32,6 +35,12 @@ class DefaultUsernameAlgoTestCase(TestCase):
 
 class OIDCAuthenticationBackendTestCase(TestCase):
     """Authentication tests."""
+
+    CLIENT_PRIVATE_KEY_JWK = jwk.JWK.generate(kty="RSA", size=4096)
+    CLIENT_PRIVATE_KEY = CLIENT_PRIVATE_KEY_JWK.export_to_pem(True, None).decode("utf-8")
+    CLIENT_PUBLIC_KEY_JWK = jwk.JWK()
+    CLIENT_PUBLIC_KEY_JWK.import_key(**json_decode(CLIENT_PRIVATE_KEY_JWK.export_public()))
+    CLIENT_PUBLIC_KEY = CLIENT_PUBLIC_KEY_JWK.export_to_pem().decode("utf-8")
 
     @override_settings(OIDC_OP_TOKEN_ENDPOINT="https://server.example.com/token")
     @override_settings(OIDC_OP_USER_ENDPOINT="https://server.example.com/user")
@@ -537,6 +546,91 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         self.assertEqual(auth.username, "example_id")
         self.assertEqual(auth.password, "client_secret")
         self.assertEqual(_kwargs["verify"], True)
+
+        request_mock.get.assert_called_once_with(
+            "https://server.example.com/user",
+            headers={"Authorization": "Bearer access_granted"},
+            verify=True,
+            timeout=None,
+            proxies=None,
+        )
+        self.assertEqual(auth_request.session.get("oidc_id_token"), "id_token")
+        self.assertEqual(
+            auth_request.session.get("oidc_access_token"), "access_granted"
+        )
+
+    @override_settings(OIDC_OP_CLIENT_AUTH_METHOD="private_key_jwt")
+    @override_settings(OIDC_RP_CLIENT_SECRET=CLIENT_PRIVATE_KEY)
+    @override_settings(OIDC_RP_SIGN_ALGO="RS256")
+    @override_settings(OIDC_RP_CLIENT_ID="example_id")
+    @override_settings(OIDC_STORE_ACCESS_TOKEN=True)
+    @override_settings(OIDC_STORE_ID_TOKEN=True)
+    @override_settings(OIDC_OP_TOKEN_ENDPOINT="https://server.example.com/token")
+    @override_settings(OIDC_OP_USER_ENDPOINT="https://server.example.com/user")
+    @override_settings(OIDC_OP_JWKS_ENDPOINT="https://server.example.com/certs")
+    @patch("mozilla_django_oidc.auth.requests")
+    @patch("mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token")
+    def test_successful_authentication_private_key_jwt(self, token_mock, request_mock):
+        """
+        Test successful authentication when using HTTP basic authentication
+        for token endpoint authentication.
+        """
+        self.backend = OIDCAuthenticationBackend()
+
+        auth_request = RequestFactory().get("/foo", {"code": "foo", "state": "bar"})
+        auth_request.session = {}
+
+        user = User.objects.create_user(
+            username="a_username", email="EMAIL@EXAMPLE.COM"
+        )
+        token_mock.return_value = True
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            "nickname": "a_username",
+            "email": "email@example.com",
+        }
+        request_mock.get.return_value = get_json_mock
+        post_json_mock = Mock(status_code=200)
+        post_json_mock.json.return_value = {
+            "id_token": "id_token",
+            "access_token": "access_granted",
+        }
+        request_mock.post.return_value = post_json_mock
+        post_data = {
+            "client_id": self.backend.OIDC_RP_CLIENT_ID,
+            "client_secret": self.backend.OIDC_RP_CLIENT_SECRET,
+            "grant_type": "authorization_code",
+            "code": "foo",
+            "redirect_uri": "http://testserver/callback/",
+        }
+        self.assertEqual(self.backend.authenticate(request=auth_request), user)
+        token_mock.assert_called_once_with("id_token", nonce=None)
+
+        # As the auth parameter is an object, we can't compare them directly
+        request_mock.post.assert_called_once()
+        post_params = request_mock.post.call_args
+        _kwargs = post_params[1]
+
+        self.assertEqual(post_params[0][0], "https://server.example.com/token")
+        # Test individual params separately
+        sent_data = _kwargs["data"]
+        encoded_jwt = sent_data["client_assertion"]
+        decoded_jwt = jwt.decode(
+            encoded_jwt,
+            self.CLIENT_PUBLIC_KEY,
+            audience=[self.backend.OIDC_OP_TOKEN_ENDPOINT],
+            algorithms=[self.backend.OIDC_RP_SIGN_ALGO],
+            leeway=2,  # 2 seconds of clock drift grace between client and server
+        )
+        self.assertEqual(decoded_jwt["iss"], self.backend.OIDC_RP_CLIENT_ID)
+        self.assertEqual(decoded_jwt["sub"], self.backend.OIDC_RP_CLIENT_ID)
+        self.assertEqual(decoded_jwt["aud"], self.backend.OIDC_OP_TOKEN_ENDPOINT)
+        self.assertEqual(
+            sent_data["client_assertion_type"],
+            "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+        )
+        self.assertEqual(sent_data["code"], post_data["code"])
+        self.assertEqual(sent_data["grant_type"], post_data["grant_type"])
 
         request_mock.get.assert_called_once_with(
             "https://server.example.com/user",

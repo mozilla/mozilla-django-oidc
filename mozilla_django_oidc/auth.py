@@ -279,7 +279,6 @@ class OIDCAuthenticationBackend(ModelBackend):
         Borrowed from logindotgov-oidc, modified
         https://github.com/trussworks/logindotgov-oidc-py
         """
-
         if self.OIDC_OP_CLIENT_AUTH_METHOD == "private_key_jwt":
             jwt_args = {
                 "iss": self.OIDC_RP_CLIENT_ID,
@@ -288,20 +287,20 @@ class OIDCAuthenticationBackend(ModelBackend):
                 "jti": secrets.token_hex(16),
                 "exp": int(time.time()) + 300,  # 5 minutes from now
             }
-
             # Client secret needs to be pem-encoded string
             encoded_jwt = jwt.encode(
-                jwt_args, self.OIDC_RP_CLIENT_SECRET, algorithm=self.OIDC_RP_SIGN_ALGO
+                jwt_args,
+                self.OIDC_RP_CLIENT_SECRET,
+                algorithm=self.OIDC_RP_SIGN_ALGO
             )
-
             token_payload = {
                 "client_assertion": encoded_jwt,
                 "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
                 "code": payload.get("code"),
                 "grant_type": "authorization_code",
             }
-
             response = requests.post(self.OIDC_OP_TOKEN_ENDPOINT, data=token_payload)
+            self.raise_token_response_error(response)
             return response.json()
 
         # Default implementation

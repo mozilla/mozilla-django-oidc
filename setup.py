@@ -38,6 +38,7 @@ install_requirements = [
     "requests == 2.31.0",
     "cryptography == 42.0.4",
     "pyjwt == 2.8.0",
+    "jwcrypto == 1.5.4"
 ]
 
 setup(
