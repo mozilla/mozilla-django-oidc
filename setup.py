@@ -32,7 +32,7 @@ readme = open("README.rst").read()
 history = open("HISTORY.rst").read().replace(".. :changelog:", "")
 
 install_requirements = [
-    "Django >= 3.2",
+    "Django >= 4.2",
     "josepy",
     "requests",
     "cryptography",
@@ -55,8 +55,8 @@ setup(
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Framework :: Django",
-        "Framework :: Django :: 3.2",
         "Framework :: Django :: 4.2",
+        "Framework :: Django :: 5.0",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         "Intended Audience :: Developers",
         "Operating System :: MacOS",
