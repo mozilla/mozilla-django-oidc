@@ -71,7 +71,7 @@ def base64_url_encode(bytes_like_obj):
 
 
 def base64_url_decode(string_like_obj):
-    """Return the bytes encoded in a URL-Safe, base64 encoded string
+    """Return the bytes encoded in a URL-Safe, base64 encoded string.
     Implements inverse of base64urlencode as described in
     https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
     This function is not used by the OpenID client; it's just for testing PKCE related functions.
@@ -90,9 +90,9 @@ def generate_code_challenge(code_verifier, method):
     The code challenge is generated according to method which must be one
     of the methods defined in https://datatracker.ietf.org/doc/html/rfc7636#section-4.2:
     - plain:
-      code_challenge = code_verifier
+    code_challenge = code_verifier
     - S256:
-      code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
+    code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
     """
 
     if method == "plain":
