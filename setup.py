@@ -31,14 +31,14 @@ if sys.argv[-1] == "tag":
 readme = open("README.rst").read()
 history = open("HISTORY.rst").read().replace(".. :changelog:", "")
 
-# NOTE! When updating versions here, also update requirements.txt
+# NOTE! When updating versions here, also update requirements.txt and tox.ini
 install_requirements = [
-    "Django == 4.2.7",
+    "Django == 4.2.10",
     "josepy == 1.14.0",
     "requests == 2.31.0",
     "cryptography == 42.0.4",
     "pyjwt == 2.8.0",
-    "jwcrypto == 1.5.4"
+    "jwcrypto == 1.5.4",
 ]
 
 setup(
