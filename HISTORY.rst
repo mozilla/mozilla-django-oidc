@@ -3,6 +3,13 @@
 History
 -------
 
+4.0.1 (2024-03-12)
+==================
+
+* Update configuration for readthedocs.
+* Point HEAD to main branch.
+* Update project's README file.
+
 
 4.0.0 (2024-01-11)
 ==================
