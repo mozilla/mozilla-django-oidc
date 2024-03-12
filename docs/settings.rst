@@ -43,12 +43,6 @@ of ``mozilla-django-oidc``.
 
    OpenID Connect client secret provided by your OP
 
-.. py:attribute:: OIDC_VERIFY_JWT
-
-   :default: ``True``
-
-   Controls whether the OpenID Connect client verifies the signature of the JWT tokens
-
 .. py:attribute:: OIDC_VERIFY_KID
 
     :default: ``True``
