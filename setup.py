@@ -36,7 +36,7 @@ install_requirements = [
     "Django == 4.2.11",
     "josepy == 1.14.0",
     "requests == 2.31.0",
-    "cryptography == 42.0.4",
+    "cryptography == 42.0.5",
     "pyjwt == 2.8.0",
     "jwcrypto == 1.5.4",
 ]
