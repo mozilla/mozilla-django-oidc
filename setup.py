@@ -33,7 +33,7 @@ history = open("HISTORY.rst").read().replace(".. :changelog:", "")
 
 # NOTE! When updating versions here, also update requirements.txt and tox.ini
 install_requirements = [
-    "Django == 4.2.10",
+    "Django == 4.2.11",
     "josepy == 1.14.0",
     "requests == 2.31.0",
     "cryptography == 42.0.4",
