@@ -4,8 +4,7 @@ import warnings
 from hashlib import sha256
 from urllib.request import parse_http_list, parse_keqv_list
 
-# Make it obvious that these aren't the usual base64 functions
-import josepy.b64
+from jwcrypto.common import base64url_encode
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
@@ -55,36 +54,6 @@ def is_authenticated(user):
     return user.is_authenticated
 
 
-def base64_url_encode(bytes_like_obj):
-    """Return a URL-Safe, base64 encoded version of bytes_like_obj
-
-    Implements base64urlencode as described in
-    https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
-    """
-
-    s = josepy.b64.b64encode(bytes_like_obj).decode("ascii")  # base64 encode
-    # the josepy base64 encoder (strips '='s padding) automatically
-    s = s.replace("+", "-")  # 62nd char of encoding
-    s = s.replace("/", "_")  # 63rd char of encoding
-
-    return s
-
-
-def base64_url_decode(string_like_obj):
-    """Return the bytes encoded in a URL-Safe, base64 encoded string.
-    Implements inverse of base64urlencode as described in
-    https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
-    This function is not used by the OpenID client; it's just for testing PKCE related functions.
-    """
-    s = string_like_obj
-
-    s = s.replace("_", "/")  # 63rd char of encoding
-    s = s.replace("-", "+")  # 62nd char of encoding
-    b = josepy.b64.b64decode(s)  # josepy base64 encoder (decodes without '='s padding)
-
-    return b
-
-
 def generate_code_challenge(code_verifier, method):
     """Return a code_challege, which proves knowledge of the code_verifier.
     The code challenge is generated according to method which must be one
@@ -99,7 +68,7 @@ def generate_code_challenge(code_verifier, method):
         return code_verifier
 
     elif method == "S256":
-        return base64_url_encode(sha256(code_verifier.encode("ascii")).digest())
+        return base64url_encode(sha256(code_verifier.encode("ascii")).digest())
 
     else:
         raise ValueError("code challenge method must be 'plain' or 'S256'.")

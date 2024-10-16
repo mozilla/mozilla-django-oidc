@@ -9,11 +9,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.urls import reverse
-from django.utils.encoding import force_bytes, smart_bytes, smart_str
+from django.utils.encoding import force_bytes, smart_str
 from django.utils.module_loading import import_string
-from josepy.b64 import b64decode
-from josepy.jwk import JWK
-from josepy.jws import JWS, Header
+from jwcrypto.common import base64url_decode
+from jwcrypto.jwk import JWK
+from jwcrypto.jws import JWS, InvalidJWSSignature
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import HTTPError
 
@@ -127,10 +127,11 @@ class OIDCAuthenticationBackend(ModelBackend):
 
     def _verify_jws(self, payload, key):
         """Verify the given JWS payload with the given key and return the payload"""
-        jws = JWS.from_compact(payload)
+        jws = JWS()
+        jws.deserialize(smart_str(payload))
 
         try:
-            alg = jws.signature.combined.alg.name
+            alg = jws.jose_header["alg"]
         except KeyError:
             msg = "No alg value found in header"
             raise SuspiciousOperation(msg)
@@ -143,13 +144,17 @@ class OIDCAuthenticationBackend(ModelBackend):
             raise SuspiciousOperation(msg)
 
         if isinstance(key, str):
-            # Use smart_bytes here since the key string comes from settings.
-            jwk = JWK.load(smart_bytes(key))
+            try:
+                jwk = JWK.from_pem(force_bytes(key))
+            except ValueError:
+                jwk = JWK.from_password(key)
         else:
             # The key is a json returned from the IDP JWKS endpoint.
-            jwk = JWK.from_json(key)
+            jwk = JWK(**key)
 
-        if not jws.verify(jwk):
+        try:
+            jws.verify(jwk)
+        except InvalidJWSSignature:
             msg = "JWS token verification failed."
             raise SuspiciousOperation(msg)
 
@@ -167,17 +172,16 @@ class OIDCAuthenticationBackend(ModelBackend):
         jwks = response_jwks.json()
 
         # Compute the current header from the given token to find a match
-        jws = JWS.from_compact(token)
-        json_header = jws.signature.protected
-        header = Header.json_loads(json_header)
+        jws = JWS()
+        jws.deserialize(smart_str(token))
 
         key = None
         for jwk in jwks["keys"]:
             if import_from_settings("OIDC_VERIFY_KID", True) and jwk[
                 "kid"
-            ] != smart_str(header.kid):
+            ] != smart_str(jws.jose_header["kid"]):
                 continue
-            if "alg" in jwk and jwk["alg"] != smart_str(header.alg):
+            if "alg" in jwk and jwk["alg"] != smart_str(jws.jose_header["alg"]):
                 continue
             key = jwk
         if key is None:
@@ -188,11 +192,11 @@ class OIDCAuthenticationBackend(ModelBackend):
         """Helper method to get the payload of the JWT token."""
         if self.get_settings("OIDC_ALLOW_UNSECURED_JWT", False):
             header, payload_data, signature = token.split(b".")
-            header = json.loads(smart_str(b64decode(header)))
+            header = json.loads(base64url_decode(smart_str(header)))
 
             # If config allows unsecured JWTs check the header and return the decoded payload
             if "alg" in header and header["alg"] == "none":
-                return b64decode(payload_data)
+                return base64url_decode(smart_str(payload_data))
 
         # By default fallback to verify JWT signatures
         return self._verify_jws(token, key)

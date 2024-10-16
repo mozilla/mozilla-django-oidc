@@ -94,7 +94,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             )
         )
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(SuspiciousOperation):
             self.backend.get_payload_data(token, None)
 
     @override_settings(OIDC_ALLOW_UNSECURED_JWT=True)
