@@ -1,9 +1,10 @@
 import json
 from unittest.mock import Mock, call, patch
 
+import jwt
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac, serialization
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
@@ -860,19 +861,34 @@ class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
     @override_settings(OIDC_RP_CLIENT_ID="example_id")
     @override_settings(OIDC_RP_CLIENT_SECRET="client_secret")
     @override_settings(OIDC_RP_SIGN_ALGO="RS256")
-    @override_settings(OIDC_RP_IDP_SIGN_KEY="sign_key")
-    def setUp(self):
-        self.backend = OIDCAuthenticationBackend()
-
     @override_settings(OIDC_USE_NONCE=False)
-    @patch("mozilla_django_oidc.auth.OIDCAuthenticationBackend._verify_jws")
     @patch("mozilla_django_oidc.auth.requests")
-    def test_jwt_verify_sign_key(self, request_mock, jws_mock):
+    def test_jwt_verify_sign_key(self, request_mock):
         """Test jwt verification signature."""
+
+        # Generate a private key to create a test token with
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+        # Make the public key available through the JWKS response
+        public_key = smart_str(key.public_key().public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.PKCS1,
+        ))
+
+        with override_settings(OIDC_RP_IDP_SIGN_KEY=public_key):
+            backend = OIDCAuthenticationBackend()
+
+        # Generate id_token
+        header = {
+            "typ": "JWT",
+            "alg": "RS256",
+        }
+        data = {"name": "John Doe", "test": "test_jwt_verify_sign_key"}
+        id_token = jwt.encode(payload=data, key=key, algorithm="RS256", headers=header)
+
         auth_request = RequestFactory().get("/foo", {"code": "foo", "state": "bar"})
         auth_request.session = {}
 
-        jws_mock.return_value = json.dumps({"aud": "audience"}).encode("utf-8")
         get_json_mock = Mock()
         get_json_mock.json.return_value = {
             "nickname": "username",
@@ -881,13 +897,11 @@ class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
-            "id_token": "token",
+            "id_token": id_token,
             "access_token": "access_token",
         }
         request_mock.post.return_value = post_json_mock
-        self.backend.authenticate(request=auth_request)
-        calls = [call(force_bytes("token"), "sign_key")]
-        jws_mock.assert_has_calls(calls)
+        self.assertIsNotNone(backend.authenticate(request=auth_request))
 
 
 class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):

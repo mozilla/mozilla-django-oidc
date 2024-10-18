@@ -34,6 +34,7 @@ history = open("HISTORY.rst").read().replace(".. :changelog:", "")
 install_requirements = [
     "Django >= 3.2",
     "josepy",
+    "pyjwt",
     "requests",
     "cryptography",
 ]
