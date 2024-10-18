@@ -35,6 +35,7 @@ install_requirements = [
     "Django >= 3.2",
     "josepy",
     "pyjwt",
+    "jwcrypto",
     "requests",
     "cryptography",
 ]
