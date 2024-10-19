@@ -10,10 +10,9 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils.encoding import force_bytes, smart_str
-from josepy.b64 import b64encode
-from josepy.jwa import ES256
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend, default_username_algo
+from mozilla_django_oidc.utils import base64_url_encode
 
 User = get_user_model()
 
@@ -70,53 +69,39 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     @override_settings(OIDC_ALLOW_UNSECURED_JWT=True)
     def test_allowed_unsecured_token(self):
         """Test payload data from unsecured token (allowed)."""
-        header = force_bytes(json.dumps({"alg": "none"}))
+        header = json.dumps({"alg": "none"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
         signature = ""
-        token = force_bytes(
-            "{}.{}.{}".format(
-                smart_str(b64encode(header)), smart_str(b64encode(payload)), signature
-            )
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
 
-        extracted_payload = self.backend.get_payload_data(token, None)
+        extracted_payload = self.backend.get_payload_data(force_bytes(token), None)
         self.assertEqual(payload, extracted_payload)
 
     @override_settings(OIDC_ALLOW_UNSECURED_JWT=False)
     def test_disallowed_unsecured_token(self):
         """Test payload data from unsecured token (disallowed)."""
-        header = force_bytes(json.dumps({"alg": "none"}))
+        header = json.dumps({"alg": "none"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
         signature = ""
-        token = force_bytes(
-            "{}.{}.{}".format(
-                smart_str(b64encode(header)), smart_str(b64encode(payload)), signature
-            )
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
 
         with self.assertRaises(KeyError):
-            self.backend.get_payload_data(token, None)
+            self.backend.get_payload_data(force_bytes(token), None)
 
     @override_settings(OIDC_ALLOW_UNSECURED_JWT=True)
     def test_allowed_unsecured_valid_token(self):
         """Test payload data from valid secured token (unsecured allowed)."""
-        header = force_bytes(json.dumps({"alg": "HS256", "typ": "JWT"}))
+        header = json.dumps({"alg": "HS256", "typ": "JWT"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
         token_bytes = force_bytes(token)
         key_text = smart_str(key)
         output = self.backend.get_payload_data(token_bytes, key_text)
@@ -125,23 +110,17 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     @override_settings(OIDC_ALLOW_UNSECURED_JWT=False)
     def test_disallowed_unsecured_valid_token(self):
         """Test payload data from valid secure token (unsecured disallowed)."""
-        header = force_bytes(json.dumps({"alg": "HS256", "typ": "JWT"}))
+        header = json.dumps({"alg": "HS256", "typ": "JWT"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
         token_bytes = force_bytes(token)
         key_text = smart_str(key)
         output = self.backend.get_payload_data(token_bytes, key_text)
@@ -150,24 +129,18 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     @override_settings(OIDC_ALLOW_UNSECURED_JWT=True)
     def test_allowed_unsecured_invalid_token(self):
         """Test payload data from invalid secure token (unsecured allowed)."""
-        header = force_bytes(json.dumps({"alg": "HS256", "typ": "JWT"}))
+        header = json.dumps({"alg": "HS256", "typ": "JWT"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         fake_key = b"mysupersecurefaketestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
         token_bytes = force_bytes(token)
         key_text = smart_str(fake_key)
 
@@ -178,24 +151,18 @@ class OIDCAuthenticationBackendTestCase(TestCase):
     @override_settings(OIDC_ALLOW_UNSECURED_JWT=False)
     def test_disallowed_unsecured_invalid_token(self):
         """Test payload data from invalid secure token (unsecured disallowed)."""
-        header = force_bytes(json.dumps({"alg": "HS256", "typ": "JWT"}))
+        header = json.dumps({"alg": "HS256", "typ": "JWT"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         fake_key = b"mysupersecurefaketestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
         token_bytes = force_bytes(token)
         key_text = smart_str(fake_key)
 
@@ -971,25 +938,17 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         }
         mock_requests.get.return_value = get_json_mock
 
-        header = force_bytes(
-            json.dumps({"alg": "RS256", "typ": "JWT", "kid": "foobar"})
-        )
+        header = json.dumps({"alg": "RS256", "typ": "JWT", "kid": "foobar"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
 
         jwk_key = self.backend.retrieve_matching_jwk(force_bytes(token))
         self.assertEqual(jwk_key, get_json_mock.json.return_value["keys"][0])
@@ -1017,25 +976,17 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         }
         mock_requests.get.return_value = get_json_mock
 
-        header = force_bytes(
-            json.dumps({"alg": "RS256", "typ": "JWT", "kid": "foobar"})
-        )
+        header = json.dumps({"alg": "RS256", "typ": "JWT", "kid": "foobar"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
 
         jwk_key = self.backend.retrieve_matching_jwk(force_bytes(token))
         self.assertEqual(jwk_key, get_json_mock.json.return_value["keys"][2])
@@ -1055,23 +1006,17 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         }
         mock_requests.get.return_value = get_json_mock
 
-        header = force_bytes(json.dumps({"alg": "HS256", "typ": "JWT", "kid": "bar"}))
+        header = json.dumps({"alg": "HS256", "typ": "JWT", "kid": "bar"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
 
         with self.assertRaises(SuspiciousOperation) as ctx:
             self.backend.retrieve_matching_jwk(force_bytes(token))
@@ -1093,23 +1038,17 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         }
         mock_requests.get.return_value = get_json_mock
 
-        header = force_bytes(json.dumps({"alg": "HS256", "typ": "JWT", "kid": "bar"}))
+        header = json.dumps({"alg": "HS256", "typ": "JWT", "kid": "bar"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
 
         with self.assertRaises(SuspiciousOperation) as ctx:
             self.backend.retrieve_matching_jwk(force_bytes(token))
@@ -1130,23 +1069,17 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         }
         mock_requests.get.return_value = get_json_mock
 
-        header = force_bytes(json.dumps({"alg": "HS256", "typ": "JWT", "kid": "kid"}))
+        header = json.dumps({"alg": "HS256", "typ": "JWT", "kid": "kid"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
 
         jwk_key = self.backend.retrieve_matching_jwk(force_bytes(token))
         self.assertEqual(jwk_key, get_json_mock.json.return_value["keys"][0])
@@ -1159,25 +1092,17 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         get_json_mock.json.return_value = {"keys": [{"alg": "RS256", "kid": "kid"}]}
         mock_requests.get.return_value = get_json_mock
 
-        header = force_bytes(
-            json.dumps({"alg": "RS256", "typ": "JWT", "kid": "differentkid"})
-        )
+        header = json.dumps({"alg": "RS256", "typ": "JWT", "kid": "differentkid"})
         payload = force_bytes(json.dumps({"foo": "bar"}))
 
         # Compute signature
         key = b"mysupersecuretestkey"
         h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)), smart_str(b64encode(payload))
-        )
+        msg = "{}.{}".format(base64_url_encode(header), base64_url_encode(payload))
         h.update(force_bytes(msg))
-        signature = b64encode(h.finalize())
+        signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(payload)),
-            smart_str(signature),
-        )
+        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
 
         with self.assertRaises(SuspiciousOperation) as ctx:
             self.backend.retrieve_matching_jwk(force_bytes(token))
@@ -1249,11 +1174,6 @@ class OIDCAuthenticationBackendES256WithJwksEndpointTestCase(TestCase):
 
         # Generate a private key to create a test token with
         private_key = ec.generate_private_key(ec.SECP256R1, default_backend())
-        private_key_pem = private_key.private_bytes(
-            serialization.Encoding.PEM,
-            serialization.PrivateFormat.PKCS8,
-            serialization.NoEncryption(),
-        )
 
         # Make the public key available through the JWKS response
         public_numbers = private_key.public_key().public_numbers()
@@ -1265,37 +1185,21 @@ class OIDCAuthenticationBackendES256WithJwksEndpointTestCase(TestCase):
                     "kty": "EC",
                     "alg": "ES256",
                     "use": "sig",
-                    "x": smart_str(b64encode(public_numbers.x.to_bytes(32, "big"))),
-                    "y": smart_str(b64encode(public_numbers.y.to_bytes(32, "big"))),
+                    "x": base64_url_encode(public_numbers.x.to_bytes(32, "big")),
+                    "y": base64_url_encode(public_numbers.y.to_bytes(32, "big")),
                     "crv": "P-256",
                 }
             ]
         }
         mock_requests.get.return_value = get_json_mock
 
-        header = force_bytes(
-            json.dumps(
-                {
-                    "typ": "JWT",
-                    "alg": "ES256",
-                    "kid": "eckid",
-                },
-            )
-        )
+        header = {
+            "typ": "JWT",
+            "alg": "ES256",
+            "kid": "eckid",
+        }
         data = {"name": "John Doe", "test": "test_es256_alg_verification"}
-
-        h = hmac.HMAC(private_key_pem, hashes.SHA256(), backend=default_backend())
-        msg = "{}.{}".format(
-            smart_str(b64encode(header)),
-            smart_str(b64encode(force_bytes(json.dumps(data)))),
-        )
-        h.update(force_bytes(msg))
-
-        signature = b64encode(ES256.sign(private_key, force_bytes(msg)))
-        token = "{}.{}".format(
-            msg,
-            smart_str(signature),
-        )
+        token = jwt.encode(payload=data, key=private_key, algorithm="ES256", headers=header)
 
         # Verify the token created with the private key by using the JWKS endpoint,
         # where the public numbers are.

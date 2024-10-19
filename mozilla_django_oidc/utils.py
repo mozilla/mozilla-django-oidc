@@ -1,13 +1,13 @@
 import logging
 import time
 import warnings
+from base64 import urlsafe_b64decode, urlsafe_b64encode
 from hashlib import sha256
 from urllib.request import parse_http_list, parse_keqv_list
 
-# Make it obvious that these aren't the usual base64 functions
-import josepy.b64
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.encoding import force_bytes
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,16 +57,12 @@ def is_authenticated(user):
 
 def base64_url_encode(bytes_like_obj):
     """Return a URL-Safe, base64 encoded version of bytes_like_obj
-
     Implements base64urlencode as described in
     https://datatracker.ietf.org/doc/html/rfc7636#appendix-A
+    This function is not used by the OpenID client; it's just for testing PKCE related functions.
     """
-
-    s = josepy.b64.b64encode(bytes_like_obj).decode("ascii")  # base64 encode
-    # the josepy base64 encoder (strips '='s padding) automatically
-    s = s.replace("+", "-")  # 62nd char of encoding
-    s = s.replace("/", "_")  # 63rd char of encoding
-
+    s = urlsafe_b64encode(force_bytes(bytes_like_obj)).decode('utf-8')
+    s = s.rstrip("=")
     return s
 
 
@@ -78,11 +74,14 @@ def base64_url_decode(string_like_obj):
     """
     s = string_like_obj
 
-    s = s.replace("_", "/")  # 63rd char of encoding
-    s = s.replace("-", "+")  # 62nd char of encoding
-    b = josepy.b64.b64decode(s)  # josepy base64 encoder (decodes without '='s padding)
-
-    return b
+    size = len(s) % 4
+    if size == 2:
+        s += '=='
+    elif size == 3:
+        s += '='
+    elif size != 0:
+        raise ValueError('Invalid base64 string')
+    return urlsafe_b64decode(s.encode('utf-8'))
 
 
 def generate_code_challenge(code_verifier, method):
