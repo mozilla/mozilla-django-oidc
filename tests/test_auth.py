@@ -851,6 +851,31 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         self.assertEqual(User.objects.get().first_name, "a_username")
 
+    @patch("mozilla_django_oidc.auth.requests")
+    @patch("mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token")
+    def test_get_userinfo_with_jwt_response(self, verify_token_mock, request_mock):
+        """Test get_userinfo with a JWT response."""
+        auth_request = RequestFactory().get("/foo", {"code": "foo", "state": "bar"})
+        auth_request.session = {}
+
+        # Mock the response from the userinfo endpoint
+        jwt_response = Mock()
+        jwt_response.headers = {"content-type": "application/jwt"}
+        jwt_response.text = "mocked_jwt_token"
+        request_mock.get.return_value = jwt_response
+
+        # Mock the verify_token method to return a specific payload
+        verify_token_mock.return_value = {"email": "email@example.com", "name": "John Doe"}
+
+        # Call the get_userinfo method
+        user_info = self.backend.get_userinfo("access_token", "id_token", {})
+
+        # Assert that verify_token was called with the correct token
+        verify_token_mock.assert_called_once_with("mocked_jwt_token")
+
+        # Assert that the returned user info matches the expected payload
+        self.assertEqual(user_info, {"email": "email@example.com", "name": "John Doe"})
+
 
 class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
     """Authentication tests with ALG RS256 and provided IdP Sign Key."""
