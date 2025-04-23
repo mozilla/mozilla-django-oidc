@@ -280,7 +280,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         )
         user_response.raise_for_status()
 
-        if user_response.headers.get("content-type", "").startswith("application/jwt"):
+        if user_response.headers.get("content-type", "").lower().startswith("application/jwt"):
             # OIDC userinfo claims can be encoded as JWT
             return self.verify_token(user_response.text)
 
