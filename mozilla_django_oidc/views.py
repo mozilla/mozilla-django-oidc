@@ -251,7 +251,7 @@ class OIDCLogoutView(View):
     @property
     def redirect_url(self):
         """Return the logout url defined in settings."""
-        return self.get_settings("LOGOUT_REDIRECT_URL", "/")
+        return resolve_url(self.get_settings("LOGOUT_REDIRECT_URL", "/"))
 
     def post(self, request):
         """Log out the user."""
