@@ -15,18 +15,19 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
+	find . -name '__pycache__' -exec rm -rf {} +
 
 lint: ## check style with flake8
 	flake8 mozilla_django_oidc tests
 
 test: ## run tests quickly with the default Python
-	DJANGO_SETTINGS_MODULE=tests.settings django-admin test
+	DJANGO_SETTINGS_MODULE=tests.settings python -m django test
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	DJANGO_SETTINGS_MODULE=tests.settings coverage run --source mozilla_django_oidc  `which django-admin` test
+	coverage run --source mozilla_django_oidc -m django test --settings=tests.settings
 	coverage report -m
 	coverage html
 	open htmlcov/index.html
@@ -37,10 +38,13 @@ docs: ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
-release: clean ## package and upload a release
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+build: clean ## build the sdist and wheel
+	python -m build . --sdist --wheel
+	ls -l dist
+
+release: build ##package and upload a release
+	twine upload dist/*
 
 sdist: clean ## package
-	python setup.py sdist
+	python -m build . --sdist
 	ls -l dist

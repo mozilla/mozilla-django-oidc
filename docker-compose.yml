@@ -1,7 +1,6 @@
 # Based in the `docker-test-mozilla-django-oidc` images
 # https://github.com/mozilla/docker-test-mozilla-django-oidc
 
-version: '3'
 services:
   testprovider:
     stdin_open: true
@@ -36,7 +35,8 @@ services:
       - testrp
       - testprovider
     command: >-
-      bash -c "cd /integration_tests &&
+      bash -c "pip install 'splinter[selenium]' &&
+               cd /integration_tests &&
                wait-for-it -t 60 -p 8080 -h testprovider &&
                wait-for-it -t 60 -p 8081 -h testrp &&
                python integration_tests.py"

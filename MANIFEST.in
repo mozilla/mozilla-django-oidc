@@ -3,4 +3,8 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
-recursive-include mozilla_django_oidc *.html *.png *.gif *js *.css *jpg *jpeg *svg *py
+
+include .flake8
+include .bumpversion.cfg
+recursive-include docs *
+recursive-include integration_tests *

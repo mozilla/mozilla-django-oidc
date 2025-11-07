@@ -55,20 +55,16 @@ Django of your choice. Here is such an example:
 
 .. code-block:: shell
 
-    $ virtualenv -p /path/to/bin/python3.8 venv
-    $ source venv
-    (venv) $ pip install -r requirements/requirements_dev.txt
-    (venv) $ DJANGO_SETTINGS_MODULE=tests.settings django-admin test
+    $ python -m venv venv
+    $ source ./venv/bin/activate
+    (venv) $ pip install '.[dev]'
+    (venv) $ make test
 
 Measuring code coverage, continuing the steps above:
 
 .. code-block:: shell
 
-    (venv) $ pip install coverage
-    (venv) $ DJANGO_SETTINGS_MODULE=tests.settings coverage run --source mozilla_django_oidc `which django-admin` test
-    (venv) $ coverage report
-    (venv) $ coverage html
-    (venv) $ open htmlcov/index.html
+    (venv) $ make coverage
 
 Local development
 -----------------

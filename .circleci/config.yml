@@ -13,7 +13,7 @@ common_steps: &common_steps
         command: echo 127.0.0.1 testprovider | tee -a /etc/hosts
     - run:
         name: Install latest lib build
-        command: . /testrp_env/bin/activate && pip install /tmp/workspace/mozilla-django-oidc-dev.tar.gz
+        command: . /testrp_env/bin/activate && pip install /tmp/workspace/mozilla-django-oidc-dev.tar.gz[test]
     - run:
         name: Override django version
         command: . /testrp_env/bin/activate && pip install $DJANGO_VERSION
@@ -45,8 +45,9 @@ jobs:
     steps:
       - checkout
       - run: mkdir workspace
+      - run: pip install '.[dev]'
       - run: make sdist
-      - run: mv dist/mozilla-django-oidc-* workspace/mozilla-django-oidc-dev.tar.gz
+      - run: mv dist/mozilla_django_oidc-* workspace/mozilla-django-oidc-dev.tar.gz
       - persist_to_workspace:
           root: workspace
           paths:

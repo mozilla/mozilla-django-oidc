@@ -10,9 +10,9 @@ jobs:
     name: Mozilla Django OIDC Release
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Install dependencies
@@ -28,7 +28,7 @@ jobs:
           --outdir dist/
           .
       - name: Publish a Python distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.4.2
+        uses: pypa/gh-action-pypi-publish@v1
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
         with:
           user: __token__
