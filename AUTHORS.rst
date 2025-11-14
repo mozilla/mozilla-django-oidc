@@ -29,3 +29,4 @@ Contributors
 * Antti Palola (`@anttipalola <https://github.com/anttipalola>`_)
 * Bono de Visser (`@kerrermanisNL <https://github.com/kerrermanisNL>`_)
 * Chris Brantley (`@chrisbrantley <https://github.com/chrisbrantley>`_)
+* Ryan Johnson (`@escattone <https://github.com/escattone>`_)

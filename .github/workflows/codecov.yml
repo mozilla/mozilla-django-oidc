@@ -7,15 +7,15 @@ jobs:
     name: Codecov
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Install dependencies
         run: pip install codecov tox tox-gh-actions
       - name: Run tox
         run: tox
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v5
         with:
           verbose: true

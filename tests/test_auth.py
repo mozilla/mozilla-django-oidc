@@ -849,10 +849,12 @@ class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
         # Make the public key available through the JWKS response
-        public_key = smart_str(key.public_key().public_bytes(
-            serialization.Encoding.PEM,
-            serialization.PublicFormat.PKCS1,
-        ))
+        public_key = smart_str(
+            key.public_key().public_bytes(
+                serialization.Encoding.PEM,
+                serialization.PublicFormat.PKCS1,
+            )
+        )
 
         with override_settings(OIDC_RP_IDP_SIGN_KEY=public_key):
             backend = OIDCAuthenticationBackend()
@@ -966,7 +968,9 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         h.update(force_bytes(msg))
         signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
+        token = "{}.{}.{}".format(
+            base64_url_encode(header), base64_url_encode(payload), signature
+        )
 
         jwk_key = self.backend.retrieve_matching_jwk(token)
         self.assertEqual(jwk_key._jwk_data, get_json_mock.json.return_value["keys"][0])
@@ -1013,7 +1017,9 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         h.update(force_bytes(msg))
         signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
+        token = "{}.{}.{}".format(
+            base64_url_encode(header), base64_url_encode(payload), signature
+        )
 
         jwk_key = self.backend.retrieve_matching_jwk(token)
         self.assertEqual(jwk_key._jwk_data, get_json_mock.json.return_value["keys"][2])
@@ -1046,7 +1052,9 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         h.update(force_bytes(msg))
         signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
+        token = "{}.{}.{}".format(
+            base64_url_encode(header), base64_url_encode(payload), signature
+        )
 
         with self.assertRaises(SuspiciousOperation) as ctx:
             self.backend.retrieve_matching_jwk(token)
@@ -1081,7 +1089,9 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         h.update(force_bytes(msg))
         signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
+        token = "{}.{}.{}".format(
+            base64_url_encode(header), base64_url_encode(payload), signature
+        )
 
         with self.assertRaises(SuspiciousOperation) as ctx:
             self.backend.retrieve_matching_jwk(token)
@@ -1115,7 +1125,9 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         h.update(force_bytes(msg))
         signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
+        token = "{}.{}.{}".format(
+            base64_url_encode(header), base64_url_encode(payload), signature
+        )
 
         jwk_key = self.backend.retrieve_matching_jwk(token)
         self.assertEqual(jwk_key._jwk_data, get_json_mock.json.return_value["keys"][0])
@@ -1148,7 +1160,9 @@ class OIDCAuthenticationBackendRS256WithJwksEndpointTestCase(TestCase):
         h.update(force_bytes(msg))
         signature = base64_url_encode(h.finalize())
 
-        token = "{}.{}.{}".format(base64_url_encode(header), base64_url_encode(payload), signature)
+        token = "{}.{}.{}".format(
+            base64_url_encode(header), base64_url_encode(payload), signature
+        )
 
         with self.assertRaises(SuspiciousOperation) as ctx:
             self.backend.retrieve_matching_jwk(token)
@@ -1245,7 +1259,9 @@ class OIDCAuthenticationBackendES256WithJwksEndpointTestCase(TestCase):
             "kid": "eckid",
         }
         data = {"name": "John Doe", "test": "test_es256_alg_verification"}
-        token = jwt.encode(payload=data, key=private_key, algorithm="ES256", headers=header)
+        token = jwt.encode(
+            payload=data, key=private_key, algorithm="ES256", headers=header
+        )
 
         # Verify the token created with the private key by using the JWKS endpoint,
         # where the public numbers are.

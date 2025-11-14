@@ -62,11 +62,14 @@ Ready to contribute? Here's how to set up `mozilla-django-oidc` for local develo
 
        $ git clone git@github.com:your_name_here/mozilla-django-oidc.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Create a virtual environment and install the package with its
+   development dependencies. This command will install all the tools
+   needed for testing and linting::
 
-       $ mkvirtualenv mozilla-django-oidc
        $ cd mozilla-django-oidc/
-       $ python setup.py develop
+       $ python -m venv .venv
+       $ source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
+       $ pip install -e .[dev]
 
 4. Create a branch for local development::
 
@@ -77,11 +80,9 @@ Ready to contribute? Here's how to set up `mozilla-django-oidc` for local develo
 5. When you're done making changes, check that your changes pass flake8 and the
    tests, including testing other Python versions with tox::
 
-       $ flake8 mozilla_django_oidc tests
-       $ python setup.py test
+       $ make lint
+       $ make test
        $ tox
-
-   To get flake8 and tox, just pip install them into your virtualenv.
 
 6. Make sure you update ``HISTORY.rst`` with your changes in the following categories
 
@@ -106,9 +107,9 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.6+ and for PyPy. Check
-   `<https://github.com/mozilla/mozilla-django-oidc/actions>`_
-   and make sure that the tests pass for all supported Python versions.
+3. The pull request should work for Python 3.8+. Check
+   `<https://github.com/mozilla/mozilla-django-oidc/actions>`_ and make sure
+   that the tests pass for all supported Python versions.
 
 Tips
 ----
@@ -120,14 +121,14 @@ We use tox to run tests::
 
 To run a specific environment, use the ``-e`` argument::
 
-    $ tox -e py27-django111
+    $ tox -e py312-django420
 
 
 You can also run the tests in a virtual environment without tox::
 
-    $ DJANGO_SETTINGS_MODULE=tests.settings django-admin test
+    $ make test
 
 
 You can specify test modules to run rather than the whole suite::
 
-    $ DJANGO_SETTINGS_MODULE=tests.settings django-admin test tests.test_views
+    $ DJANGO_SETTINGS_MODULE=tests.settings python -m django test tests.test_views

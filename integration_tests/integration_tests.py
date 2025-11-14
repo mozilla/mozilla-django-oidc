@@ -1,6 +1,6 @@
 import unittest
 
-from splinter import Browser
+from splinter import Browser, Config
 
 
 class IntegrationTest(unittest.TestCase):
@@ -13,10 +13,11 @@ class IntegrationTest(unittest.TestCase):
             "password": "example_p@ssw0rd",
             "email": "example@example.com",
         }
+        self.splinter_config = Config(headless=True)
 
     def setUp(self):
         """Create test account in `testprovider` instance"""
-        with Browser(self.webdriver, headless=True) as browser:
+        with Browser(self.webdriver, config=self.splinter_config) as browser:
             browser.visit("http://testprovider:8080/account/signup")
             browser.find_by_css("#id_username").fill(self.account["username"])
             browser.find_by_css("#id_password").fill(self.account["password"])
@@ -26,7 +27,7 @@ class IntegrationTest(unittest.TestCase):
 
     def tearDown(self):
         """Remove test account from `testprovider` instance"""
-        with Browser(self.webdriver, headless=True) as browser:
+        with Browser(self.webdriver, config=self.splinter_config) as browser:
             self.perform_login(browser)
             browser.visit("http://testprovider:8080/account/delete")
             browser.find_by_css(".btn-danger").click()
@@ -46,7 +47,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_login(self):
         """Test logging in `testrp` using OIDC"""
-        browser = Browser(self.webdriver, headless=True)
+        browser = Browser(self.webdriver, config=self.splinter_config)
 
         # Check that user is not logged in
         browser.visit("http://testrp:8081")
@@ -63,7 +64,7 @@ class IntegrationTest(unittest.TestCase):
 
     def test_logout(self):
         """Test logout functionality of OIDC lib"""
-        browser = Browser(self.webdriver, headless=True)
+        browser = Browser(self.webdriver, config=self.splinter_config)
 
         # Check that user is not logged in
         browser.visit("http://testrp:8081")
