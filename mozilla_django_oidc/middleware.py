@@ -121,8 +121,13 @@ class SessionRefresh(MiddlewareMixin):
             LOGGER.debug("request is not refreshable")
             return
 
-        expiration = request.session.get("oidc_id_token_expiration", 0)
         now = time.time()
+
+        if hasattr(request, 'headers') and 'X-Refresh-OIDC-Token' in request.headers:
+            request.session['oidc_id_token_expiration'] = now
+
+        expiration = request.session.get("oidc_id_token_expiration", 0)
+
         if expiration > now:
             # The id_token is still valid, so we don't have to do anything.
             LOGGER.debug("id token is still valid (%s > %s)", expiration, now)
