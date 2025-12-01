@@ -17,7 +17,7 @@ After installation, you'll need to do some things to get your site using
 Requirements
 ------------
 
-This library supports Python 3.6+ on OSX and Linux.
+This library supports Python 3.8+ on OSX and Linux.
 
 
 Acquire a client id and client secret

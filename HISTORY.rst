@@ -3,6 +3,20 @@
 History
 -------
 
+5.0.0 (TBD)
+===========
+
+* Add support for Django 5.0, 5.1, and 5.2
+* Add support for Python 3.13 (Django 5.1+ only)
+* Add support for Python 3.14 (Django 5.2+ only)
+* Update minimum Django version to 4.2
+
+Backwards-incompatible changes:
+
+* Drop support for Django 3.2
+* Python 3.8 and 3.9 are only supported with Django 4.2 (Django 5.0+ requires Python 3.10+)
+
+
 4.0.1 (2024-03-12)
 ==================
 
