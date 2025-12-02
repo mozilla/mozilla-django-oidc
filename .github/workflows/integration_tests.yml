@@ -1,0 +1,131 @@
+name: mozilla-django-oidc end-to-end integration tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  # 1. Build the library (sdist) and store it as an artifact
+  build_lib:
+    name: Build Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist
+        run: |
+          pip install '.[dev]'
+          # Use python build module (modern replacement for make sdist)
+          python -m build --sdist
+          # Rename to a consistent name for the test jobs
+          mv dist/mozilla_django_oidc-*.tar.gz dist/mozilla-django-oidc-dev.tar.gz
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-package
+          path: dist/mozilla-django-oidc-dev.tar.gz
+          retention-days: 1
+
+  # 2. Run the Matrix of E2E Tests
+  e2e_tests:
+    name: E2E (Py${{ matrix.python }} / ${{ matrix.django_name }} / ${{ matrix.algo }})
+    needs: build_lib
+    runs-on: ubuntu-latest
+
+    # Run inside the specific Docker container for the Python version
+    container:
+      image: mozilla/oidc-testprovider:oidc_e2e_setup_py${{ matrix.python }}-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Define the base dimensions
+        python: ['38', '39', '310', '311', '312', '313']
+        algo: ['rs', 'hs']
+        django_name: ['django420', 'django50', 'django51', 'django52']
+
+        # Define the Django version mapping
+        include:
+          - django_name: 'django420'
+            django_spec: 'Django>=4.2,<5.0'
+          - django_name: 'django50'
+            django_spec: 'Django>=5.0,<5.1'
+          - django_name: 'django51'
+            django_spec: 'Django>=5.1,<5.2'
+          - django_name: 'django52'
+            django_spec: 'Django>=5.2,<5.3'
+
+        exclude:
+          # Python 3.8 and 3.9 only support Django 4.2 in this config
+          - python: '38'
+            django_name: 'django50'
+          - python: '38'
+            django_name: 'django51'
+          - python: '38'
+            django_name: 'django52'
+          - python: '39'
+            django_name: 'django50'
+          - python: '39'
+            django_name: 'django51'
+          - python: '39'
+            django_name: 'django52'
+
+          # Python 3.13 only supports Django 5.1+ in this config
+          - python: '313'
+            django_name: 'django420'
+          - python: '313'
+            django_name: 'django50'
+
+    env:
+      TEST_OIDC_ALGO: ${{ matrix.algo }}
+      DJANGO_VERSION: ${{ matrix.django_spec }}
+      HOME: /root
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-package
+          path: /tmp/workspace
+
+      - name: Setup /etc/hosts
+        run: |
+          echo "127.0.0.1 testrp" >> /etc/hosts
+          echo "127.0.0.1 testprovider" >> /etc/hosts
+
+      - name: Install Lib and Dependencies
+        run: |
+          . /testrp_env/bin/activate
+          # Use [test] extra to pull in splinter[selenium]
+          pip install /tmp/workspace/mozilla-django-oidc-dev.tar.gz[test]
+          pip install "$DJANGO_VERSION"
+
+      - name: Start Background Services
+        run: |
+          # Start Provider in background
+          (. /testprovider_env/bin/activate && cd /testprovider && ./bin/run.sh) &
+
+          # Start RP in background
+          (. /testrp_env/bin/activate && cd /testrp && ./bin/run.sh) &
+
+      - name: Wait for Services
+        run: |
+          wait-for-it -p 8080 -h localhost -t 60
+          wait-for-it -p 8081 -h localhost -t 60
+
+      - name: Run Integration Tests
+        working-directory: integration_tests
+        run: |
+          . /testrp_env/bin/activate
+          python integration_tests.py
