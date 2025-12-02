@@ -14,7 +14,8 @@ History
 Backwards-incompatible changes:
 
 * Drop support for Django 3.2
-* Python 3.8 and 3.9 are only supported with Django 4.2 (Django 5.0+ requires Python 3.10+)
+* Drop support for Python 3.8
+* Python 3.9 is only supported with Django 4.2 (Django 5.0+ requires Python 3.10+)
 
 
 4.0.1 (2024-03-12)

@@ -17,7 +17,7 @@ After installation, you'll need to do some things to get your site using
 Requirements
 ------------
 
-This library supports Python 3.8+ on OSX and Linux.
+This library supports Python 3.9+ on OSX and Linux.
 
 
 Acquire a client id and client secret
@@ -144,7 +144,7 @@ Next, edit your ``urls.py`` and add the following:
 .. code-block:: python
 
    from django.urls import path, include
-   
+
    urlpatterns = [
        # ...
        path('oidc/', include('mozilla_django_oidc.urls')),
@@ -280,8 +280,8 @@ fields.
 If you want something different, set ``settings.OIDC_USERNAME_ALGO`` to a Python
 dotted path to the function you want to use.
 
-The function takes in an email address as a text (Python 2 unicode or Python 3
-string) and returns a text (Python 2 unicode or Python 3 string).
+The function takes in an email address as a text (Python 3 string) and
+returns a text (Python 3 string).
 
 Here's an example function for Python 3 that doesn't convert the email address
 at all:

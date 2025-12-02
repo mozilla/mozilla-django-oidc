@@ -48,7 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         # Define the base dimensions
-        python: ['38', '39', '310', '311', '312', '313']
+        python: ['39', '310', '311', '312', '313']
         algo: ['rs', 'hs']
         django_name: ['django420', 'django50', 'django51', 'django52']
 
@@ -64,13 +64,7 @@ jobs:
             django_spec: 'Django>=5.2,<5.3'
 
         exclude:
-          # Python 3.8 and 3.9 only support Django 4.2 in this config
-          - python: '38'
-            django_name: 'django50'
-          - python: '38'
-            django_name: 'django51'
-          - python: '38'
-            django_name: 'django52'
+          # Python 3.9 only supports Django 4.2 in this config
           - python: '39'
             django_name: 'django50'
           - python: '39'
