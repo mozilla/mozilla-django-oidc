@@ -5,11 +5,17 @@ mozilla-django-oidc
 .. image:: https://badge.fury.io/py/mozilla-django-oidc.svg
    :target: https://badge.fury.io/py/mozilla-django-oidc
 
+.. image:: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/integration_tests.yml/badge.svg?branch=main
+   :target: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/integration_tests.yml
+
+.. image:: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/unit_tests.yml/badge.svg?branch=main
+   :target: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/unit_tests.yml
+
+.. image:: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/codecov.yml/badge.svg?branch=main
+   :target: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/codecov.yml
+
 .. image:: https://codecov.io/gh/mozilla/mozilla-django-oidc/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/mozilla/mozilla-django-oidc
-
-.. image:: https://circleci.com/gh/mozilla/mozilla-django-oidc/tree/main.svg?style=svg
-   :target: https://circleci.com/gh/mozilla/mozilla-django-oidc/tree/main
 
 A lightweight authentication and access management library for integration with OpenID Connect enabled authentication services.
 
