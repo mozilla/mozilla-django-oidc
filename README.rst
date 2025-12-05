@@ -7,11 +7,9 @@ mozilla-django-oidc
 
 .. image:: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/unit_tests.yml/badge.svg?branch=main
    :target: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/unit_tests.yml
-   :alt: unit tests
 
 .. image:: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/integration_tests.yml/badge.svg?branch=main
    :target: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/integration_tests.yml
-   :alt: integration tests
 
 .. image:: https://codecov.io/gh/mozilla/mozilla-django-oidc/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/mozilla/mozilla-django-oidc

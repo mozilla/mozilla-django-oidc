@@ -1,4 +1,4 @@
-name: mozilla-django-oidc unit tests
+name: unit tests
 on: [push, pull_request]
 
 jobs:
