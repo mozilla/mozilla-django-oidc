@@ -18,7 +18,7 @@ services:
       - ./:/mozilla-django-oidc
     environment:
       - TEST_OIDC_ALGO=${TEST_OIDC_ALGO:-hs}
-      - DJANGO_VERSION=${DJANGO_VERSION:-Django>=3.2}
+      - DJANGO_VERSION=${DJANGO_VERSION:-Django>=4.2}
     command: >-
       bash -c "cd /mozilla-django-oidc/ &&
                pip install -I . &&
