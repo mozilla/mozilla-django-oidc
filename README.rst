@@ -11,7 +11,7 @@ mozilla-django-oidc
 .. image:: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/integration_tests.yml/badge.svg?branch=main
    :target: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/integration_tests.yml
 
-.. image:: https://codecov.io/gh/mozilla/mozilla-django-oidc/branch/main/graph/badge.svg
+.. image:: https://codecov.io/gh/mozilla/mozilla-django-oidc/graph/badge.svg?token=QrytQ8IwrM
    :target: https://codecov.io/gh/mozilla/mozilla-django-oidc
 
 A lightweight authentication and access management library for integration with OpenID Connect enabled authentication services.
