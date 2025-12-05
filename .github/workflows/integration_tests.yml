@@ -1,4 +1,4 @@
-name: mozilla-django-oidc end-to-end integration tests
+name: integration tests
 
 on:
   push:
