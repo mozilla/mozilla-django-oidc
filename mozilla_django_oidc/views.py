@@ -236,7 +236,11 @@ class OIDCAuthenticationRequestView(View):
         return HttpResponseRedirect(redirect_url)
 
     def get_extra_params(self, request):
-        return self.get_settings("OIDC_AUTH_REQUEST_EXTRA_PARAMS", {})
+        extra_params = {}
+        for allowed_param_name in self.get_settings('OIDC_AUTH_REQUEST_EXTRA_PARAMS', []):
+            if allowed_param_name in request.GET:
+                extra_params[allowed_param_name] = request.GET[allowed_param_name]
+        return extra_params
 
 
 class OIDCLogoutView(View):
