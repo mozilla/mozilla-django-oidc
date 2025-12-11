@@ -43,12 +43,13 @@ jobs:
     # Run inside the specific Docker container for the Python version
     container:
       image: mozilla/oidc-testprovider:oidc_e2e_setup_py${{ matrix.python }}-latest
+      options: --user root
 
     strategy:
       fail-fast: false
       matrix:
         # Define the base dimensions
-        python: ['39', '310', '311', '312', '313']
+        python: ['310', '311', '312', '313', '314']
         algo: ['rs', 'hs']
         django_name: ['django420', 'django50', 'django51', 'django52']
 
@@ -64,19 +65,18 @@ jobs:
             django_spec: 'Django>=5.2,<5.3'
 
         exclude:
-          # Python 3.9 only supports Django 4.2 in this config
-          - python: '39'
-            django_name: 'django50'
-          - python: '39'
-            django_name: 'django51'
-          - python: '39'
-            django_name: 'django52'
-
           # Python 3.13 only supports Django 5.1+ in this config
           - python: '313'
             django_name: 'django420'
           - python: '313'
             django_name: 'django50'
+          # Python 3.14 only supports Django 5.2+ in this config
+          - python: '314'
+            django_name: 'django420'
+          - python: '314'
+            django_name: 'django50'
+          - python: '314'
+            django_name: 'django51'
 
     env:
       TEST_OIDC_ALGO: ${{ matrix.algo }}
