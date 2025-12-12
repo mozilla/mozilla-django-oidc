@@ -14,7 +14,7 @@ authors = [
     { name = "John Giannelos", email = "jgiannelos@mozilla.com" }
 ]
 license = "MPL-2.0"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["mozilla-django-oidc"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -29,7 +29,6 @@ classifiers = [
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
