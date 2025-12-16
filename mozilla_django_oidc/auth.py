@@ -261,6 +261,12 @@ class OIDCAuthenticationBackend(ModelBackend):
             proxies=self.get_settings("OIDC_PROXY", None),
         )
         user_response.raise_for_status()
+
+        if user_response.headers.get("content-type", "").lower().startswith("application/jwt"):
+            # OIDC userinfo claims can be encoded as JWT
+            return self.verify_token(user_response.text)
+
+        # otherwise process as JSON payload
         return user_response.json()
 
     def authenticate(self, request, **kwargs):
