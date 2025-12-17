@@ -141,7 +141,9 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         try:
             # Maybe add a settings to enforce audiance validation
-            return jwt.decode(payload, key, algorithms=alg, options={"verify_aud": False})
+            return jwt.decode(
+                payload, key, algorithms=alg, options={"verify_aud": False}
+            )
         except jwt.DecodeError:
             msg = "JWS token verification failed."
             raise SuspiciousOperation(msg)
@@ -262,7 +264,11 @@ class OIDCAuthenticationBackend(ModelBackend):
         )
         user_response.raise_for_status()
 
-        if user_response.headers.get("content-type", "").lower().startswith("application/jwt"):
+        if (
+            user_response.headers.get("content-type", "")
+            .lower()
+            .startswith("application/jwt")
+        ):
             # OIDC userinfo claims can be encoded as JWT
             return self.verify_token(user_response.text)
 
@@ -354,7 +360,7 @@ class OIDCAuthenticationBackend(ModelBackend):
             return user
         else:
             LOGGER.debug(
-                "Login failed: No user with %s found, and " "OIDC_CREATE_USER is False",
+                "Login failed: No user with %s found, and OIDC_CREATE_USER is False",
                 self.describe_user_by_claims(user_info),
             )
             return None
