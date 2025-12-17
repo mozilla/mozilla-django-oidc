@@ -217,7 +217,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -267,7 +267,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -321,7 +321,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -375,7 +375,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         get_json_mock = Mock()
         claims_response = {"nickname": "a_username", "email": "email@example.com"}
         get_json_mock.json.return_value = claims_response
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -427,7 +427,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -488,7 +488,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -648,7 +648,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -678,7 +678,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -709,7 +709,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -742,7 +742,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
             "domain": domain,
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -830,7 +830,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -842,33 +842,138 @@ class OIDCAuthenticationBackendTestCase(TestCase):
 
         self.assertEqual(User.objects.get().first_name, "a_username")
 
+    @override_settings(OIDC_RP_SIGN_ALGO="HS256")
+    @override_settings(OIDC_USE_NONCE=False)
     @patch("mozilla_django_oidc.auth.requests")
-    @patch("mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token")
-    def test_get_userinfo_with_jwt_response(self, verify_token_mock, request_mock):
-        """Test get_userinfo with a JWT response."""
-        auth_request = RequestFactory().get("/foo", {"code": "foo", "state": "bar"})
-        auth_request.session = {}
-
-        # Mock the response from the userinfo endpoint
-        jwt_response = Mock()
-        jwt_response.headers = {"content-type": "application/jwt"}
-        jwt_response.text = "mocked_jwt_token"
-        request_mock.get.return_value = jwt_response
-
-        # Mock the verify_token method to return a specific payload
-        verify_token_mock.return_value = {
+    def test_get_userinfo_with_jwt_response(self, request_mock):
+        """Test get_userinfo with actual JWT token verification."""
+        userinfo_claims = {
+            "sub": "1234567890",
             "email": "email@example.com",
             "name": "John Doe",
+            "preferred_username": "johndoe",
         }
+        jwt_token = jwt.encode(
+            userinfo_claims,
+            "client_secret",
+            algorithm="HS256",
+            headers={"alg": "HS256", "typ": "JWT"},
+        )
 
-        # Call the get_userinfo method
+        jwt_response = Mock()
+        jwt_response.headers = {"content-type": "application/jwt"}
+        jwt_response.text = jwt_token
+        request_mock.get.return_value = jwt_response
+
         user_info = self.backend.get_userinfo("access_token", "id_token", {})
+        self.assertEqual(user_info["email"], "email@example.com")
+        self.assertEqual(user_info["name"], "John Doe")
+        self.assertEqual(user_info["sub"], "1234567890")
 
-        # Assert that verify_token was called with the correct token
-        verify_token_mock.assert_called_once_with("mocked_jwt_token")
+    @override_settings(OIDC_RP_SIGN_ALGO="HS256")
+    @override_settings(OIDC_USE_NONCE=False)
+    @patch("mozilla_django_oidc.auth.requests")
+    def test_get_userinfo_jwt_with_charset(self, request_mock):
+        """Test JWT userinfo with charset in content-type."""
+        userinfo_claims = {"email": "email@example.com", "name": "Jane Doe"}
+        jwt_token = jwt.encode(
+            userinfo_claims,
+            "client_secret",
+            algorithm="HS256",
+            headers={"alg": "HS256", "typ": "JWT"},
+        )
 
-        # Assert that the returned user info matches the expected payload
-        self.assertEqual(user_info, {"email": "email@example.com", "name": "John Doe"})
+        jwt_response = Mock()
+        jwt_response.headers = {"content-type": "application/jwt; charset=utf-8"}
+        jwt_response.text = jwt_token
+        request_mock.get.return_value = jwt_response
+
+        user_info = self.backend.get_userinfo("access_token", "id_token", {})
+        self.assertEqual(user_info["email"], "email@example.com")
+        self.assertEqual(user_info["name"], "Jane Doe")
+
+    @override_settings(OIDC_OP_TOKEN_ENDPOINT="https://server.example.com/token")
+    @override_settings(OIDC_OP_USER_ENDPOINT="https://server.example.com/user")
+    @override_settings(OIDC_RP_CLIENT_ID="example_id")
+    @override_settings(OIDC_RP_CLIENT_SECRET="client_secret")
+    @override_settings(OIDC_RP_SIGN_ALGO="RS256")
+    @override_settings(OIDC_USE_NONCE=False)
+    @patch("mozilla_django_oidc.auth.requests")
+    def test_get_userinfo_jwt_with_rs256(self, request_mock):
+        """Test JWT userinfo with RS256 signing."""
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        public_key = smart_str(
+            private_key.public_key().public_bytes(
+                serialization.Encoding.PEM, serialization.PublicFormat.PKCS1
+            )
+        )
+
+        with override_settings(OIDC_RP_IDP_SIGN_KEY=public_key):
+            backend = OIDCAuthenticationBackend()
+
+        # Create JWT signed with private key
+        userinfo_claims = {"email": "email@example.com", "name": "Alice"}
+        jwt_token = jwt.encode(
+            userinfo_claims,
+            private_key,
+            algorithm="RS256",
+            headers={"alg": "RS256", "typ": "JWT"},
+        )
+
+        jwt_response = Mock()
+        jwt_response.headers = {"content-type": "application/jwt"}
+        jwt_response.text = jwt_token
+        request_mock.get.return_value = jwt_response
+
+        user_info = backend.get_userinfo("access_token", "id_token", {})
+        self.assertEqual(user_info["email"], "email@example.com")
+        self.assertEqual(user_info["name"], "Alice")
+
+    @override_settings(OIDC_RP_SIGN_ALGO="HS256")
+    @override_settings(OIDC_USE_NONCE=False)
+    @patch("mozilla_django_oidc.auth.requests")
+    def test_get_userinfo_jwt_invalid_signature(self, request_mock):
+        """Test that invalid JWT signature raises SuspiciousOperation."""
+        # Create JWT with wrong secret
+        jwt_token = jwt.encode(
+            {"email": "email@example.com"},
+            "wrong_secret",
+            algorithm="HS256",
+            headers={"alg": "HS256", "typ": "JWT"},
+        )
+
+        jwt_response = Mock()
+        jwt_response.headers = {"content-type": "application/jwt"}
+        jwt_response.text = jwt_token
+        request_mock.get.return_value = jwt_response
+
+        with self.assertRaises(SuspiciousOperation) as ctx:
+            self.backend.get_userinfo("access_token", "id_token", {})
+
+        self.assertEqual(ctx.exception.args[0], "JWS token verification failed.")
+
+    @override_settings(OIDC_RP_SIGN_ALGO="HS256")
+    @override_settings(OIDC_USE_NONCE=False)
+    @patch("mozilla_django_oidc.auth.requests")
+    def test_get_userinfo_jwt_algorithm_mismatch(self, request_mock):
+        """Test that algorithm mismatch raises SuspiciousOperation."""
+        # Create JWT with HS512 but backend expects HS256
+        jwt_token = jwt.encode(
+            {"email": "email@example.com"},
+            "client_secret",
+            algorithm="HS512",
+            headers={"alg": "HS512", "typ": "JWT"},
+        )
+
+        jwt_response = Mock()
+        jwt_response.headers = {"content-type": "application/jwt"}
+        jwt_response.text = jwt_token
+        request_mock.get.return_value = jwt_response
+
+        with self.assertRaises(SuspiciousOperation) as ctx:
+            self.backend.get_userinfo("access_token", "id_token", {})
+
+        self.assertIn("does not match", ctx.exception.args[0])
 
 
 class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
@@ -914,7 +1019,7 @@ class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
             "nickname": "username",
             "email": "email@example.com",
         }
-        get_json_mock.headers.get.return_value = "application/json"
+        get_json_mock.headers = {"content-type": "application/json"}
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
