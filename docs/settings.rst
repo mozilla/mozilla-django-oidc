@@ -127,6 +127,18 @@ of ``mozilla-django-oidc``.
    Sets the maximum number of State / Nonce combinations stored in the session.
    Multiple combinations are used when the user does multiple concurrent login sessions.
 
+.. py:attribute:: OIDC_REDIRECT_ALLOWED_HOSTS
+
+   :default: ``None``
+
+   List of hosts which are allowed to be redirected to (must be of List type).
+   The redirect URL specified by the OIDC_REDIRECT_FIELD_NAME field must match a host
+   in this list.
+
+   .. note::
+
+      Whilst there is no default, a request's host is always allowed.
+
 .. py:attribute:: OIDC_REDIRECT_FIELD_NAME
 
    :default: ``next``
