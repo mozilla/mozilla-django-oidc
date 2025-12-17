@@ -217,6 +217,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -266,6 +267,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -319,6 +321,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -372,6 +375,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         get_json_mock = Mock()
         claims_response = {"nickname": "a_username", "email": "email@example.com"}
         get_json_mock.json.return_value = claims_response
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -423,6 +427,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -483,6 +488,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -642,6 +648,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -671,6 +678,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -701,6 +709,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -733,6 +742,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "email": "email@example.com",
             "domain": domain,
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -820,6 +830,7 @@ class OIDCAuthenticationBackendTestCase(TestCase):
             "nickname": "a_username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
@@ -845,7 +856,10 @@ class OIDCAuthenticationBackendTestCase(TestCase):
         request_mock.get.return_value = jwt_response
 
         # Mock the verify_token method to return a specific payload
-        verify_token_mock.return_value = {"email": "email@example.com", "name": "John Doe"}
+        verify_token_mock.return_value = {
+            "email": "email@example.com",
+            "name": "John Doe",
+        }
 
         # Call the get_userinfo method
         user_info = self.backend.get_userinfo("access_token", "id_token", {})
@@ -900,6 +914,7 @@ class OIDCAuthenticationBackendRS256WithKeyTestCase(TestCase):
             "nickname": "username",
             "email": "email@example.com",
         }
+        get_json_mock.headers.get.return_value = "application/json"
         request_mock.get.return_value = get_json_mock
         post_json_mock = Mock(status_code=200)
         post_json_mock.json.return_value = {
