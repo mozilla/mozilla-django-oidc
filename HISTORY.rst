@@ -3,13 +3,24 @@
 History
 -------
 
-5.0.0 (TBD)
-===========
+5.0.0 (2025-12-18)
+==================
 
 * Add support for Django 5.0, 5.1, and 5.2
+* Update minimum Django version to 4.2
 * Add support for Python 3.13 (Django 5.1+ only)
 * Add support for Python 3.14 (Django 5.2+ only)
-* Update minimum Django version to 4.2
+* Replace josepy with PyJWT (also eliminates josepy-related circular import error).
+  Thanks `@tonial <https://github.com/tonial>`_
+* Add support for JWT UserInfo response.
+  Thanks `@ikarius <https://github.com/ikarius>`_ and `@escattone <https://github.com/escattone/>`_
+* Resolve LOGOUT_REDIRECT_URL for compatibility with django.contrib.auth.
+  Thanks `@akatsoulas <https://github.com/akatsoulas>`_
+* Fix SECP256R1 instance in test_auth.py.
+  Thanks `@janbrasna <https://github.com/janbrasna>`_
+* Add OIDC_REDIRECT_ALLOWED_HOSTS to settings documentation.
+  Thanks `@myleskeeffe <https://github.com/myleskeeffe>`_
+* Replace setup.py with pyproject.toml
 
 Backwards-incompatible changes:
 
