@@ -73,7 +73,6 @@ build = [
 docs = [
     "sphinx",
     "sphinx_rtd_theme",
-    "readthedocs-sphinx-search",
 ]
 dev = [
     "mozilla-django-oidc[test,docs,drf,lint,build]",
