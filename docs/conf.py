@@ -26,7 +26,7 @@ django.setup()
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "mozilla-djando-oidc"
+project = "mozilla-django-oidc"
 copyright = "2016, Mozilla"
 
 
