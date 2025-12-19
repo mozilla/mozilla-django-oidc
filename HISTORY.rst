@@ -3,6 +3,12 @@
 History
 -------
 
+5.0.2 (2025-12-19)
+==================
+
+* Fix and update Read the Docs.
+  Thanks `@janbrasna <https://github.com/janbrasna>`_ and `@escattone <https://github.com/escattone/>`_
+
 5.0.1 (2025-12-18)
 ==================
 
