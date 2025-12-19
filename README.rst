@@ -2,8 +2,8 @@
 mozilla-django-oidc
 ===================
 
-.. image:: https://badge.fury.io/py/mozilla-django-oidc.svg
-   :target: https://badge.fury.io/py/mozilla-django-oidc
+.. image:: https://img.shields.io/pypi/v/mozilla-django-oidc
+   :target: https://pypi.org/project/mozilla-django-oidc/
 
 .. image:: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/unit_tests.yml/badge.svg?branch=main
    :target: https://github.com/mozilla/mozilla-django-oidc/actions/workflows/unit_tests.yml
@@ -40,7 +40,7 @@ Running Unit Tests
 
 Use ``tox`` to run as many different versions of Python you have. If you
 don't have ``tox`` installed (and executable) already you can either
-install it in your system Python or `<https://pypi.python.org/pypi/pipsi>`_.
+install it in your system Python or use `pipx <https://pipx.pypa.io/>`_.
 Once installed, simply execute in the project root directory.
 
 .. code-block:: shell
@@ -49,7 +49,7 @@ Once installed, simply execute in the project root directory.
 
 ``tox`` will do the equivalent of installing virtual environments for every
 combination mentioned in the ``tox.ini`` file. If your system, for example,
-doesn't have ``python3.4`` those ``tox`` tests will be skipped.
+doesn't have ``python3.10`` those ``tox`` tests will be skipped.
 
 For a faster test-rinse-repeat cycle you can run tests in a specific
 environment with a specific version of Python and specific version of
@@ -75,7 +75,7 @@ Local development
 The local development setup is based on Docker so you need the following installed in your system:
 
 * `docker`
-* `docker-compose`
+* `docker compose`
 
 You will also need to edit your ``hosts`` file to resolve ``testrp`` and ``testprovider`` hostnames to ``127.0.0.1``.
 
@@ -86,7 +86,7 @@ To run the `testrp` and `testprovider` instances run the following:
 
 .. code-block:: shell
 
-   (venv) $ docker-compose up -d testprovider testrp
+   (venv) $ docker compose up -d testprovider testrp
 
 Then visit the testing django app on: ``http://testrp:8081``.
 
@@ -95,8 +95,8 @@ In order to test a change you need to restart the ``testrp`` service.
 
 .. code-block:: shell
 
-   (venv) $ docker-compose stop testrp
-   (venv) $ docker-compose up -d testrp
+   (venv) $ docker compose stop testrp
+   (venv) $ docker compose up -d testrp
 
 Running integration tests
 =========================
@@ -105,12 +105,12 @@ Integration tests are mounted as a volume to the docker containers. Tests can be
 
 .. code-block:: shell
 
-   (venv) $ docker-compose run --service-ports testrunner
+   (venv) $ docker compose run --service-ports testrunner
 
 Linting
 -------
 
-All code is checked with `<https://pypi.python.org/pypi/flake8>`_ in
+All code is checked with `flake8 <https://pypi.org/project/flake8/>`_ in
 continuous integration. To make sure your code still passes all style guides
 install ``flake8`` and check:
 
@@ -139,7 +139,7 @@ Finally you can use pre-commit hooks to run linting and formatting before you co
 Releasing a new version
 ------------------------
 
-``mozilla-django-oidc`` releases are hosted in `PyPI <https://pypi.python.org/pypi/mozilla-django-oidc>`_.
+``mozilla-django-oidc`` releases are hosted in `PyPI <https://pypi.org/project/mozilla-django-oidc/>`_.
 Here are the steps you need to follow in order to push a new release:
 
 * Make sure that ``HISTORY.rst`` is up-to-date focusing mostly on backwards incompatible changes.
@@ -181,7 +181,7 @@ Here are the steps you need to follow in order to push a new release:
 
       git push origin 0.1.1
 
-The release is pushed automatically to PyPI using a travis deployment hook on every new tag.
+The release is published automatically to PyPI using GitHub Actions on every new tag.
 
 
 License
@@ -198,5 +198,5 @@ Tools used in rendering this package:
 *  Cookiecutter_
 *  `cookiecutter-djangopackage`_
 
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
 .. _`cookiecutter-djangopackage`: https://github.com/pydanny/cookiecutter-djangopackage
