@@ -276,11 +276,28 @@ class OIDCAuthenticationBackend(ModelBackend):
         return user_response.json()
 
     def authenticate(self, request, **kwargs):
-        """Authenticates a user based on the OIDC code flow."""
+        """Authenticates a user based on a Bearer access_token or the OIDC code flow."""
 
         self.request = request
         if not self.request:
             return None
+
+        # If a bearer token is present in the request, use it to authenticate the user.
+        if authorization := request.META.get("HTTP_AUTHORIZATION"):
+            scheme, token = authorization.split(maxsplit=1)
+            if scheme.lower() == "bearer":
+                # get_or_create_user and get_userinfo uses neither id_token nor payload.
+                # XXX: maybe we only want to _get_ the user, and not create the if they
+                # aren't alrealdy registered.
+                try:
+                    return self.get_or_create_user(token, None, None)
+                except HTTPError as exc:
+                    if exc.response.status_code in [401, 403]:
+                        LOGGER.warning(
+                            "failed to authenticate user from bearer token: %s", exc
+                        )
+                        return None
+                    raise exc
 
         state = self.request.GET.get("state")
         code = self.request.GET.get("code")
