@@ -760,6 +760,17 @@ class OIDCLogoutViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/example-logout")
 
+    @override_settings(LOGOUT_REDIRECT_URL=None)
+    def test_default_logout_redirect_url(self):
+        url = reverse("oidc_logout")
+        request = self.factory.post(url)
+        request.user = AnonymousUser()
+        logout_view = views.OIDCLogoutView.as_view()
+
+        response = logout_view(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/")
+
     @override_settings(LOGOUT_REDIRECT_URL="/example-logout")
     def test_post(self):
         user = User.objects.create_user("example_username")
