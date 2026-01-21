@@ -56,3 +56,35 @@ You don't have to use ``document.location.href`` to redirect immediately
 inside the client-side application. Perhaps you can other things like
 updating the DOM to say that the user has to refresh their authentication
 and provide a regular link.
+
+Hypermedia libraries
+====================
+
+Hypermedia oriented libraries, like ``HTMX``, work a bit differently. The detection of the XHR behavior is detected by the ``x-requested-with`` header.
+Not all hypermedia libraries set this header, so you might have to add it. In ``HTMX``, this can be done by installing the ``AJAX header`` extension.
+
+Another thing to keep in mind, is that the server will respond with JSON. You will have to stop normal swapping behavior and handle the JSON response instead.
+
+The following code shows how to handle this in ``HTMX``:
+
+.. code-block:: javascript
+
+    // This assumes the /server/api/* requests are intercepted by the
+    // mozilla-django-oidc refresh middleware.
+
+    // Enable the AJAX header extension for part or all of your HTMX requests.
+
+    document.addEventListener('htmx:beforeSwap', function(evt) {
+        // Handle 403 responses with refresh_url header (session expired)
+        if (evt.detail.xhr.status === 403) {
+            // Stop the swap from happening and navigate to the oauth login page
+            evt.preventDefault();
+            const refreshUrl = evt.detail.xhr.getResponseHeader('refresh_url');
+            if (refreshUrl) {
+                // Redirect to oauth login page to refresh authentication
+                window.location.href = refreshUrl;
+                return;
+            }
+            console.error('No refresh_url found');
+        }
+    });
