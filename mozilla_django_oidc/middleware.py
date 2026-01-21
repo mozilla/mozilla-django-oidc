@@ -183,8 +183,6 @@ class SessionRefresh(MiddlewareMixin):
             request, state, params, code_verifier
         )
 
-        request.session["oidc_login_next"] = request.get_full_path()
-
         query = urlencode(params, quote_via=quote)
         redirect_url = "{url}?{query}".format(url=auth_url, query=query)
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
@@ -199,4 +197,6 @@ class SessionRefresh(MiddlewareMixin):
             response = JsonResponse({"refresh_url": redirect_url}, status=403)
             response["refresh_url"] = redirect_url
             return response
+
+        request.session["oidc_login_next"] = request.get_full_path()
         return HttpResponseRedirect(redirect_url)
