@@ -392,20 +392,11 @@ class TokenOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         if authorization := request.META.get("HTTP_AUTHORIZATION"):
             scheme, token = authorization.split(maxsplit=1)
             if scheme.lower() == "bearer":
+                self.store_tokens(token, None)
                 try:
-                    # get_or_create_user and get_userinfo uses neither id_token nor payload.
                     return self.get_or_create_user(token, None, None)
-                except HTTPError as exc:
-                    # get_or_create_user forwards the token to the
-                    # OIDC_OP_USER_ENDPOINT. If the token is invalid, that endpoint will
-                    # return a 401 error.
-                    # We also cover 403 response statuses as they would indicate a
-                    # similar authentication failure.
-                    if exc.response.status_code in [401, 403]:
-                        LOGGER.warning(
-                            "failed to authenticate user from bearer token: %s", exc
-                        )
-                        return None
-                    raise exc
+                except SuspiciousOperation as exc:
+                    LOGGER.warning("failed to get or create user: %s", exc)
+                    return None
 
         return None
