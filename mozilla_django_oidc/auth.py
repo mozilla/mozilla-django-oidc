@@ -372,3 +372,31 @@ class OIDCAuthenticationBackend(ModelBackend):
             return self.UserModel.objects.get(pk=user_id)
         except self.UserModel.DoesNotExist:
             return None
+
+
+class TokenOIDCAuthenticationBackend(OIDCAuthenticationBackend):
+    """OIDCAuthenticationBackend checking a pre-issued Bearer access_token."""
+
+    def authenticate(self, request, **kwargs):
+        """Authenticates a user based on a Bearer access_token.
+
+        When the Django user doesn't yet exists, whether it gets created or not
+        is controlled by the `settings.OIDC_CREATE_USER` variable.
+        """
+
+        self.request = request
+        if not self.request:
+            return None
+
+        # Look for the bearer token in the request to authenticate the user.
+        if authorization := request.META.get("HTTP_AUTHORIZATION"):
+            scheme, token = authorization.split(maxsplit=1)
+            if scheme.lower() == "bearer":
+                self.store_tokens(token, None)
+                try:
+                    return self.get_or_create_user(token, None, None)
+                except SuspiciousOperation as exc:
+                    LOGGER.warning("failed to get or create user: %s", exc)
+                    return None
+
+        return None
