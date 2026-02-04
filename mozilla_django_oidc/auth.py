@@ -276,30 +276,11 @@ class OIDCAuthenticationBackend(ModelBackend):
         return user_response.json()
 
     def authenticate(self, request, **kwargs):
-        """Authenticates a user based on a Bearer access_token or the OIDC code flow.
-
-        When the Django user doesn't yet exists, whether it gets created or not
-        is controlled by the `settings.OIDC_CREATE_USER` variable.
-        """
+        """Authenticates a user based on the OIDC code flow."""
 
         self.request = request
         if not self.request:
             return None
-
-        # If a bearer token is present in the request, use it to authenticate the user.
-        if authorization := request.META.get("HTTP_AUTHORIZATION"):
-            scheme, token = authorization.split(maxsplit=1)
-            if scheme.lower() == "bearer":
-                try:
-                    # get_or_create_user and get_userinfo uses neither id_token nor payload.
-                    return self.get_or_create_user(token, None, None)
-                except HTTPError as exc:
-                    if exc.response.status_code in [401, 403]:
-                        LOGGER.warning(
-                            "failed to authenticate user from bearer token: %s", exc
-                        )
-                        return None
-                    raise exc
 
         state = self.request.GET.get("state")
         code = self.request.GET.get("code")
@@ -391,3 +372,40 @@ class OIDCAuthenticationBackend(ModelBackend):
             return self.UserModel.objects.get(pk=user_id)
         except self.UserModel.DoesNotExist:
             return None
+
+
+class TokenOIDCAuthenticationBackend(OIDCAuthenticationBackend):
+    """OIDCAuthenticationBackend checking a pre-issued Bearer access_token."""
+
+    def authenticate(self, request, **kwargs):
+        """Authenticates a user based on a Bearer access_token.
+
+        When the Django user doesn't yet exists, whether it gets created or not
+        is controlled by the `settings.OIDC_CREATE_USER` variable.
+        """
+
+        self.request = request
+        if not self.request:
+            return None
+
+        # Look for the bearer token in the request to authenticate the user.
+        if authorization := request.META.get("HTTP_AUTHORIZATION"):
+            scheme, token = authorization.split(maxsplit=1)
+            if scheme.lower() == "bearer":
+                try:
+                    # get_or_create_user and get_userinfo uses neither id_token nor payload.
+                    return self.get_or_create_user(token, None, None)
+                except HTTPError as exc:
+                    # get_or_create_user forwards the token to the
+                    # OIDC_OP_USER_ENDPOINT. If the token is invalid, that endpoint will
+                    # return a 401 error.
+                    # We also cover 403 response statuses as they would indicate a
+                    # similar authentication failure.
+                    if exc.response.status_code in [401, 403]:
+                        LOGGER.warning(
+                            "failed to authenticate user from bearer token: %s", exc
+                        )
+                        return None
+                    raise exc
+
+        return None
