@@ -51,6 +51,7 @@ class OIDCAuthenticationBackend(ModelBackend):
         self.OIDC_RP_CLIENT_SECRET = self.get_settings("OIDC_RP_CLIENT_SECRET")
         self.OIDC_RP_SIGN_ALGO = self.get_settings("OIDC_RP_SIGN_ALGO", "HS256")
         self.OIDC_RP_IDP_SIGN_KEY = self.get_settings("OIDC_RP_IDP_SIGN_KEY", None)
+        self.OIDC_JWT_LEEWAY = self.get_settings("OIDC_JWT_LEEWAY", 0)
 
         if (
             self.OIDC_RP_SIGN_ALGO.startswith("RS")
@@ -142,7 +143,11 @@ class OIDCAuthenticationBackend(ModelBackend):
         try:
             # Maybe add a settings to enforce audiance validation
             return jwt.decode(
-                payload, key, algorithms=alg, options={"verify_aud": False}
+                payload,
+                key,
+                algorithms=alg,
+                leeway=self.OIDC_JWT_LEEWAY,
+                options={"verify_aud": False},
             )
         except jwt.DecodeError:
             msg = "JWS token verification failed."
@@ -186,7 +191,11 @@ class OIDCAuthenticationBackend(ModelBackend):
 
             # If config allows unsecured JWTs check the header and return the decoded payload
             if "alg" in header and header["alg"] == "none":
-                return jwt.decode(token, options={"verify_signature": False})
+                return jwt.decode(
+                    token,
+                    leeway=self.OIDC_JWT_LEEWAY,
+                    options={"verify_signature": False},
+                )
 
         # By default fallback to verify JWT signatures
         return self._verify_jws(token, key)

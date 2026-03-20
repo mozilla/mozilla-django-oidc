@@ -49,6 +49,12 @@ of ``mozilla-django-oidc``.
 
    Controls whether the OpenID Connect client verifies the signature of the JWT tokens
 
+.. py:attribute:: OIDC_JWT_LEEWAY
+
+   :default: ``0``
+
+   A time margin in seconds for the expiration check.
+
 .. py:attribute:: OIDC_VERIFY_KID
 
     :default: ``True``
