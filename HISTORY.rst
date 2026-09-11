@@ -3,6 +3,14 @@
 History
 -------
 
+Unreleased
+==========
+
+Bugs:
+
+* SessionRefresh no longer treats a missing authentication backend as OIDC (#578).
+
+
 5.0.2 (2025-12-19)
 ==================
 

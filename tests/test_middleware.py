@@ -55,7 +55,9 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
         mock_middleware_random.return_value = "examplestring"
 
         request = self.factory.get("/foo", HTTP_X_REQUESTED_WITH="XMLHttpRequest")
-        request.session = {}
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        }
         request.user = self.user
 
         response = self.middleware.process_request(request)
@@ -83,7 +85,9 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
         mock_middleware_random.return_value = "examplestring"
 
         request = self.factory.get("/foo", HTTP_X_REQUESTED_WITH="XMLHttpRequest")
-        request.session = {}
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        }
         request.user = self.user
 
         response = self.middleware.process_request(request)
@@ -113,7 +117,9 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
 
         request = self.factory.get("/foo")
         request.user = self.user
-        request.session = {}
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        }
 
         response = self.middleware.process_request(request)
 
@@ -139,7 +145,9 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
 
         request = self.factory.get("/foo")
         request.user = self.user
-        request.session = {}
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        }
 
         response = self.middleware.process_request(request)
 
@@ -164,7 +172,10 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
 
         request = self.factory.get("/foo")
         request.user = self.user
-        request.session = {"oidc_id_token_expiration": time.time() - 10}
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend",
+            "oidc_id_token_expiration": time.time() - 10,
+        }
 
         response = self.middleware.process_request(request)
 
@@ -188,7 +199,10 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
 
         request = self.factory.get("/foo")
         request.user = self.user
-        request.session = {"oidc_id_token_expiration": time.time() - 10}
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend",
+            "oidc_id_token_expiration": time.time() - 10,
+        }
 
         response = self.middleware.process_request(request)
 
@@ -207,6 +221,24 @@ class SessionRefreshTokenMiddlewareTestCase(TestCase):
             "code_challenge": ["m8yog7rVNdOd7hYIoUg6yl5mk_IYauWdSIBUjoPJHB0"],
         }
         self.assertEqual(expected_query, parse_qs(qs))
+
+    def test_missing_backend_skips_renewal(self, mock_middleware_random):
+        request = self.factory.get("/foo")
+        request.user = self.user
+        request.session = {}
+
+        response = self.middleware.process_request(request)
+        self.assertTrue(not response)
+
+    def test_non_oidc_backend_skips_renewal(self, mock_middleware_random):
+        request = self.factory.get("/foo")
+        request.user = self.user
+        request.session = {
+            "_auth_user_backend": "django.contrib.auth.backends.ModelBackend"
+        }
+
+        response = self.middleware.process_request(request)
+        self.assertTrue(not response)
 
 
 # This adds a "home page" we can test against.
@@ -308,15 +340,35 @@ class MiddlewareTestCase(TestCase):
     def test_is_refreshable_url(self):
         request = self.factory.get("/mdo_fake_view/")
         request.user = self.user
-        request.session = dict()
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        }
         middleware = SessionRefresh(MagicMock())
         assert middleware.is_refreshable_url(request)
+
+    def test_is_not_refreshable_url_missing_backend(self):
+        request = self.factory.get("/mdo_fake_view/")
+        request.user = self.user
+        request.session = dict()
+        middleware = SessionRefresh(MagicMock())
+        assert not middleware.is_refreshable_url(request)
+
+    def test_is_not_refreshable_url_non_oidc_backend(self):
+        request = self.factory.get("/mdo_fake_view/")
+        request.user = self.user
+        request.session = {
+            "_auth_user_backend": "django.contrib.auth.backends.ModelBackend"
+        }
+        middleware = SessionRefresh(MagicMock())
+        assert not middleware.is_refreshable_url(request)
 
     @override_settings(OIDC_EXEMPT_URLS=["mdo_fake_view"])
     def test_is_not_refreshable_url_exempt_view_name(self):
         request = self.factory.get("/mdo_fake_view/")
         request.user = self.user
-        request.session = dict()
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        }
         middleware = SessionRefresh(MagicMock())
         assert not middleware.is_refreshable_url(request)
 
@@ -324,7 +376,9 @@ class MiddlewareTestCase(TestCase):
     def test_is_not_refreshable_url_exempt_path(self):
         request = self.factory.get("/mdo_fake_view/")
         request.user = self.user
-        request.session = dict()
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        }
         middleware = SessionRefresh(MagicMock())
         assert not middleware.is_refreshable_url(request)
 
@@ -332,7 +386,9 @@ class MiddlewareTestCase(TestCase):
     def test_is_not_refreshable_url_exempt_pattern(self):
         request = self.factory.get("/mdo_fake_view/")
         request.user = self.user
-        request.session = dict()
+        request.session = {
+            "_auth_user_backend": "mozilla_django_oidc.auth.OIDCAuthenticationBackend"
+        }
         middleware = SessionRefresh(MagicMock())
         assert not middleware.is_refreshable_url(request)
 

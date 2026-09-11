@@ -103,7 +103,7 @@ class SessionRefresh(MiddlewareMixin):
         """
         # Do not attempt to refresh the session if the OIDC backend is not used
         backend_session = request.session.get(BACKEND_SESSION_KEY)
-        is_oidc_enabled = True
+        is_oidc_enabled = False
         if backend_session:
             auth_backend = import_string(backend_session)
             is_oidc_enabled = issubclass(auth_backend, OIDCAuthenticationBackend)
