@@ -1,5 +1,8 @@
-name: mozilla-django-oidc codecov
+name: codecov
 on: [pull_request]
+
+permissions:
+  contents: read
 
 jobs:
   codecov:
@@ -7,15 +10,15 @@ jobs:
     name: Codecov
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install dependencies
         run: pip install codecov tox tox-gh-actions
       - name: Run tox
         run: tox
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v6
         with:
           verbose: true
