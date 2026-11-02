@@ -139,6 +139,14 @@ class OIDCAuthenticationBackend(ModelBackend):
             )
             raise SuspiciousOperation(msg)
 
+        if isinstance(key, jwt.PyJWK):
+            # A JWKS entry without an "alg" member makes PyJWK default to the
+            # first algorithm of the key type (RS256 for RSA keys), and PyJWT
+            # then rejects tokens signed with any other algorithm. The header
+            # algorithm was already checked against OIDC_RP_SIGN_ALGO above,
+            # so pass the bare key and let that algorithm be used.
+            key = key.key
+
         try:
             # Maybe add a settings to enforce audiance validation
             return jwt.decode(
