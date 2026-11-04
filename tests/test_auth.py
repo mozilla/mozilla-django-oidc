@@ -1414,3 +1414,49 @@ class OIDCAuthenticationBackendES256WithJwksEndpointTestCase(TestCase):
 
         self.assertEqual(payload, data)
         mock_requests.get.assert_called_once()
+
+
+@override_settings(OIDC_OP_TOKEN_ENDPOINT="https://server.example.com/token")
+@override_settings(OIDC_OP_USER_ENDPOINT="https://server.example.com/user")
+@override_settings(OIDC_RP_CLIENT_ID="example_id")
+@override_settings(OIDC_RP_CLIENT_SECRET="client_secret")
+@override_settings(OIDC_RP_SIGN_ALGO="RS384")
+@override_settings(OIDC_OP_JWKS_ENDPOINT="https://server.example.com/jwks")
+class OIDCAuthenticationBackendRS384WithJwksEndpointTestCase(TestCase):
+    """Authentication tests with ALG RS384 and IpD JWKS Endpoint."""
+
+    @patch("mozilla_django_oidc.auth.requests")
+    def test_rs384_alg_verification_jwk_without_alg(self, mock_requests):
+        """Test that OIDC_RP_SIGN_ALGO is honoured when the JWK has no alg"""
+
+        self.backend = OIDCAuthenticationBackend()
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+        # The JWKS entry does not have an "alg" member, so PyJWK would default
+        # to RS256 for it.
+        public_numbers = private_key.public_key().public_numbers()
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = {
+            "keys": [
+                {
+                    "kid": "rsakid",
+                    "kty": "RSA",
+                    "use": "sig",
+                    "n": base64_url_encode(public_numbers.n.to_bytes(256, "big")),
+                    "e": base64_url_encode(public_numbers.e.to_bytes(3, "big")),
+                }
+            ]
+        }
+        mock_requests.get.return_value = get_json_mock
+
+        header = {"typ": "JWT", "alg": "RS384", "kid": "rsakid"}
+        data = {"name": "John Doe", "test": "test_rs384_alg_verification"}
+        token = jwt.encode(
+            payload=data, key=private_key, algorithm="RS384", headers=header
+        )
+
+        payload = self.backend.verify_token(token)
+
+        self.assertEqual(payload, data)
+        mock_requests.get.assert_called_once()
